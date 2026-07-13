@@ -17,6 +17,7 @@ from conftest import (
     SELECT,
     VULTURE,
     NOX,
+    assert_bites,
     example_pkg,
     generate,
     git_init_commit,
@@ -206,6 +207,9 @@ def test_precommit_all_hooks(project):
 
 # ---- the optional gates actually BITE --------------------------------------------------------------
 
+GRAPH_ASSERT = ["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"]
+
+
 @pytest.fixture(scope="module")
 def full_project(scaffold, tmp_path_factory):
     out = tmp_path_factory.mktemp("inject")
@@ -215,17 +219,19 @@ def full_project(scaffold, tmp_path_factory):
     return out
 
 
+def _append(path, text):
+    """Mutate: append `text` to a file; return a restore callable (for assert_bites)."""
+    original = path.read_text()
+    path.write_text(original + text)
+    return lambda: path.write_text(original)
+
+
 def test_astgrep_catches_top_level_function(full_project):
-    target = full_project / "full_pkg" / "math_ops.py"
-    original = target.read_text()
-    target.write_text(original + "\n\ndef sneaky_top_level():\n    return 1\n")
-    result = run(
-        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", "full_pkg"],
+    assert_bites(
         full_project,
-        check=False,
+        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", "full_pkg"],
+        lambda p: _append(p / "full_pkg" / "math_ops.py", "\n\ndef sneaky_top_level():\n    return 1\n"),
     )
-    target.write_text(original)
-    assert result.returncode != 0, "ast-grep must FAIL on an injected top-level function"
 
 
 def test_jscpd_catches_duplication(full_project):
@@ -262,35 +268,27 @@ def test_jscpd_catches_duplication(full_project):
 
 def test_graph_assert_catches_cycle(full_project):
     # math_ops <- pipeline already; add math_ops -> pipeline to close an import cycle
-    target = full_project / "full_pkg" / "math_ops.py"
-    original = target.read_text()
-    target.write_text(original + "\n\nfrom full_pkg.pipeline import Pipeline as _Cycle  # noqa: E402, F401\n")
-    result = run(
-        ["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"],
+    assert_bites(
         full_project,
-        check=False,
+        GRAPH_ASSERT,
+        lambda p: _append(
+            p / "full_pkg" / "math_ops.py",
+            "\n\nfrom full_pkg.pipeline import Pipeline as _Cycle  # noqa: E402, F401\n",
+        ),
     )
-    target.write_text(original)
-    assert result.returncode != 0, "graph --assert must FAIL on an injected import cycle"
-    # and it passes again once reverted
-    ok = run(["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"], full_project)
-    assert ok.returncode == 0
+    assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
 def test_graph_assert_catches_unmirrored(full_project):
     # a new LOGIC module with no tests/unit/full_pkg/test_<name>.py mirror must block
-    orphan = full_project / "full_pkg" / "orphan.py"
-    orphan.write_text("class Orphan:\n    @staticmethod\n    def go():\n        return 1\n")
-    result = run(
-        ["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"],
-        full_project,
-        check=False,
-    )
-    orphan.unlink()
-    assert result.returncode != 0, "graph --assert must FAIL on a logic module lacking its mirror test"
+    def mutate(p):
+        orphan = p / "full_pkg" / "orphan.py"
+        orphan.write_text("class Orphan:\n    @staticmethod\n    def go():\n        return 1\n")
+        return orphan.unlink
+
+    result = assert_bites(full_project, GRAPH_ASSERT, mutate)
     assert "test mirror" in (result.stdout + result.stderr)
-    ok = run(["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"], full_project)
-    assert ok.returncode == 0
+    assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
 def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):

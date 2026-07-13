@@ -7,37 +7,24 @@ each run builds a throwaway git repo from the on-disk template (testing what is 
 """
 
 import os
-import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[2]  # tests/e2e/conftest.py -> scaffold root
-
-
-def _copier_default(key):
-    """Read a `when: false` constant's default straight from copier.yml — the single source of truth.
-
-    Keeps the harness's pinned versions + ruff select in ONE place (copier.yml) so a bump can't drift
-    between the template and the tests that exercise it. Regex-parsed to avoid a PyYAML dependency.
-    """
-    text = (REPO / "copier.yml").read_text(encoding="utf-8")
-    match = re.search(rf'^{key}:\n(?:  .*\n)*?  default: "([^"]+)"', text, re.M)
-    if match is None:
-        msg = f"copier.yml: no default found for {key!r}"
-        raise RuntimeError(msg)
-    return match.group(1)
-
+sys.path.insert(0, str(REPO / "tests"))
+from _meta import copier_default  # noqa: E402  (shared copier.yml reader, one home)
 
 COPIER = "copier@9.16.0"
-RUFF = f"ruff@{_copier_default('ruff_version')}"
-VULTURE = f"vulture@{_copier_default('vulture_version')}"
-NOX = f"nox@{_copier_default('nox_version')}"
-PRECOMMIT = f"pre-commit@{_copier_default('precommit_version')}"
+RUFF = f"ruff@{copier_default('ruff_version')}"
+VULTURE = f"vulture@{copier_default('vulture_version')}"
+NOX = f"nox@{copier_default('nox_version')}"
+PRECOMMIT = f"pre-commit@{copier_default('precommit_version')}"
 # Curated-narrow select — single-sourced from copier.yml's `ruff_select` (must match the template).
-SELECT = _copier_default("ruff_select")
+SELECT = copier_default("ruff_select")
 
 # Two representative points on the toggle lattice: the minimal mid-stage and the full cardioseg mirror.
 COMBOS = {
@@ -95,13 +82,23 @@ def has_node():
     return shutil.which("node") is not None and shutil.which("npx") is not None
 
 
+def assert_bites(project, cmd, mutate):
+    """Prove a gate BITES: `mutate(project)` injects a violation and returns a restore callable; run
+    `cmd`; restore BEFORE asserting (so a failure can't leave a shared fixture dirty); assert non-zero."""
+    restore = mutate(project)
+    result = run(cmd, project, check=False)
+    restore()
+    assert result.returncode != 0, f"gate must FAIL after injection: {' '.join(map(str, cmd))}"
+    return result
+
+
 def layers(combo_name):
     return [p.strip() for p in COMBOS[combo_name]["packages"].split(",")]
 
 
 def make_scaffold(dst: Path):
     """Build a throwaway git repo from the on-disk template so copier can version it."""
-    for item in ["copier.yml", "ruff.toml", ".pre-commit-hooks.yaml", "template"]:
+    for item in ["copier.yml", "ruff.toml", ".pre-commit-hooks.yaml", "_partials", "template"]:
         src = REPO / item
         if src.is_dir():
             shutil.copytree(src, dst / item)

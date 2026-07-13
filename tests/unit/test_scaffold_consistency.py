@@ -5,21 +5,17 @@ versions can silently drift from copier.yml when a version is bumped. This guard
 """
 
 import re
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-
-
-def _copier_default(key: str) -> str:
-    text = (REPO / "copier.yml").read_text(encoding="utf-8")
-    match = re.search(rf'^{key}:\n(?:  .*\n)*?  default: "([^"]+)"', text, re.M)
-    assert match, f"copier.yml: no default for {key!r}"
-    return match.group(1)
+sys.path.insert(0, str(REPO / "tests"))
+from _meta import copier_default  # noqa: E402  (shared copier.yml reader, one home)
 
 
 def test_pre_commit_hooks_versions_match_single_source():
     hooks = (REPO / ".pre-commit-hooks.yaml").read_text(encoding="utf-8")
-    ruff_v, vulture_v = _copier_default("ruff_version"), _copier_default("vulture_version")
+    ruff_v, vulture_v = copier_default("ruff_version"), copier_default("vulture_version")
     assert f"ruff@{ruff_v}" in hooks, f"manifest must pin ruff@{ruff_v}"
     assert f"vulture@{vulture_v}" in hooks, f"manifest must pin vulture@{vulture_v}"
     # no stray pin at a different version may sneak in
