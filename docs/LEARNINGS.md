@@ -100,10 +100,9 @@ Result — all four held, no `.rej` conflicts, gates green post-update:
 - **Per-repo `_commit` advancing independently = the ratchet mechanized** ("one family per PR, graduate
   at zero", now across repos via tags).
 
-Still to flip (only the network hop remains):
-- Gate DELIVERY `repo: local` → `repo: <scaffold> rev: vN` in `.pre-commit-config.yaml` for central
-  versioned gates (root `.pre-commit-hooks.yaml` already stubbed).
-- `copier update` from a real REMOTE + Actions fetching by URL — verified after a first push.
+Network hop: **DONE** — proven against a private remote, see "Remote hop PROVEN" below (`copier update`
++ pre-commit `repo:<url> rev:vN` both resolve + run green). What remains is only `knl` (a scripted smoke
+so the remote path is regression-guarded rather than one-time-manual).
 
 ## Windows vs WSL
 
@@ -263,3 +262,21 @@ that renders a beads section into CLAUDE.md/AGENTS.md + gitignores the Dolt engi
 tracked). Opt-in (default false); `bd init` is a documented post-gen step, not auto-run.
 
 Result: **49 passed, 3 skipped**. The scaffold now matches both mature siblings on the arch gate.
+
+## Remote hop PROVEN — private repo (2026-07-14)
+
+The last untested claim, closed against a real **private** GitHub remote
+(`github.com/dimiturtrz/sdlc-scaffold`, `main`+`dev` like the real repos, baseline tag `v0.2.0`):
+
+- **copier copy from the private URL @ v0.2.0** → clean project, `_commit` pinned, all `nox` gates green.
+- **copier update drift-heal (nmh)** — downstream at `v0.2.0`, a LOCAL-SLOT edit, then `copier update` to
+  `v0.3.0`: pin advanced, a portable fix (AGENTS sync line) flowed in, the `MY_LOCAL_DIR` slot edit
+  survived, **0 `.rej`**.
+- **pre-commit remote hooks (ppq)** — a consumer's `repo: <url> rev: v0.3.0` cloned the private manifest
+  and ran `ruff-gate` / `vulture-gate` / `arch-fitness` all green. arch-fitness needed the
+  `--extra devtools` manifest fix (grimp/networkx are optional) — the same latent gap fixed in noxfile.
+
+Private-repo auth for all three: a git credential-store entry from the PAT, written for the operation and
+removed after. The one added cost vs public is a read-token/deploy-key secret in any CONSUMER's CI.
+
+Remaining: `knl` — script the remote path as a scaffold smoke/CI so it's regression-guarded, not manual.
