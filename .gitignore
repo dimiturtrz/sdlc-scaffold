@@ -8,3 +8,8 @@ uv.lock
 
 # local scratch instance generated from the template for manual poking — regenerable, never committed
 /sdlc_test/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
