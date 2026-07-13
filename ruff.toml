@@ -1,0 +1,6 @@
+# Governs ruff when it runs against THIS scaffold's own source (e.g. formatting the static
+# `template/devtools/graph.py`). Matches the generated projects' superset line-length so
+# `ruff format template/...` yields the byte-identical result the generated project enforces —
+# without this, ruff defaults to line-length 88 and every template format-check disagrees at 120.
+# NOT copied into generated projects: it sits at the scaffold root, outside `template/`.
+line-length = 120

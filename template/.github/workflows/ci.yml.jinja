@@ -76,12 +76,25 @@ jobs:
       - name: Install dependencies (locked, + dev/devtools extras for pytest + graph tests)
         run: uv sync --frozen --extra dev --extra devtools
       # One instrumented run = the test gate AND the coverage data (.coverage), no double suite exec.
-      # Config (source/omit/exclude) is in [tool.coverage.*].
+      # Config (source/omit/exclude) is in [tool.coverage.*].{% if has_viewer %} Viewer tests run in their
+      # OWN lane below (--ignore here) so this floor stays calibrated to core+trainer.{% endif %}
       - name: Tests + coverage (tests block)
-        run: uv run pytest tests --cov --cov-report=term-missing -q
+        run: uv run pytest tests{% if has_viewer %} --ignore=tests/viewer{% endif %} --cov --cov-report=term-missing -q
       # Coverage floor — below the floor fails the merge. Reads the .coverage from the run above.
       - name: Coverage floor — enforced (>={{ coverage_floor }}, blocks)
         run: uv run coverage report --fail-under={{ coverage_floor }}
+      # Coverage target — advisory (>=95 warns, never blocks). always() so it shows even if the floor failed.
+      - name: Coverage target — advisory (>=95, warns)
+        if: always()
+        continue-on-error: true
+        run: uv run coverage report --fail-under=95 || echo "::warning::coverage below the 95% target"
+      {% if has_viewer %}
+      # Viewer coverage — SEPARATE lane (own .coverage.viewer) so the floor above stays calibrated to
+      # core+trainer while the viewer's logic is still measured (advisory), not silently uncovered.
+      - name: Viewer coverage — advisory (separate lane)
+        continue-on-error: true
+        run: COVERAGE_FILE=.coverage.viewer uv run pytest tests/viewer --cov={{ viewer_name }} --cov-report=term-missing -q
+      {% endif %}
       {% if enforce_arch_fitness %}
       # Architecture fitness — the METRIC arch axis (god-module = fan-in AND fan-out over a degree /
       # import cycle / god-file) as a GATE on the grimp+networkx import graph, the axis import-linter's

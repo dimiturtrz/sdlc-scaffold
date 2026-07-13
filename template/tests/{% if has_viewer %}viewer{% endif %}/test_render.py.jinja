@@ -1,0 +1,11 @@
+from {{ viewer_name }}.render import Renderer
+
+
+def test_render_summary_reports_clamped_mean():
+    out = Renderer.render_summary([1.0, 2.0, 3.0], low=0.0, high=10.0)
+    assert "2.0" in out
+
+
+def test_render_summary_clamps_to_high():
+    out = Renderer.render_summary([100.0, 200.0], low=0.0, high=10.0)
+    assert "10.0" in out

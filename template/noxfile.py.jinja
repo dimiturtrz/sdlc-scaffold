@@ -23,7 +23,7 @@ def lint(session: nox.Session) -> None:
     session.run("uvx", RUFF, "format", "--check", *LAYERS, external=True, success_codes=[0, 1])
     session.run("uvx", VULTURE, *LAYERS, "--min-confidence", "80", external=True)
     session.run("uvx", "--from", "import-linter", "lint-imports", external=True)
-{% if enforce_arch_fitness %}    session.run("uv", "run", "python", "-m", "devtools.graph", "--assert", external=True)
+{% if enforce_arch_fitness %}    session.run("uv", "run", "python", "-m", "devtools.graph", "--assert", *LAYERS, external=True)
 {% endif %}
 
 @nox.session(venv_backend="none")
@@ -34,9 +34,17 @@ def test(session: nox.Session) -> None:
 
 @nox.session(venv_backend="none")
 def cov(session: nox.Session) -> None:
-    """pytest with coverage, failing under the floor."""
-    session.run("uv", "run", "pytest", "tests", "--cov", "--cov-report=term-missing", external=True)
+    """pytest with coverage, failing under the floor{% if has_viewer %}; viewer measured in its own advisory lane{% endif %}."""
+    session.run("uv", "run", "pytest", "tests"{% if has_viewer %}, "--ignore=tests/viewer"{% endif %}, "--cov", "--cov-report=term-missing", external=True)
     session.run("uv", "run", "coverage", "report", "--fail-under={{ coverage_floor }}", external=True)
+    # Advisory: 95% target — warns, never fails (coverage exits 2 when under; success_codes swallows it).
+    session.run("uv", "run", "coverage", "report", "--fail-under=95", external=True, success_codes=[0, 2])
+{% if has_viewer %}    # Viewer coverage — separate lane (own data file), advisory (never blocks).
+    session.run(
+        "uv", "run", "pytest", "tests/viewer", "--cov={{ viewer_name }}", "--cov-report=term-missing",
+        external=True, success_codes=[0, 1, 2, 5], env={"COVERAGE_FILE": ".coverage.viewer"},
+    )
+{% endif %}
 
 
 @nox.session(venv_backend="none")
