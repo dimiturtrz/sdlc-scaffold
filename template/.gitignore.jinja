@@ -39,7 +39,7 @@ htmlcov/
 # Beads / Dolt engine bits (issues.jsonl is tracked; the embedded engine is not)
 .dolt/
 .beads-credential-key
-{% if has_viewer %}
-# Viewer (JS/TS) dependencies
+{% if enable_jscpd %}
+# jscpd (node) — pulled transiently by npx for the duplication gate
 node_modules/
 {% endif %}

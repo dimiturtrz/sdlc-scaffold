@@ -12,7 +12,7 @@ metric arch axis import-linter's categorical layer contracts can't express):
 god-module (fan-in AND fan-out BOTH over a degree), a new import cycle appears, or a file blows the line
 ceiling — plus an advisory chokepoint warning that never blocks. Thresholds live in `pyproject
 [tool.structure]`, defaulted when absent. IMPORT-level only. Packages to graph are the positional argv
-(default `core`). Run: `python -m devtools.graph [pkgs...]` | `python -m devtools.graph --assert [pkgs...]`.
+(default `src`). Run: `python -m devtools.graph [pkgs...]` | `python -m devtools.graph --assert [pkgs...]`.
 """
 
 from __future__ import annotations
@@ -158,8 +158,8 @@ def main():
     ap.add_argument(
         "packages",
         nargs="*",
-        default=["core"],
-        help="root packages to graph (default: core)",
+        default=["src"],
+        help="root packages to graph (default: src)",
     )
     ap.add_argument("--top", type=int, default=10, help="rows per ranked table")
     ap.add_argument(
@@ -169,7 +169,7 @@ def main():
         help="fitness GATE: exit 1 on a god-module / import cycle / god-file (advisory: chokepoint)",
     )
     args = ap.parse_args()
-    packages = args.packages or ["core"]
+    packages = args.packages or ["src"]
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if args.assert_:
         raise SystemExit(_run_assert(packages))

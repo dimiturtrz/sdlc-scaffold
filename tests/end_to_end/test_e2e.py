@@ -51,12 +51,11 @@ def test_no_leftover_jinja(project):
 def test_expected_layout(project):
     name, path = project
     answers = COMBOS[name]
-    assert (path / "core" / "math_ops.py").exists()
-    assert (path / answers["package_name"] / "pipeline.py").exists()
+    pkg = answers["package_name"]
+    assert (path / pkg / "math_ops.py").exists()
+    assert (path / pkg / "pipeline.py").exists()
     assert (path / "devtools" / "graph.py").exists()
     # toggles gate file presence
-    viewer_dir = path / answers.get("viewer_name", "__none__")
-    assert viewer_dir.exists() == (answers["has_viewer"] == "true")
     assert (path / "devtools" / "sgconfig.yml").exists() == (answers["enable_astgrep"] == "true")
     assert (path / "devtools" / "jscpd.json").exists() == (answers["enable_jscpd"] == "true")
     class_shape = answers["enable_class_shape_smells"] == "true"
@@ -82,29 +81,9 @@ def test_vulture_conf80(project):
 
 
 def test_coverage_floor(project):
-    name, path = project
-    cmd = ["uv", "run", "pytest", "tests"]
-    if COMBOS[name]["has_viewer"] == "true":
-        cmd.append("--ignore=tests/viewer")
-    cmd += ["--cov", "-q"]
-    run(cmd, path)
-    run(["uv", "run", "coverage", "report", "--fail-under=80"], path)
-
-
-def test_viewer_coverage_lane(project):
-    name, path = project
-    if COMBOS[name]["has_viewer"] != "true":
-        pytest.skip("no viewer")
-    run(
-        ["uv", "run", "pytest", "tests/viewer", "--cov=" + COMBOS[name]["viewer_name"], "-q"],
-        path,
-        env={"COVERAGE_FILE": ".coverage.viewer"},
-    )
-
-
-def test_import_linter(project):
     _, path = project
-    run(["uvx", "--from", "import-linter", "lint-imports"], path)
+    run(["uv", "run", "pytest", "tests", "--cov", "-q"], path)
+    run(["uv", "run", "coverage", "report", "--fail-under=80"], path)
 
 
 def test_graph_assert_all_layers(project):
@@ -118,7 +97,7 @@ def test_astgrep(project):
         pytest.skip("astgrep off")
     run(
         ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml",
-         "core", COMBOS[name]["package_name"]],
+         COMBOS[name]["package_name"]],
         path,
     )
 
@@ -129,7 +108,7 @@ def test_jscpd(project):
         pytest.skip("jscpd off")
     if not has_node():
         pytest.skip("node/npx not available")
-    run(["npx", "--yes", "jscpd", "core", COMBOS[name]["package_name"], "--config", "devtools/jscpd.json"], path)
+    run(["npx", "--yes", "jscpd", COMBOS[name]["package_name"], "--config", "devtools/jscpd.json"], path)
 
 
 def test_class_shape_smells(project):
@@ -138,7 +117,7 @@ def test_class_shape_smells(project):
         pytest.skip("class-shape off")
     # advisory explorers — must run clean (exit 0); findings are fine, they never block
     for tool in ("state_candidates", "lcom", "data_clumps"):
-        run(["uv", "run", "python", "-m", f"devtools.{tool}", "core", COMBOS[name]["package_name"]], path)
+        run(["uv", "run", "python", "-m", f"devtools.{tool}", COMBOS[name]["package_name"]], path)
 
 
 # ---- gates, via the runners ------------------------------------------------------------------------
@@ -169,11 +148,11 @@ def full_project(scaffold, tmp_path_factory):
 
 
 def test_astgrep_catches_top_level_function(full_project):
-    target = full_project / "core" / "math_ops.py"
+    target = full_project / "full_pkg" / "math_ops.py"
     original = target.read_text()
     target.write_text(original + "\n\ndef sneaky_top_level():\n    return 1\n")
     result = run(
-        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", "core", "full_pkg"],
+        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", "full_pkg"],
         full_project,
         check=False,
     )
@@ -198,17 +177,17 @@ def test_jscpd_catches_duplication(full_project):
         "            raise ValueError(msg)\n"
         "        return total / wsum\n"
     )
-    core = full_project / "core" / "math_ops.py"
+    mod = full_project / "full_pkg" / "math_ops.py"
     pkg = full_project / "full_pkg" / "pipeline.py"
-    core_orig, pkg_orig = core.read_text(), pkg.read_text()
-    core.write_text(core_orig + block)
+    mod_orig, pkg_orig = mod.read_text(), pkg.read_text()
+    mod.write_text(mod_orig + block)
     pkg.write_text(pkg_orig + block)
     result = run(
-        ["npx", "--yes", "jscpd", "core", "full_pkg", "--config", "devtools/jscpd.json"],
+        ["npx", "--yes", "jscpd", "full_pkg", "--config", "devtools/jscpd.json"],
         full_project,
         check=False,
     )
-    core.write_text(core_orig)
+    mod.write_text(mod_orig)
     pkg.write_text(pkg_orig)
     assert result.returncode != 0, "jscpd must FAIL on an injected duplicated block"
 

@@ -4,13 +4,9 @@ One-line description of {{ project_name }}. (Replace me.)
 
 ## Layout
 
-Layers, imports point DOWN only (`core` < `{{ package_name }}`{% if has_viewer %} < `{{ viewer_name }}`{% endif %}):
-
-- `core/` — the clean kernel: pure, shared, imports nothing above it.
-- `{{ package_name }}/` — the trainer/orchestration layer, built on `core`.
-{% if has_viewer %}- `{{ viewer_name }}/` — the viewer/edge consumer of `core`{% if viewer_imports_trainer %} (may also reuse `{{ package_name }}`){% endif %}.
-{% endif %}- `tests/` — `unit/`, `integration/`, `e2e/`.
-- `devtools/` — the arch-fitness engine (`graph.py`).
+- `{{ package_name }}/` — your code. One package; organise modules however the project needs.
+- `tests/` — `unit/`, `integration/`, `e2e/`.
+- `devtools/` — the guardrail tools (`graph.py` arch-fitness{% if enable_class_shape_smells %}, plus the class-shape explorers{% endif %}).
 
 ## Quickstart
 
@@ -23,6 +19,6 @@ nox -s lint test cov
 
 `nox -s lint test cov` (or `nox -s gates`) runs exactly what CI runs:
 
-- **lint** — ruff check (pinned) + ruff format --check (advisory) + vulture + import-linter{% if enforce_arch_fitness %} + arch-fitness (`graph.py --assert`){% endif %}.
+- **lint** — ruff check (pinned) + ruff format --check (advisory) + vulture{% if enforce_arch_fitness %} + arch-fitness (`graph.py --assert`){% endif %}.
 - **test** — pytest.
 - **cov** — pytest --cov with a `--fail-under={{ coverage_floor }}` floor.

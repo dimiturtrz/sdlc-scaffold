@@ -14,8 +14,6 @@ _exclude:
   - ".venv"
   - "__pycache__"
   - "*.pyc"
-  - "{% if not has_viewer %}{{ viewer_name }}{% endif %}"
-  - "{% if not has_viewer %}tests/viewer{% endif %}"
   - "{% if not enable_astgrep %}devtools/sg-rules{% endif %}"
   - "{% if not enable_astgrep %}devtools/sgconfig.yml{% endif %}"
   - "{% if not enable_jscpd %}devtools/jscpd.json{% endif %}"
@@ -32,23 +30,6 @@ package_name:
   type: str
   help: "Python package (the 'trainer' layer), snake_case"
   default: "{{ project_name.replace('-', '_') }}"
-
-has_viewer:
-  type: bool
-  help: "Ship a viewer layer (browser/edge consumer of core)?"
-  default: false
-
-viewer_name:
-  type: str
-  help: "Viewer package name (snake_case)"
-  default: "{{ package_name }}_viz"
-  when: "{{ has_viewer }}"
-
-viewer_imports_trainer:
-  type: bool
-  help: "Allow viewer -> trainer imports (downward edge, mindscape-style)? If no, forbid it (cardiac-style)."
-  default: false
-  when: "{{ has_viewer }}"
 
 enforce_arch_fitness:
   type: bool

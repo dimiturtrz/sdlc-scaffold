@@ -8,7 +8,7 @@ name; a param carried by >=half the methods (and >=2) is latent state. Score = s
 counts, so a class where many methods thread many common params ranks highest. Dispatcher command classes
 (`add_args`+`run`) and already-stateful classes (have `__init__`) are skipped.
 
-    python -m devtools.state_candidates core mypackage
+    python -m devtools.state_candidates src mypackage
 """
 
 from __future__ import annotations
@@ -105,7 +105,7 @@ def main():
     ap = argparse.ArgumentParser(
         prog="python -m devtools.state_candidates", description="rank namespace-classes by latent shared instance state"
     )
-    ap.add_argument("packages", nargs="*", default=["core"], help="package dirs to scan (default: core)")
+    ap.add_argument("packages", nargs="*", default=["src"], help="package dirs to scan (default: src)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     rows = scan(args.packages)

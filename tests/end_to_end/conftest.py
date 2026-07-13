@@ -27,8 +27,6 @@ COMBOS = {
     "base": {
         "project_name": "base",
         "package_name": "base_pkg",
-        "has_viewer": "false",
-        "viewer_imports_trainer": "false",
         "enforce_arch_fitness": "true",
         "enable_astgrep": "false",
         "enable_jscpd": "false",
@@ -38,9 +36,6 @@ COMBOS = {
     "full": {
         "project_name": "full",
         "package_name": "full_pkg",
-        "has_viewer": "true",
-        "viewer_name": "full_viz",
-        "viewer_imports_trainer": "false",
         "enforce_arch_fitness": "true",
         "enable_astgrep": "true",
         "enable_jscpd": "true",
@@ -73,11 +68,7 @@ def has_node():
 
 
 def layers(combo_name):
-    answers = COMBOS[combo_name]
-    result = ["core", answers["package_name"]]
-    if answers["has_viewer"] == "true":
-        result.append(answers["viewer_name"])
-    return result
+    return [COMBOS[combo_name]["package_name"]]
 
 
 def make_scaffold(dst: Path):

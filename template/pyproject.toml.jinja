@@ -16,7 +16,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["core*", "{{ package_name }}*"{% if has_viewer %}, "{{ viewer_name }}*"{% endif %}]
+include = ["{{ package_name }}*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -42,13 +42,13 @@ min_confidence = 60
 ignore_names = ["model_config"]
 ignore_decorators = ["@model_validator", "@field_validator", "@field_serializer", "@model_serializer", "@computed_field"]
 # >>> LOCAL-SLOT: vulture-scan — edit freely, the template will not overwrite intent here
-paths = ["core", "{{ package_name }}"]
+paths = ["{{ package_name }}"]
 exclude = []
 # <<< LOCAL-SLOT: vulture-scan
 
 [tool.coverage.run]
 # >>> LOCAL-SLOT: coverage-scan — edit freely, the template will not overwrite intent here
-source = ["core", "{{ package_name }}"]
+source = ["{{ package_name }}"]
 omit = []
 # <<< LOCAL-SLOT: coverage-scan
 
@@ -63,27 +63,10 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 
-[tool.importlinter]
-root_packages = ["core", "{{ package_name }}"{% if has_viewer %}, "{{ viewer_name }}"{% endif %}]
-
-[[tool.importlinter.contracts]]
-name = "core is an independent kernel (imports neither trainer nor viewer)"
-type = "forbidden"
-source_modules = ["core"]
-forbidden_modules = ["{{ package_name }}"{% if has_viewer %}, "{{ viewer_name }}"{% endif %}]
-{% if has_viewer %}
-[[tool.importlinter.contracts]]
-name = "{{ package_name }} (trainer) never imports {{ viewer_name }} (viewer)"
-type = "forbidden"
-source_modules = ["{{ package_name }}"]
-forbidden_modules = ["{{ viewer_name }}"]
-{% if not viewer_imports_trainer %}
-[[tool.importlinter.contracts]]
-name = "{{ viewer_name }} (viewer) never imports {{ package_name }} (trainer)"
-type = "forbidden"
-source_modules = ["{{ viewer_name }}"]
-forbidden_modules = ["{{ package_name }}"]
-{% endif %}{% endif %}
+# Directional layer contracts (e.g. "viewer never imports trainer") are project-specific, so the
+# scaffold does not impose them. If your project has layers to enforce, add import-linter here and a
+# `lint-imports` call in noxfile.py — see devtools/README.md. The layer-agnostic structural checks
+# (cycles, god-modules, oversized files) ship by default via devtools/graph.py --assert below.
 {% if enforce_arch_fitness %}
 # Architecture fitness thresholds read by devtools/graph.py --assert. Portable defaults; override per repo.
 [tool.structure]

@@ -16,7 +16,7 @@ real fusion); (b) ABSTRACT/STUB — every method is a trivial body (`...`/pass/`
 NotImplementedError`/docstring). What survives is a CONCRETE, STATEFUL class whose behaviour genuinely
 splits into disjoint-state groups.
 
-    python -m devtools.lcom core mypackage
+    python -m devtools.lcom src mypackage
 """
 
 from __future__ import annotations
@@ -172,7 +172,7 @@ def main():
     ap = argparse.ArgumentParser(
         prog="python -m devtools.lcom", description="rank classes by LCOM4 cohesion (>=2 = split candidate)"
     )
-    ap.add_argument("packages", nargs="*", default=["core"])
+    ap.add_argument("packages", nargs="*", default=["src"])
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     rows = scan(args.packages)

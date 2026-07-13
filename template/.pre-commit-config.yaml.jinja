@@ -6,7 +6,7 @@ repos:
     hooks:
       - id: ruff-gate
         name: ruff — enforced (full select)
-        entry: uvx ruff@0.15.13 check core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %} --select {{ ruff_select }}
+        entry: uvx ruff@0.15.13 check {{ package_name }} --select {{ ruff_select }}
         language: system
         pass_filenames: false
         always_run: true
@@ -26,16 +26,10 @@ repos:
         pass_filenames: false
         always_run: true
 
-      - id: importlinter-gate
-        name: import-linter — architecture layers
-        entry: uvx --from import-linter lint-imports
-        language: system
-        pass_filenames: false
-        always_run: true
       {% if enforce_arch_fitness %}
       - id: arch-fitness
         name: architecture fitness (graph.py --assert)
-        entry: uv run --extra devtools python -m devtools.graph --assert core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %}
+        entry: uv run --extra devtools python -m devtools.graph --assert {{ package_name }}
         language: system
         pass_filenames: false
         always_run: true
@@ -43,7 +37,7 @@ repos:
       {% if enable_astgrep %}
       - id: astgrep-gate
         name: ast-grep — module shape
-        entry: uvx --from ast-grep-cli ast-grep scan -c devtools/sgconfig.yml core {{ package_name }}
+        entry: uvx --from ast-grep-cli ast-grep scan -c devtools/sgconfig.yml {{ package_name }}
         language: system
         pass_filenames: false
         always_run: true
@@ -54,19 +48,19 @@ repos:
       # without ever blocking — advisory by construction, not by continue-on-error.
       - id: state-candidates
         name: class-shape — namespace-state (advisory)
-        entry: uv run python -m devtools.state_candidates core {{ package_name }}
+        entry: uv run python -m devtools.state_candidates {{ package_name }}
         language: system
         pass_filenames: false
         always_run: true
       - id: lcom
         name: class-shape — LCOM4 cohesion (advisory)
-        entry: uv run python -m devtools.lcom core {{ package_name }}
+        entry: uv run python -m devtools.lcom {{ package_name }}
         language: system
         pass_filenames: false
         always_run: true
       - id: data-clumps
         name: class-shape — data clumps (advisory)
-        entry: uv run python -m devtools.data_clumps core {{ package_name }}
+        entry: uv run python -m devtools.data_clumps {{ package_name }}
         language: system
         pass_filenames: false
         always_run: true
