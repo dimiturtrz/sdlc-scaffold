@@ -1,0 +1,12 @@
+"""Trainer-layer pipeline — the real downward edge onto `core` (import-linter + graph.py chew this)."""
+
+from core.math_ops import MathOps
+
+
+class Pipeline:
+    """Composes `core` primitives — demonstrates the `{{ package_name }}` -> `core` edge."""
+
+    @staticmethod
+    def clamped_mean(values: list[float], *, low: float, high: float) -> float:
+        """Mean of `values`, clamped into [`low`, `high`] via two kernel primitives."""
+        return MathOps.clamp(MathOps.mean(values), low=low, high=high)

@@ -1,0 +1,61 @@
+# copier questionary + settings. Only `template/` is rendered.
+_subdirectory: template
+_templates_suffix: .jinja
+_answers_file: .copier-answers.yml
+
+# Exclude scaffold-meta from generated output (belongs to the template repo, not the project).
+_exclude:
+  - "copier.yml"
+  - "SPEC.md"
+  - "README.md"
+  - ".git"
+  - ".venv"
+  - "__pycache__"
+  - "*.pyc"
+
+project_name:
+  type: str
+  help: "Repo / folder name, kebab-case (e.g. sample-proj)"
+  placeholder: "my-project"
+
+package_name:
+  type: str
+  help: "Python package (the 'trainer' layer), snake_case"
+  default: "{{ project_name.replace('-', '_') }}"
+
+has_viewer:
+  type: bool
+  help: "Ship a viewer layer (browser/edge consumer of core)?"
+  default: false
+
+viewer_name:
+  type: str
+  help: "Viewer package name (snake_case)"
+  default: "{{ package_name }}_viz"
+  when: "{{ has_viewer }}"
+
+viewer_imports_trainer:
+  type: bool
+  help: "Allow viewer -> trainer imports (downward edge, mindscape-style)? If no, forbid it (cardiac-style)."
+  default: false
+  when: "{{ has_viewer }}"
+
+enforce_arch_fitness:
+  type: bool
+  help: "Ship the arch-fitness gate (graph.py --assert + [tool.structure])?"
+  default: true
+
+enable_astgrep:
+  type: bool
+  help: "Ship the ast-grep module-shape gate (in-a-class + no import-time side effects)?"
+  default: false
+
+enable_jscpd:
+  type: bool
+  help: "Ship the jscpd duplication (DRY) gate?"
+  default: false
+
+coverage_floor:
+  type: int
+  help: "Coverage floor (coverage report --fail-under)"
+  default: 80

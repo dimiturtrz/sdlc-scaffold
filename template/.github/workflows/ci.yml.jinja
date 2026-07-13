@@ -1,0 +1,91 @@
+name: ci
+
+# Gate for the dev -> main flow: `lint` + `tests` must pass on every PR (and on pushes to main).
+# Enforced as required status checks via branch protection. Shipped example code is clean, so the
+# gates BLOCK from the first generation (they are regression guards, not a mid-ratchet backlog).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# A newer push to the same ref cancels the older in-flight run (no stacking on rapid pushes).
+concurrency:
+  group: ci-{% raw %}${{ github.ref }}{% endraw %}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      # ENFORCED (blocks the merge): the full house select over shipped source. Clean on a fresh gen;
+      # catches REGRESSION (new unused import / undefined name / unsorted imports / magic number / ...).
+      - name: Lint — enforced (shipped source, full select)
+        run: uvx ruff@0.15.13 check core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %} --select F,E,W,B,C4,UP,I,T20,FBT,BLE001,S,C90,PLR,PLC,SIM,RUF
+      # ADVISORY (never blocks): full curated config over the whole tree, surfaces any pending families.
+      - name: Lint — advisory full (non-blocking)
+        run: uvx ruff@0.15.13 check . --statistics || true
+      # ADVISORY: format drift, shown but never blocks.
+      - name: Format — advisory (non-blocking)
+        run: uvx ruff@0.15.13 format --check . || true
+      # Dead code — the axis ruff can't see (paths/ignores in [tool.vulture]). BLOCKS at conf>=80
+      # (near-certain: unreachable, unused locals — precision high enough to fail the merge).
+      - name: Dead code — enforced (vulture conf>=80)
+        run: uvx vulture@2.16 --min-confidence 80
+      # WARNS at conf>=60 (dead funcs/classes — real signal, but eats no-fan-in FPs so it can't block).
+      # continue-on-error keeps the job green (yellow); output is reshaped to ::warning:: PR annotations.
+      - name: Dead code — advisory (vulture conf>=60, warns)
+        continue-on-error: true
+        run: |
+          uvx vulture@2.16 --min-confidence 60 | sed -E 's#^([^:]+):([0-9]+): (.*)$#::warning file=\1,line=\2::\3#'
+      # Architecture layers — the dependency rule as a static import-graph contract. BLOCKS: core imports
+      # neither trainer nor viewer; the viewer never the trainer. Contracts in [tool.importlinter].
+      - name: Import layers — enforced (import-linter)
+        run: uvx --from import-linter lint-imports
+      {% if enable_astgrep %}
+      # Module shape — ast-grep: the SYNTACTIC axis ruff has no plugin API for (in-a-class house rule +
+      # no import-time side effects). Rules are data under devtools/sg-rules/*.yml, severity=error (BLOCKS).
+      - name: "Module shape — enforced (ast-grep)"
+        run: uvx --from ast-grep-cli ast-grep scan -c devtools/sgconfig.yml core {{ package_name }}
+      {% endif %}
+      {% if enable_jscpd %}
+      # Duplication — the DRY axis (jscpd) the coupling tools can't see. Threshold in devtools/jscpd.json.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Duplication — advisory (jscpd, DRY axis)
+        continue-on-error: true
+        run: npx --yes jscpd core {{ package_name }} --config devtools/jscpd.json
+      {% endif %}
+
+  tests:
+    runs-on: ubuntu-latest
+    # No dataset on the runner -> point the data root at an empty POSIX dir so data-gated tests skip
+    # cleanly (adapters glob an absent raw/ -> no subjects -> pytest.skip) instead of erroring.
+    env:
+      {{ project_name | upper | replace('-','_') }}_DATA: /tmp/nodata
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install dependencies (locked, + dev/devtools extras for pytest + graph tests)
+        run: uv sync --frozen --extra dev --extra devtools
+      # One instrumented run = the test gate AND the coverage data (.coverage), no double suite exec.
+      # Config (source/omit/exclude) is in [tool.coverage.*].
+      - name: Tests + coverage (tests block)
+        run: uv run pytest tests --cov --cov-report=term-missing -q
+      # Coverage floor — below the floor fails the merge. Reads the .coverage from the run above.
+      - name: Coverage floor — enforced (>={{ coverage_floor }}, blocks)
+        run: uv run coverage report --fail-under={{ coverage_floor }}
+      {% if enforce_arch_fitness %}
+      # Architecture fitness — the METRIC arch axis (god-module = fan-in AND fan-out over a degree /
+      # import cycle / god-file) as a GATE on the grimp+networkx import graph, the axis import-linter's
+      # categorical contracts can't express. Thresholds in [tool.structure]. Runs here for the synced env.
+      - name: Architecture fitness — enforced (devtools/graph.py --assert)
+        run: uv run python -m devtools.graph --assert core {{ package_name }}
+      {% endif %}

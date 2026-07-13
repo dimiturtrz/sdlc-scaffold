@@ -1,0 +1,45 @@
+# Data lives OUTSIDE the repo (paths.yaml points at it); never commit datasets/weights.
+data/
+paths.yaml
+
+# External git-repo deps: checked out under external/, never vendored.
+external/
+
+# Python bytecode / build
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Test / lint / type caches
+.pytest_cache/
+.ruff_cache/
+.import_linter_cache/
+.grimp_cache/
+
+# Virtualenv
+.venv/
+
+# Run outputs / logs / local DBs
+runs/
+logs/
+*.db
+
+# MLflow local tracking store
+mlruns/
+mlflow.db
+
+# Coverage artifacts
+.coverage*
+coverage.xml
+htmlcov/
+
+# Private/local-only docs (generic pattern — reveals no intent in the ignore list itself)
+*.local.md
+
+# Beads / Dolt engine bits (issues.jsonl is tracked; the embedded engine is not)
+.dolt/
+.beads-credential-key
+{% if has_viewer %}
+# Viewer (JS/TS) dependencies
+node_modules/
+{% endif %}

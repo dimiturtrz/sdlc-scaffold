@@ -1,0 +1,16 @@
+"""Viewer-layer rendering — a downward consumer of `core`{% if viewer_imports_trainer %} and `{{ package_name }}`{% endif %}."""
+{% if viewer_imports_trainer %}
+from {{ package_name }}.pipeline import Pipeline
+{% else %}
+from core.math_ops import MathOps
+{% endif %}
+
+class Renderer:
+    """Renders a textual summary — the viewer's downward edge onto {% if viewer_imports_trainer %}the trainer{% else %}`core`{% endif %}."""
+
+    @staticmethod
+    def render_summary(values: list[float], *, low: float, high: float) -> str:
+        """Render a one-line summary of `values` clamped into [`low`, `high`]."""
+{% if viewer_imports_trainer %}        summary = Pipeline.clamped_mean(values, low=low, high=high)
+{% else %}        summary = MathOps.clamp(MathOps.mean(values), low=low, high=high)
+{% endif %}        return f"clamped mean over {len(values)} values: {summary}"

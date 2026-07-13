@@ -1,0 +1,33 @@
+"""Pure numeric helpers — the leaf of the layer graph, importing nothing above `core`."""
+
+
+class MathOps:
+    """Numeric primitives as methods.
+
+    House style: behavior lives on a class (a named, injectable seam), not as free functions —
+    so the optional ast-grep `in-a-class` gate stays green whether or not it is enabled.
+    """
+
+    @staticmethod
+    def mean(values: list[float]) -> float:
+        """Arithmetic mean of a non-empty sequence.
+
+        Raises:
+            ValueError: if `values` is empty (an undefined mean).
+        """
+        if not values:
+            msg = "mean() requires at least one value"
+            raise ValueError(msg)
+        return sum(values) / len(values)
+
+    @staticmethod
+    def clamp(value: float, *, low: float, high: float) -> float:
+        """Constrain `value` to the closed interval [`low`, `high`].
+
+        Raises:
+            ValueError: if the interval is empty (`low` > `high`).
+        """
+        if low > high:
+            msg = "clamp() requires low <= high"
+            raise ValueError(msg)
+        return min(max(value, low), high)

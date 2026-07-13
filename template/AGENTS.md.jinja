@@ -1,0 +1,51 @@
+# {{ project_name }} — agent instructions
+
+Keep this file and `AGENTS.md` IN SYNC (different harnesses read each; same content).
+
+## Build & Test
+
+`uv` is the env + dependency manager; `nox` is the task runner (every session calls `uvx`/`uv run`
+so local runs match CI exactly).
+
+```bash
+uv sync --extra dev --extra devtools   # create/refresh .venv
+nox -s lint test cov                   # the merge gate, locally
+nox -s gates                           # same, one entrypoint
+```
+
+## Architecture layers — the import-linter contract
+
+Imports point **DOWN only**: `core` < `{{ package_name }}`{% if has_viewer %} < `{{ viewer_name }}`{% endif %}.
+
+- `core/` is the clean kernel — it imports **neither** `{{ package_name }}`{% if has_viewer %} nor `{{ viewer_name }}`{% endif %}.
+- `{{ package_name }}/` (trainer) builds on `core`{% if has_viewer %}; it never imports `{{ viewer_name }}`{% endif %}.
+{% if has_viewer %}- `{{ viewer_name }}/` (viewer) consumes `core`{% if viewer_imports_trainer %}, and may reuse `{{ package_name }}` — that downward edge is an **intended** dependency, allowed, not drift{% else %}; it never imports `{{ package_name }}` — the viewer stays a pure `core` consumer{% endif %}.
+{% endif %}
+What is forbidden is **upward drift**. If a layer needs a symbol from above, the symbol is in the
+wrong layer — push it down (into `core`), don't invert the arrow. Enforced statically:
+`uvx --from import-linter lint-imports`, contracts in `[tool.importlinter]`.
+
+## Static-analysis gates — the ratchet
+
+Each gate is engine + params + invocation, run identically in `noxfile.py` and CI. Philosophy: a
+**ratchet** — a check starts advisory, and once the code is clean it graduates to enforced. Fix the
+finding, don't suppress it; suppressions stay minimal and meaningful (a `# noqa: RULE` with no prose,
+never a blanket ignore). The linter is a bug-finder, not cosmetics.
+
+- **ruff** (pinned `0.15.13`) — `check` on the full house select, enforced; `format --check` advisory.
+  Encodes: logging not prints (T20), named constants not magic numbers (PLR2004), keyword-only bools
+  (FBT), specific-exception-or-crash (BLE001/S), low complexity (C90/PLR), imports-at-top (PLC0415).
+- **vulture** (pinned `2.16`) — dead-code at `min_confidence = 60`.
+- **coverage** — pytest-cov with a `--fail-under={{ coverage_floor }}` floor.
+- **import-linter** — the layer contract above.
+{% if enforce_arch_fitness %}- **arch-fitness** — `python -m devtools.graph --assert`: god-module (fan-in/out), god-file (line
+  ceiling), and import-cycle thresholds from `[tool.structure]`.
+{% endif %}
+## Conventions
+
+- **Data lives out of the repo** (under a root pointed at by `paths.yaml`, gitignored). No datasets,
+  weights, or run outputs in git.
+- **No notebooks** (`.ipynb`) — a one-off run becomes a committed CLI / `python -m` entrypoint
+  (reproducible + reviewable), never a REPL session.
+- **Minimal comments** — prefer self-documenting names; a comment is a liability, not a default.
+- **Config objects over long arg lists**; strategy pattern over `if`/type dispatch.

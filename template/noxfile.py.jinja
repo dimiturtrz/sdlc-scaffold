@@ -1,0 +1,47 @@
+"""Task runner for {{ project_name }}.
+
+Every session shells out to ``uvx``/``uv run`` with pinned tool versions so a local ``nox`` run
+executes exactly what CI executes. Sessions declare ``venv_backend="none"`` — nox does not build an
+environment; ``uv`` owns dependency resolution.
+"""
+
+import nox
+
+nox.options.sessions = ["lint", "test", "cov"]
+
+RUFF = "ruff@0.15.13"
+VULTURE = "vulture@2.16"
+SELECT = "F,E,W,B,C4,UP,I,T20,FBT,BLE001,S,C90,PLR,PLC,SIM,RUF"
+LAYERS = ["core", "{{ package_name }}"{% if has_viewer %}, "{{ viewer_name }}"{% endif %}]
+
+
+@nox.session(venv_backend="none")
+def lint(session: nox.Session) -> None:
+    """ruff check (enforced) + ruff format --check (advisory) + vulture + import-linter{% if enforce_arch_fitness %} + arch-fitness{% endif %}."""
+    session.run("uvx", RUFF, "check", *LAYERS, "--select", SELECT, external=True)
+    # Advisory: format drift is surfaced, never blocks.
+    session.run("uvx", RUFF, "format", "--check", *LAYERS, external=True, success_codes=[0, 1])
+    session.run("uvx", VULTURE, *LAYERS, "--min-confidence", "80", external=True)
+    session.run("uvx", "--from", "import-linter", "lint-imports", external=True)
+{% if enforce_arch_fitness %}    session.run("uv", "run", "python", "-m", "devtools.graph", "--assert", external=True)
+{% endif %}
+
+@nox.session(venv_backend="none")
+def test(session: nox.Session) -> None:
+    """pytest."""
+    session.run("uv", "run", "pytest", "tests", "-q", external=True)
+
+
+@nox.session(venv_backend="none")
+def cov(session: nox.Session) -> None:
+    """pytest with coverage, failing under the floor."""
+    session.run("uv", "run", "pytest", "tests", "--cov", "--cov-report=term-missing", external=True)
+    session.run("uv", "run", "coverage", "report", "--fail-under={{ coverage_floor }}", external=True)
+
+
+@nox.session(venv_backend="none")
+def gates(session: nox.Session) -> None:
+    """Run every gate: lint + test + cov."""
+    lint(session)
+    test(session)
+    cov(session)

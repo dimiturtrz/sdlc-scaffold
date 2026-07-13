@@ -1,0 +1,93 @@
+[project]
+name = "{{ project_name }}"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pydantic>=2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+devtools = ["grimp", "networkx"]   # power devtools/graph.py (always shipped) — import-graph arch gate
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["core*", "{{ package_name }}*"{% if has_viewer %}, "{{ viewer_name }}*"{% endif %}]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--import-mode=importlib"
+
+[tool.ruff]
+line-length = 120
+# >>> LOCAL-SLOT: ruff-exclude — edit freely, the template will not overwrite intent here
+extend-exclude = ["docs", "learning", "research"]
+# <<< LOCAL-SLOT: ruff-exclude
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "B", "C4", "UP", "I", "T20", "FBT", "BLE001", "S", "C90", "PLR", "PLC", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**" = ["S101", "PLR2004", "FBT"]
+
+[tool.vulture]
+min_confidence = 60
+ignore_names = ["model_config"]
+ignore_decorators = ["@model_validator", "@field_validator", "@field_serializer", "@model_serializer", "@computed_field"]
+# >>> LOCAL-SLOT: vulture-scan — edit freely, the template will not overwrite intent here
+paths = ["core", "{{ package_name }}"]
+exclude = []
+# <<< LOCAL-SLOT: vulture-scan
+
+[tool.coverage.run]
+# >>> LOCAL-SLOT: coverage-scan — edit freely, the template will not overwrite intent here
+source = ["core", "{{ package_name }}"]
+omit = []
+# <<< LOCAL-SLOT: coverage-scan
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "^\\s*\\.\\.\\.$",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.importlinter]
+root_packages = ["core", "{{ package_name }}"{% if has_viewer %}, "{{ viewer_name }}"{% endif %}]
+
+[[tool.importlinter.contracts]]
+name = "core is an independent kernel (imports neither trainer nor viewer)"
+type = "forbidden"
+source_modules = ["core"]
+forbidden_modules = ["{{ package_name }}"{% if has_viewer %}, "{{ viewer_name }}"{% endif %}]
+{% if has_viewer %}
+[[tool.importlinter.contracts]]
+name = "{{ package_name }} (trainer) never imports {{ viewer_name }} (viewer)"
+type = "forbidden"
+source_modules = ["{{ package_name }}"]
+forbidden_modules = ["{{ viewer_name }}"]
+{% if not viewer_imports_trainer %}
+[[tool.importlinter.contracts]]
+name = "{{ viewer_name }} (viewer) never imports {{ package_name }} (trainer)"
+type = "forbidden"
+source_modules = ["{{ viewer_name }}"]
+forbidden_modules = ["{{ package_name }}"]
+{% endif %}{% endif %}
+{% if enforce_arch_fitness %}
+# Architecture fitness thresholds read by devtools/graph.py --assert. Portable defaults; override per repo.
+[tool.structure]
+bottleneck_degree = 8    # fan-in AND fan-out both over this = god-module
+file_max = 750           # god-file line ceiling — raise per repo as real files grow (override-friendly)
+betweenness_max = 0.10   # advisory chokepoint threshold
+{% endif %}
