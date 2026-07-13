@@ -30,12 +30,12 @@ extend-exclude = ["docs", "learning", "research"]
 # <<< LOCAL-SLOT: ruff-exclude
 
 [tool.ruff.lint]
-select = ["F", "E", "W", "B", "C4", "UP", "I", "T20", "FBT", "BLE001", "S", "C90", "PLR", "PLC", "SIM", "RUF"]
+select = [{% for c in ruff_select.split(",") %}"{{ c }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**" = ["S101", "PLR2004", "FBT"]
+"tests/**" = ["PLR2004", "FBT"]
 
 [tool.vulture]
 min_confidence = 60

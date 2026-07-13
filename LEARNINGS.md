@@ -141,35 +141,47 @@ non-zero (caught); injected a duplicated block → jscpd "Found 1 clones" non-ze
 after revert.
 
 **Channel matrix — deliberate, documented:** the fast lint-family gates bind to all of solo/nox/
-pre-commit/CI. **Coverage is intentionally NOT a pre-commit hook** — a full test-suite run on every
-commit is wrong; it lives in nox + CI. jscpd IS a pre-commit hook but **stricter there than CI** (CI
-marks it advisory `continue-on-error`; a commit hook blocks on any clone) — a "clean at commit" choice,
-and it needs node/npx on PATH. Remove the `jscpd-gate` hook to make it advisory-only.
+pre-commit/CI. **Coverage + jscpd are intentionally NOT pre-commit hooks** — a full test-suite run per
+commit is wrong, and jscpd is advisory (see harmonization below); both live in nox + CI. Class-shape
+smells (exit-0 explorers) DO ride pre-commit — they surface findings without ever blocking.
 
-## DECISION NEEDED (item 8 — not auto-resolved, your call)
+## Repos surpassed the scaffold → harmonization (2026-07-13)
 
-**ruff `select` is a UNION superset, broader than cardiac's curated-narrow.** Current select:
-`F,E,W,B,C4,UP,I,T20,FBT,BLE001,S,C90,PLR,PLC,SIM,RUF`. This is the union of all 3 repos — it pulled
-`UP` (pyupgrade) and `SIM` (flake8-simplify) from **mindscape**, which **cardiac deliberately keeps OFF**
-("TRY/EM/SIM/UP — opinionated churn"). So the scaffold's ruff is *stricter* than cardiac, not a faithful
-cardiac mirror on this axis.
+Re-checked the 3 real repos mid-project: **they had all converged AND grown past the scaffold.** All
+three now carry the full gate set (import-linter, arch-fitness, ast-grep, jscpd) — synthscape went from
+*none* of those to all. cardiac + synthscape also grew a new **class-shape-smell trio** the scaffold
+lacked; mindscape independently grew a `.pre-commit-config.yaml`. A scaffold built to mirror cardiac's
+*earlier* state was now the LAGGARD — migrating a repo onto it would have STRIPPED tooling. So the
+scaffold had to catch up before any rollout. What changed:
 
-- **Keep the union (current):** more rules caught out of the box; a fresh project starts maximally
-  strict. Cost: `UP`/`SIM` fire opinionated rewrites cardiac considers churn; a migrating cardiac-style
-  repo would see new findings.
-- **Narrow to cardiac (drop `UP,SIM`, and reconsider `C4`):** faithful to the most-mature repo's
-  deliberate choices; less churn. Cost: mindscape-style repos lose two families they run today.
+1. **Absorbed the class-shape trio** (`lcom.py` LCOM4 cohesion, `data_clumps.py` Fowler data-clumps,
+   `state_candidates.py` namespace-latent-state) from cardiac, GENERALIZED — dropped `core.obs`, argv
+   packages default `["core"]`, stdlib logging, bd-refs stripped. Gated by `enable_class_shape_smells`
+   (default false). Shipped as non-`.jinja` static files (their f-string braces `{{{…}}}` would collide
+   with jinja) via conditional-name paths. Advisory everywhere (exit-0 explorers): CI `continue-on-error`
+   step, nox loop, 3 pre-commit hooks. Formatted at 120 (cardiac's own format is only advisory, so its
+   source wasn't clean).
+2. **jscpd reconciled to advisory default** (cardiac + synth = 2-of-3 majority): CI `continue-on-error`,
+   nox `success_codes=[0,1]`, and **removed from pre-commit** (an advisory gate shouldn't block a commit).
+   A repo wanting it enforced (mindscape-style, blocks >1%) adds the hook back — documented inline.
+3. **pre-commit `--extra devtools`** on arch-fitness (adopted from mindscape's version — guarantees
+   grimp/networkx present).
 
-Left AS-IS (union) pending your decision. Changing it is a one-line edit in `pyproject.toml.jinja`
-(and the mirrored `SELECT`/`--select` strings in `ci.yml.jinja`, `noxfile.py.jinja`,
-`.pre-commit-config.yaml.jinja` — grep for the select string; note it lives in 4 files, itself an
-argument for extracting the select to a single source later).
+## Item 8 RESOLVED — ruff select is NARROW
+
+Settled by the repos themselves: cardiac and synthscape now carry the **identical curated-narrow** select
+(specific codes, no `UP`/`SIM`/`C4`/broad-`E`/`W`); only mindscape is broad. **2-of-3 + the most-mature
+both vote narrow**, so the scaffold now ships cardiac's exact list:
+`F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100` (ignore
+`RUF001-3`). Also **single-sourced** — a `ruff_select` value in `copier.yml` (`when: false`) renders into
+all four consumers (`pyproject` via a jinja split-loop, `ci`/`nox`/`pre-commit` as the raw string), so the
+old 4-place duplication is gone. Grep-verified: no `UP`/`SIM`/`C4` leak anywhere.
 
 ## E2E test suite (2026-07-13)
 
-The manual verification is now codified as pytest — `tests/test_e2e.py` (scaffold root, outside
-`template/`, so never copied into generated projects). It black-boxes the scaffold: builds a throwaway
-git repo from the on-disk template, generates real projects for each toggle combo, and asserts:
+The manual verification is now codified as pytest — `tests/end_to_end/test_e2e.py` (scaffold root,
+outside `template/`, so never copied into generated projects). It black-boxes the scaffold: builds a
+throwaway git repo from the on-disk template, generates real projects for each toggle combo, and asserts:
 - **renders clean** (no leftover jinja; toggle-gated files present/absent as expected);
 - **every gate GREEN** solo (ruff/format/vulture/coverage/viewer-lane/import-linter/graph/ast-grep/jscpd)
   and via **nox** + **pre-commit**;
@@ -179,13 +191,13 @@ git repo from the on-disk template, generates real projects for each toggle comb
   edit (`MY_LOCAL_DIR`) survives the 3-way merge, pin advances to v0.2.0.
 
 Run: `cd sdlc-scaffold && uv run pytest` (Linux/WSL; jscpd steps skip if node absent). Result:
-**26 passed, 3 skipped** (base-combo astgrep/jscpd/viewer skips) in ~12s. The scaffold's own
+**27 passed, 4 skipped** (base-combo astgrep/jscpd/class-shape/viewer skips) in ~12s. The scaffold's own
 `.github/workflows/e2e.yml` runs it on push/PR (installs node for jscpd). This is the regression guard
 for the scaffold itself — a template edit that breaks any gate now fails a test, not a manual run.
 
 ## One-line status
 
 Scaffold mirrors cardioseg at full toggle, every gate green across solo/nox/pre-commit/CI, new gates
-proven to bite, drift-healing proven — and all of it is now a green E2E pytest suite (26 passed) with
+proven to bite, drift-healing proven — and all of it is now a green E2E pytest suite (27 passed) with
 its own CI. Open: the ruff-select union-vs-narrow call (item 8), and the 4-place duplication of the
 select string (extract to one source).

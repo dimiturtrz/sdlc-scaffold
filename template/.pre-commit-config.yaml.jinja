@@ -6,7 +6,7 @@ repos:
     hooks:
       - id: ruff-gate
         name: ruff — enforced (full select)
-        entry: uvx ruff@0.15.13 check core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %} --select F,E,W,B,C4,UP,I,T20,FBT,BLE001,S,C90,PLR,PLC,SIM,RUF
+        entry: uvx ruff@0.15.13 check core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %} --select {{ ruff_select }}
         language: system
         pass_filenames: false
         always_run: true
@@ -35,7 +35,7 @@ repos:
       {% if enforce_arch_fitness %}
       - id: arch-fitness
         name: architecture fitness (graph.py --assert)
-        entry: uv run python -m devtools.graph --assert core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %}
+        entry: uv run --extra devtools python -m devtools.graph --assert core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %}
         language: system
         pass_filenames: false
         always_run: true
@@ -48,13 +48,28 @@ repos:
         pass_filenames: false
         always_run: true
       {% endif %}
-      {% if enable_jscpd %}
-      # DRY axis. Stricter than CI here (CI marks jscpd advisory; a commit hook blocks on any clone) —
-      # a deliberate "clean at commit" choice. Needs node/npx on PATH. Flip to advisory by removing this.
-      - id: jscpd-gate
-        name: jscpd — duplication (DRY)
-        entry: npx --yes jscpd core {{ package_name }} --config devtools/jscpd.json
+      {% if enable_class_shape_smells %}
+      # Class-shape smells — advisory explorers (LCOM4 cohesion / Fowler data-clumps / namespace-state).
+      # They only print a ranked report and always exit 0, so as commit hooks they surface findings
+      # without ever blocking — advisory by construction, not by continue-on-error.
+      - id: state-candidates
+        name: class-shape — namespace-state (advisory)
+        entry: uv run python -m devtools.state_candidates core {{ package_name }}
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: lcom
+        name: class-shape — LCOM4 cohesion (advisory)
+        entry: uv run python -m devtools.lcom core {{ package_name }}
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: data-clumps
+        name: class-shape — data clumps (advisory)
+        entry: uv run python -m devtools.data_clumps core {{ package_name }}
         language: system
         pass_filenames: false
         always_run: true
       {% endif %}
+      {# jscpd is advisory by default (cardiac/synth majority) -> CI + nox only, NOT a blocking commit
+         hook. A repo that wants it stricter (mindscape-style, blocks >1%) adds a jscpd hook here. #}

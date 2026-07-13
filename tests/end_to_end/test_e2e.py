@@ -38,6 +38,9 @@ def test_no_leftover_jinja(project):
             continue
         if ".venv" in file.parts or ".git" in file.parts:
             continue
+        # our shipped devtools tools are STATIC Python that legitimately contains f-string braces `{{`.
+        if "devtools" in file.parts and file.suffix == ".py":
+            continue
         text = file.read_text(encoding="utf-8", errors="ignore")
         # `${{ github.ref }}` is a GitHub Actions expression, not leftover jinja.
         if "{%" in text or ("{{" in text and "github.ref" not in text):
@@ -56,6 +59,9 @@ def test_expected_layout(project):
     assert viewer_dir.exists() == (answers["has_viewer"] == "true")
     assert (path / "devtools" / "sgconfig.yml").exists() == (answers["enable_astgrep"] == "true")
     assert (path / "devtools" / "jscpd.json").exists() == (answers["enable_jscpd"] == "true")
+    class_shape = answers["enable_class_shape_smells"] == "true"
+    for tool in ("lcom.py", "data_clumps.py", "state_candidates.py"):
+        assert (path / "devtools" / tool).exists() == class_shape
 
 
 # ---- gates, solo -----------------------------------------------------------------------------------
@@ -124,6 +130,15 @@ def test_jscpd(project):
     if not has_node():
         pytest.skip("node/npx not available")
     run(["npx", "--yes", "jscpd", "core", COMBOS[name]["package_name"], "--config", "devtools/jscpd.json"], path)
+
+
+def test_class_shape_smells(project):
+    name, path = project
+    if COMBOS[name]["enable_class_shape_smells"] != "true":
+        pytest.skip("class-shape off")
+    # advisory explorers — must run clean (exit 0); findings are fine, they never block
+    for tool in ("state_candidates", "lcom", "data_clumps"):
+        run(["uv", "run", "python", "-m", f"devtools.{tool}", "core", COMBOS[name]["package_name"]], path)
 
 
 # ---- gates, via the runners ------------------------------------------------------------------------

@@ -19,7 +19,8 @@ RUFF = "ruff@0.15.13"
 VULTURE = "vulture@2.16"
 NOX = "nox@2026.7.11"
 PRECOMMIT = "pre-commit@4.6.0"
-SELECT = "F,E,W,B,C4,UP,I,T20,FBT,BLE001,S,C90,PLR,PLC,SIM,RUF"
+# Curated-narrow select (single-sourced in copier.yml as `ruff_select`) — must match the template.
+SELECT = "F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100"
 
 # Two representative points on the toggle lattice: the minimal mid-stage and the full cardioseg mirror.
 COMBOS = {
@@ -31,6 +32,7 @@ COMBOS = {
         "enforce_arch_fitness": "true",
         "enable_astgrep": "false",
         "enable_jscpd": "false",
+        "enable_class_shape_smells": "false",
         "coverage_floor": "80",
     },
     "full": {
@@ -42,6 +44,7 @@ COMBOS = {
         "enforce_arch_fitness": "true",
         "enable_astgrep": "true",
         "enable_jscpd": "true",
+        "enable_class_shape_smells": "true",
         "coverage_floor": "80",
     },
 }

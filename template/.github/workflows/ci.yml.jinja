@@ -25,7 +25,7 @@ jobs:
       # ENFORCED (blocks the merge): the full house select over shipped source. Clean on a fresh gen;
       # catches REGRESSION (new unused import / undefined name / unsorted imports / magic number / ...).
       - name: Lint — enforced (shipped source, full select)
-        run: uvx ruff@0.15.13 check core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %} --select F,E,W,B,C4,UP,I,T20,FBT,BLE001,S,C90,PLR,PLC,SIM,RUF
+        run: uvx ruff@0.15.13 check core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %} --select {{ ruff_select }}
       # ADVISORY (never blocks): full curated config over the whole tree, surfaces any pending families.
       - name: Lint — advisory full (non-blocking)
         run: uvx ruff@0.15.13 check . --statistics || true
@@ -101,4 +101,15 @@ jobs:
       # categorical contracts can't express. Thresholds in [tool.structure]. Runs here for the synced env.
       - name: Architecture fitness — enforced (devtools/graph.py --assert)
         run: uv run python -m devtools.graph --assert core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %}
+      {% endif %}
+      {% if enable_class_shape_smells %}
+      # Class-shape smells — ADVISORY explorers (never block): LCOM4 cohesion, Fowler data-clumps, and
+      # namespace-classes with latent shared state. Heuristics that rank refactor candidates — surfaced
+      # for the reviewer, never a merge gate. Each only prints a ranked report and exits 0.
+      - name: Class-shape smells — advisory (LCOM / data-clumps / namespace-state)
+        continue-on-error: true
+        run: |
+          uv run python -m devtools.state_candidates core {{ package_name }}
+          uv run python -m devtools.lcom core {{ package_name }}
+          uv run python -m devtools.data_clumps core {{ package_name }}
       {% endif %}
