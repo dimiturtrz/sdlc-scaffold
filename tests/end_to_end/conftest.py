@@ -7,6 +7,7 @@ each run builds a throwaway git repo from the on-disk template (testing what is 
 """
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -14,19 +15,36 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[2]  # tests/end_to_end/conftest.py -> scaffold root
+
+
+def _copier_default(key):
+    """Read a `when: false` constant's default straight from copier.yml — the single source of truth.
+
+    Keeps the harness's pinned versions + ruff select in ONE place (copier.yml) so a bump can't drift
+    between the template and the tests that exercise it. Regex-parsed to avoid a PyYAML dependency.
+    """
+    text = (REPO / "copier.yml").read_text(encoding="utf-8")
+    match = re.search(rf'^{key}:\n(?:  .*\n)*?  default: "([^"]+)"', text, re.M)
+    if match is None:
+        msg = f"copier.yml: no default found for {key!r}"
+        raise RuntimeError(msg)
+    return match.group(1)
+
+
 COPIER = "copier@9.16.0"
-RUFF = "ruff@0.15.13"
-VULTURE = "vulture@2.16"
-NOX = "nox@2026.7.11"
-PRECOMMIT = "pre-commit@4.6.0"
-# Curated-narrow select (single-sourced in copier.yml as `ruff_select`) — must match the template.
-SELECT = "F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100"
+RUFF = f"ruff@{_copier_default('ruff_version')}"
+VULTURE = f"vulture@{_copier_default('vulture_version')}"
+NOX = f"nox@{_copier_default('nox_version')}"
+PRECOMMIT = f"pre-commit@{_copier_default('precommit_version')}"
+# Curated-narrow select — single-sourced from copier.yml's `ruff_select` (must match the template).
+SELECT = _copier_default("ruff_select")
 
 # Two representative points on the toggle lattice: the minimal mid-stage and the full cardioseg mirror.
 COMBOS = {
     "base": {
         "project_name": "base",
-        "package_name": "base_pkg",
+        "packages": "base_pkg",
+        "ship_example": "true",
         "enforce_arch_fitness": "true",
         "enable_astgrep": "false",
         "enable_jscpd": "false",
@@ -35,7 +53,8 @@ COMBOS = {
     },
     "full": {
         "project_name": "full",
-        "package_name": "full_pkg",
+        "packages": "full_pkg",
+        "ship_example": "true",
         "enforce_arch_fitness": "true",
         "enable_astgrep": "true",
         "enable_jscpd": "true",
@@ -43,6 +62,11 @@ COMBOS = {
         "coverage_floor": "80",
     },
 }
+
+
+def example_pkg(combo_name):
+    """The demo package's folder name = the first entry in `packages` (copier's computed package_name)."""
+    return COMBOS[combo_name]["packages"].split(",")[0].strip()
 
 
 def run(cmd, cwd, *, check=True, env=None):
@@ -68,7 +92,7 @@ def has_node():
 
 
 def layers(combo_name):
-    return [COMBOS[combo_name]["package_name"]]
+    return [p.strip() for p in COMBOS[combo_name]["packages"].split(",")]
 
 
 def make_scaffold(dst: Path):

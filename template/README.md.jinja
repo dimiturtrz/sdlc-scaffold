@@ -4,9 +4,13 @@ One-line description of {{ project_name }}. (Replace me.)
 
 ## Layout
 
-- `{{ package_name }}/` — your code. One package; organise modules however the project needs.
+- {% for p in packages.split(",") %}`{{ p | trim }}/`{% if not loop.last %}, {% endif %}{% endfor %} — your package{% if packages.split(",")|length > 1 %}s{% endif %}. The guardrails target {% if packages.split(",")|length > 1 %}all of them{% else %}it{% endif %}; organise modules however the project needs.
 - `tests/` — `unit/`, `integration/`, `e2e/`.
 - `devtools/` — the guardrail tools (`graph.py` arch-fitness{% if enable_class_shape_smells %}, plus the class-shape explorers{% endif %}).
+
+The set of packages the gates lint/test/graph is the `packages` answer (comma-separated) — add more
+without touching any gate file; every gate renders over the list. Directional layer contracts between
+packages are **opt-in** (add import-linter yourself — see `devtools/README.md`), never imposed.
 
 ## Quickstart
 

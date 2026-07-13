@@ -17,6 +17,7 @@ from conftest import (
     SELECT,
     VULTURE,
     NOX,
+    example_pkg,
     generate,
     git_init_commit,
     has_node,
@@ -51,7 +52,7 @@ def test_no_leftover_jinja(project):
 def test_expected_layout(project):
     name, path = project
     answers = COMBOS[name]
-    pkg = answers["package_name"]
+    pkg = example_pkg(name)
     assert (path / pkg / "math_ops.py").exists()
     assert (path / pkg / "pipeline.py").exists()
     assert (path / "devtools" / "graph.py").exists()
@@ -61,6 +62,54 @@ def test_expected_layout(project):
     class_shape = answers["enable_class_shape_smells"] == "true"
     for tool in ("lcom.py", "data_clumps.py", "state_candidates.py"):
         assert (path / "devtools" / tool).exists() == class_shape
+
+
+def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
+    """A multi-package `packages` list must render into EVERY gate target (nox/ci/pyproject).
+
+    Render-only: the phantom second package has no folder, so gates aren't run — this proves the
+    list-splitting, which is what a real core/neuroscan/neuroviz repo relies on.
+    """
+    out = tmp_path_factory.mktemp("multi") / "proj"
+    generate(scaffold, out, {
+        "project_name": "multi",
+        "packages": "pkg_a,pkg_b",
+        "ship_example": "true",
+        "enforce_arch_fitness": "true",
+        "enable_astgrep": "true",
+        "enable_jscpd": "true",
+        "enable_class_shape_smells": "true",
+        "coverage_floor": "80",
+    })
+    assert 'LAYERS = ["pkg_a", "pkg_b"]' in (out / "noxfile.py").read_text()
+    ci = (out / ".github" / "workflows" / "ci.yml").read_text()
+    assert "check pkg_a pkg_b --select" in ci
+    assert "--assert pkg_a pkg_b" in ci
+    pyproject = (out / "pyproject.toml").read_text()
+    assert 'source = ["pkg_a", "pkg_b"]' in pyproject
+    assert 'include = ["pkg_a*", "pkg_b*"]' in pyproject
+    # the demo package ships under the FIRST entry
+    assert (out / "pkg_a" / "math_ops.py").exists()
+
+
+def test_ship_example_false_omits_demo(scaffold, tmp_path_factory):
+    """ship_example=false drops the demo package + its unit tests — the repo-adoption path."""
+    out = tmp_path_factory.mktemp("adopt") / "proj"
+    generate(scaffold, out, {
+        "project_name": "adopt",
+        "packages": "myapp",
+        "ship_example": "false",
+        "enforce_arch_fitness": "true",
+        "enable_astgrep": "false",
+        "enable_jscpd": "false",
+        "enable_class_shape_smells": "false",
+        "coverage_floor": "80",
+    })
+    assert not (out / "myapp").exists(), "demo package must be absent when ship_example=false"
+    assert not (out / "tests" / "unit" / "test_math_ops.py").exists()
+    # guardrails still shipped
+    assert (out / "noxfile.py").exists()
+    assert (out / "devtools" / "graph.py").exists()
 
 
 # ---- gates, solo -----------------------------------------------------------------------------------
@@ -97,7 +146,7 @@ def test_astgrep(project):
         pytest.skip("astgrep off")
     run(
         ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml",
-         COMBOS[name]["package_name"]],
+         *layers(name)],
         path,
     )
 
@@ -108,7 +157,7 @@ def test_jscpd(project):
         pytest.skip("jscpd off")
     if not has_node():
         pytest.skip("node/npx not available")
-    run(["npx", "--yes", "jscpd", COMBOS[name]["package_name"], "--config", "devtools/jscpd.json"], path)
+    run(["npx", "--yes", "jscpd", *layers(name), "--config", "devtools/jscpd.json"], path)
 
 
 def test_class_shape_smells(project):
@@ -117,7 +166,7 @@ def test_class_shape_smells(project):
         pytest.skip("class-shape off")
     # advisory explorers — must run clean (exit 0); findings are fine, they never block
     for tool in ("state_candidates", "lcom", "data_clumps"):
-        run(["uv", "run", "python", "-m", f"devtools.{tool}", COMBOS[name]["package_name"]], path)
+        run(["uv", "run", "python", "-m", f"devtools.{tool}", *layers(name)], path)
 
 
 # ---- gates, via the runners ------------------------------------------------------------------------

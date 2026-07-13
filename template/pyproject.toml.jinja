@@ -16,7 +16,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["{{ package_name }}*"]
+include = [{% for p in packages.split(",") %}"{{ p | trim }}*"{% if not loop.last %}, {% endif %}{% endfor %}]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -42,13 +42,13 @@ min_confidence = 60
 ignore_names = ["model_config"]
 ignore_decorators = ["@model_validator", "@field_validator", "@field_serializer", "@model_serializer", "@computed_field"]
 # >>> LOCAL-SLOT: vulture-scan — edit freely, the template will not overwrite intent here
-paths = ["{{ package_name }}"]
+paths = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 exclude = []
 # <<< LOCAL-SLOT: vulture-scan
 
 [tool.coverage.run]
 # >>> LOCAL-SLOT: coverage-scan — edit freely, the template will not overwrite intent here
-source = ["{{ package_name }}"]
+source = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 omit = []
 # <<< LOCAL-SLOT: coverage-scan
 

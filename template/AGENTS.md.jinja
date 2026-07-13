@@ -31,10 +31,10 @@ Each gate is engine + params + invocation, run identically in `noxfile.py` and C
 finding, don't suppress it; suppressions stay minimal and meaningful (a `# noqa: RULE` with no prose,
 never a blanket ignore). The linter is a bug-finder, not cosmetics.
 
-- **ruff** (pinned `0.15.13`) — `check` on the full house select, enforced; `format --check` advisory.
+- **ruff** (pinned `{{ ruff_version }}`) — `check` on the full house select, enforced; `format --check` advisory.
   Encodes: logging not prints (T20), named constants not magic numbers (PLR2004), keyword-only bools
   (FBT), specific-exception-or-crash (BLE001/S), low complexity (C90/PLR), imports-at-top (PLC0415).
-- **vulture** (pinned `2.16`) — dead-code at `min_confidence = 60`.
+- **vulture** (pinned `{{ vulture_version }}`) — dead-code at `min_confidence = 60`.
 - **coverage** — pytest-cov with a `--fail-under={{ coverage_floor }}` floor.
 {% if enforce_arch_fitness %}- **arch-fitness** — `python -m devtools.graph --assert`: god-module (fan-in/out), god-file (line
   ceiling), and import-cycle thresholds from `[tool.structure]`. The layer-agnostic structural gate

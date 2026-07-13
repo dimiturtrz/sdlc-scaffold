@@ -20,16 +20,31 @@ _exclude:
   - "{% if not enable_class_shape_smells %}devtools/lcom.py{% endif %}"
   - "{% if not enable_class_shape_smells %}devtools/data_clumps.py{% endif %}"
   - "{% if not enable_class_shape_smells %}devtools/state_candidates.py{% endif %}"
+  - "{% if not ship_example %}{{ package_name }}{% endif %}"
+  - "{% if not ship_example %}tests/unit/test_math_ops.py{% endif %}"
+  - "{% if not ship_example %}tests/unit/test_pipeline.py{% endif %}"
 
 project_name:
   type: str
   help: "Repo / folder name, kebab-case (e.g. sample-proj)"
   placeholder: "my-project"
 
+packages:
+  type: str
+  help: "Packages the guardrails target — comma-separated, snake_case (add your others, e.g. core,neuroscan,neuroviz)"
+  default: "{{ project_name.replace('-', '_') }}"
+
+# The demo package's folder name = the FIRST entry in `packages`. Computed, never asked — keeps
+# folder names simple interpolation (`{{ '{{' }} package_name {{ '}}' }}/`) while `packages` stays the one input.
 package_name:
   type: str
-  help: "Python package (the 'trainer' layer), snake_case"
-  default: "{{ project_name.replace('-', '_') }}"
+  default: "{{ packages.split(',')[0] | trim }}"
+  when: false
+
+ship_example:
+  type: bool
+  help: "Ship the demo package (math_ops + pipeline) so a fresh gen has code to lint/test/graph? Set false when adopting into a repo that already has its own code."
+  default: true
 
 enforce_arch_fitness:
   type: bool
@@ -63,4 +78,27 @@ coverage_floor:
 ruff_select:
   type: str
   default: "F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100"
+  when: false
+
+# Single source of truth for the pinned tool versions — rendered into ci.yml / noxfile.py /
+# .pre-commit-config.yaml (and parsed by the E2E conftest) so a version bump happens in ONE place.
+# `when: false` = never asked, always this value.
+ruff_version:
+  type: str
+  default: "0.15.13"
+  when: false
+
+vulture_version:
+  type: str
+  default: "2.16"
+  when: false
+
+nox_version:
+  type: str
+  default: "2026.7.11"
+  when: false
+
+precommit_version:
+  type: str
+  default: "4.6.0"
   when: false
