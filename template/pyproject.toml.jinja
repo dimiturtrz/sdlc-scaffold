@@ -68,9 +68,12 @@ exclude_lines = [
 # `lint-imports` call in noxfile.py — see devtools/README.md. The layer-agnostic structural checks
 # (cycles, god-modules, oversized files) ship by default via devtools/graph.py --assert below.
 {% if enforce_arch_fitness %}
-# Architecture fitness thresholds read by devtools/graph.py --assert. Portable defaults; override per repo.
+# Architecture fitness thresholds read by devtools/graph.py --assert.
 [tool.structure]
+# >>> LOCAL-SLOT: arch-thresholds — tune per repo; the template ships defaults and won't churn these,
+# so a per-project override survives `copier update` without a merge conflict.
 bottleneck_degree = 8    # fan-in AND fan-out both over this = god-module
-file_max = 750           # god-file line ceiling — raise per repo as real files grow (override-friendly)
+file_max = 750           # god-file line ceiling — raise as real files grow
 betweenness_max = 0.10   # advisory chokepoint threshold
+# <<< LOCAL-SLOT: arch-thresholds
 {% endif %}
