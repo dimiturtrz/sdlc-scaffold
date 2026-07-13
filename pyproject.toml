@@ -1,0 +1,17 @@
+# The SCAFFOLD's own project file — for its E2E test suite ONLY. Not part of any generated project
+# (copier renders `template/` only; this sits at the repo root). The E2E test drives copier + every
+# gate as subprocesses, so the sole dependency is pytest; copier/ruff/vulture/nox/pre-commit are
+# invoked through `uvx`/`uv run` at test time.
+[project]
+name = "sdlc-scaffold"
+version = "0.1.0"
+description = "Copier template for the personal-projects SDLC guardrail stack + its E2E test."
+requires-python = ">=3.11"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider -ra"
+markers = ["slow: full generate+sync+gate runs (minutes)"]

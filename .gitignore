@@ -1,0 +1,7 @@
+# scaffold's own tooling artifacts (its E2E suite runs uv here)
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+uv.lock

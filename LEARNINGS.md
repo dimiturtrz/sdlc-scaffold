@@ -165,8 +165,27 @@ Left AS-IS (union) pending your decision. Changing it is a one-line edit in `pyp
 `.pre-commit-config.yaml.jinja` — grep for the select string; note it lives in 4 files, itself an
 argument for extracting the select to a single source later).
 
+## E2E test suite (2026-07-13)
+
+The manual verification is now codified as pytest — `tests/test_e2e.py` (scaffold root, outside
+`template/`, so never copied into generated projects). It black-boxes the scaffold: builds a throwaway
+git repo from the on-disk template, generates real projects for each toggle combo, and asserts:
+- **renders clean** (no leftover jinja; toggle-gated files present/absent as expected);
+- **every gate GREEN** solo (ruff/format/vulture/coverage/viewer-lane/import-linter/graph/ast-grep/jscpd)
+  and via **nox** + **pre-commit**;
+- **optional gates BITE** — inject a top-level function → ast-grep fails; inject a duplicated block →
+  jscpd fails;
+- **`copier update` heals drift** — a portable `file_max` change flows in while a project-local slot
+  edit (`MY_LOCAL_DIR`) survives the 3-way merge, pin advances to v0.2.0.
+
+Run: `cd sdlc-scaffold && uv run pytest` (Linux/WSL; jscpd steps skip if node absent). Result:
+**26 passed, 3 skipped** (base-combo astgrep/jscpd/viewer skips) in ~12s. The scaffold's own
+`.github/workflows/e2e.yml` runs it on push/PR (installs node for jscpd). This is the regression guard
+for the scaffold itself — a template edit that breaks any gate now fails a test, not a manual run.
+
 ## One-line status
 
-Scaffold now mirrors cardioseg at full toggle: every cardioseg gate present + green across solo/nox/
-pre-commit/CI, new gates proven to bite, drift-healing proven. Open: the ruff-select union-vs-narrow
-call (item 8), and the 4-place duplication of the select string (extract to one source).
+Scaffold mirrors cardioseg at full toggle, every gate green across solo/nox/pre-commit/CI, new gates
+proven to bite, drift-healing proven — and all of it is now a green E2E pytest suite (26 passed) with
+its own CI. Open: the ruff-select union-vs-narrow call (item 8), and the 4-place duplication of the
+select string (extract to one source).

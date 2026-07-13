@@ -1,0 +1,26 @@
+# The SCAFFOLD's own CI (not the template's — that lives in template/.github/). Runs the E2E suite:
+# generate real projects from the template, run every gate, prove the gates bite, prove copier update
+# heals drift. node is installed for the jscpd steps (otherwise they skip).
+name: e2e
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: E2E — generate + gate every toggle combo
+        run: uv run --group dev pytest tests -v
