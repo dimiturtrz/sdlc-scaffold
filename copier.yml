@@ -7,9 +7,6 @@ _answers_file: .copier-answers.yml
 # Toggle-keyed entries render to "" (a gitignore no-op) when the feature is ON, and to the path
 # when OFF — so clean filenames live in template/ and copier drops the ones a project didn't ask for.
 _exclude:
-  - "copier.yml"
-  - "SPEC.md"
-  - "README.md"
   - ".git"
   - ".venv"
   - "__pycache__"

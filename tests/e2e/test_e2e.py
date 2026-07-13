@@ -56,6 +56,7 @@ def test_expected_layout(project):
     assert (path / pkg / "math_ops.py").exists()
     assert (path / pkg / "pipeline.py").exists()
     assert (path / "devtools" / "graph.py").exists()
+    assert (path / "devtools" / "README.md").exists()
     # toggles gate file presence
     assert (path / "devtools" / "sgconfig.yml").exists() == (answers["enable_astgrep"] == "true")
     assert (path / "devtools" / "jscpd.json").exists() == (answers["enable_jscpd"] == "true")
@@ -239,6 +240,23 @@ def test_jscpd_catches_duplication(full_project):
     mod.write_text(mod_orig)
     pkg.write_text(pkg_orig)
     assert result.returncode != 0, "jscpd must FAIL on an injected duplicated block"
+
+
+def test_graph_assert_catches_cycle(full_project):
+    # math_ops <- pipeline already; add math_ops -> pipeline to close an import cycle
+    target = full_project / "full_pkg" / "math_ops.py"
+    original = target.read_text()
+    target.write_text(original + "\n\nfrom full_pkg.pipeline import Pipeline as _Cycle  # noqa: E402, F401\n")
+    result = run(
+        ["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"],
+        full_project,
+        check=False,
+    )
+    target.write_text(original)
+    assert result.returncode != 0, "graph --assert must FAIL on an injected import cycle"
+    # and it passes again once reverted
+    ok = run(["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"], full_project)
+    assert ok.returncode == 0
 
 
 # ---- versioned rollout: drift heals, local slot survives -------------------------------------------
