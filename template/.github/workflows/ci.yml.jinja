@@ -100,5 +100,5 @@ jobs:
       # import cycle / god-file) as a GATE on the grimp+networkx import graph, the axis import-linter's
       # categorical contracts can't express. Thresholds in [tool.structure]. Runs here for the synced env.
       - name: Architecture fitness — enforced (devtools/graph.py --assert)
-        run: uv run python -m devtools.graph --assert core {{ package_name }}
+        run: uv run python -m devtools.graph --assert core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %}
       {% endif %}

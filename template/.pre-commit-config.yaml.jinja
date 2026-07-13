@@ -35,7 +35,7 @@ repos:
       {% if enforce_arch_fitness %}
       - id: arch-fitness
         name: architecture fitness (graph.py --assert)
-        entry: uv run python -m devtools.graph --assert core {{ package_name }}
+        entry: uv run python -m devtools.graph --assert core {{ package_name }}{% if has_viewer %} {{ viewer_name }}{% endif %}
         language: system
         pass_filenames: false
         always_run: true
@@ -44,6 +44,16 @@ repos:
       - id: astgrep-gate
         name: ast-grep — module shape
         entry: uvx --from ast-grep-cli ast-grep scan -c devtools/sgconfig.yml core {{ package_name }}
+        language: system
+        pass_filenames: false
+        always_run: true
+      {% endif %}
+      {% if enable_jscpd %}
+      # DRY axis. Stricter than CI here (CI marks jscpd advisory; a commit hook blocks on any clone) —
+      # a deliberate "clean at commit" choice. Needs node/npx on PATH. Flip to advisory by removing this.
+      - id: jscpd-gate
+        name: jscpd — duplication (DRY)
+        entry: npx --yes jscpd core {{ package_name }} --config devtools/jscpd.json
         language: system
         pass_filenames: false
         always_run: true
