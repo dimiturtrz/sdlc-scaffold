@@ -90,7 +90,10 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
         "enable_class_shape_smells": "true",
         "coverage_floor": "80",
     })
-    assert 'LAYERS = ["pkg_a", "pkg_b"]' in (out / "noxfile.py").read_text()
+    noxfile = (out / "noxfile.py").read_text()
+    assert 'LAYERS = ["pkg_a", "pkg_b"]' in noxfile
+    # graph.py needs the devtools extra (grimp/networkx) — nox must pull it, matching CI (not plain uv run)
+    assert '"uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph"' in noxfile
     ci = (out / ".github" / "workflows" / "ci.yml").read_text()
     assert "check pkg_a pkg_b --select" in ci
     assert "--assert pkg_a pkg_b" in ci

@@ -3,6 +3,12 @@
 Built + verified 2026-07-13. A copier template + a generated `sample-proj`, every gate run green
 locally across 3 toggle combos. The 3 real repos (cardiac-seg / mindscape / synthscape) untouched.
 
+> **Historical log.** Sections below through "Windows vs WSL" describe the ORIGINAL MVP (a `core`/
+> trainer/`viewer` layering + import-linter gate). That model was later dropped — see "Refactor +
+> guardrail-testing pass (2026-07-13)" below for the current single-package `packages`-list contract.
+> The authoritative current docs are the root **README** + **SPEC.md**; treat the early tables here as
+> a record of the journey, not present state.
+
 ## Verified green (real command output, not asserted)
 
 | gate | base | viewer ON | astgrep+jscpd ON |
@@ -64,16 +70,17 @@ astgrep/jscpd ON add `sgconfig.yml` + `sg-rules/*` + `jscpd.json`.
 
 ## Migration path — the 3 real repos (deferred, when ready)
 
-Each real repo becomes a copier-managed project WITHOUT losing its rich local slots:
-1. In a branch: `copier copy --overwrite --data <that repo's stage answers> sdlc-scaffold .` (answers preset
-   — cardiac: viewer ON + `viewer_imports_trainer=false` + astgrep ON + jscpd ON; mindscape: viewer ON +
-   `viewer_imports_trainer=true` + astgrep OFF; synth: viewer OFF + astgrep OFF).
+The authoritative adoption steps are in the root **README** ("Adopt into an existing repo"). Post-refactor
+presets for the 3 repos (packages-list model, no viewer/import-linter flags):
+1. In a branch: `copier copy --data packages=<their packages> --data ship_example=false sdlc-scaffold .`
+   — cardiac / mindscape: `packages=core,<trainer>,<viewer>` (they have all three dirs); synth:
+   `packages=core,<trainer>`. Gate toggles: `enforce_arch_fitness=true`; astgrep/jscpd/class-shape per repo.
 2. `git diff` — ACCEPT the portable superset blocks (ruff select, vulture ignores, coverage exclude_lines);
-   KEEP the LOCAL-SLOT regions (cardiac's 40-line coverage omit, domain vulture `ignore_names`, the
-   store-surface import contract). The `# >>> LOCAL-SLOT` markers make the seam mechanical.
-3. Reconcile select drift: real repos are mid-ratchet (mindscape's graduated subset). Either jump to the
-   full superset (if the repo is clean for it) or temporarily override `select` in a local slot and ratchet.
-4. Add `.copier-answers.yml` → the repo is now update-able.
+   KEEP the LOCAL-SLOT regions (cardiac's coverage omit, domain vulture `ignore_names`, arch thresholds).
+   Directional layer contracts are NOT shipped — a repo that wants them adds import-linter itself.
+3. Reconcile select drift: real repos are mid-ratchet. Jump to the curated-narrow select if clean, or
+   override `select` in a local slot and ratchet.
+4. Commit `.copier-answers.yml` → the repo is now `copier update`-able.
 
 ## Git-versioned staged rollout — PROVEN on WSL (2026-07-13)
 

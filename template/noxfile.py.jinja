@@ -19,10 +19,17 @@ LAYERS = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last 
 def lint(session: nox.Session) -> None:
     """ruff check (enforced) + ruff format --check (advisory) + vulture{% if enforce_arch_fitness %} + arch-fitness{% endif %}."""
     session.run("uvx", RUFF, "check", *LAYERS, "--select", SELECT, external=True)
-    # Advisory: format drift is surfaced, never blocks.
-    session.run("uvx", RUFF, "format", "--check", *LAYERS, external=True, success_codes=[0, 1])
+    # Advisory (mirrors CI, never blocks): full curated config over the whole tree + format drift.
+    session.run("uvx", RUFF, "check", ".", "--statistics", external=True, success_codes=[0, 1])
+    session.run("uvx", RUFF, "format", "--check", ".", external=True, success_codes=[0, 1])
     session.run("uvx", VULTURE, *LAYERS, "--min-confidence", "80", external=True)
-{% if enforce_arch_fitness %}    session.run("uv", "run", "python", "-m", "devtools.graph", "--assert", *LAYERS, external=True)
+    # Advisory: conf60 dead-code (real signal, but eats no-fan-in FPs so it can't block). vulture exits 3
+    # when it finds dead code — success_codes swallows that (0=clean, 3=found), only a usage error blocks.
+    session.run("uvx", VULTURE, *LAYERS, "--min-confidence", "60", external=True, success_codes=[0, 3])
+{% if enforce_arch_fitness %}    # --extra devtools: graph.py needs grimp+networkx (optional extra), same as CI's synced tests job.
+    session.run(
+        "uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph", "--assert", *LAYERS, external=True
+    )
 {% endif %}{% if enable_astgrep %}    session.run(
         "uvx",
         "--from",
