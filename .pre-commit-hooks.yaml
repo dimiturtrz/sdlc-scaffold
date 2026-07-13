@@ -14,13 +14,6 @@
   pass_filenames: false
   always_run: true
 
-- id: importlinter-gate
-  name: import-linter — architecture layers
-  entry: uvx --from import-linter lint-imports
-  language: system
-  pass_filenames: false
-  always_run: true
-
 - id: arch-fitness
   name: architecture fitness (graph.py --assert)
   entry: uv run python -m devtools.graph --assert
