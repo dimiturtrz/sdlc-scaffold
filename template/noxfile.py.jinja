@@ -86,7 +86,6 @@ def cov(session: nox.Session) -> None:
     )
 {% endif %}
 
-
 @nox.session(venv_backend="none")
 def gates(session: nox.Session) -> None:
     """Run every gate: lint + test + cov."""
