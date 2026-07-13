@@ -1,0 +1,5 @@
+# Force LF for the scaffold's OWN files (incl template/*.jinja) so copier always renders LF and the
+# E2E ruff-format gate is platform-independent. (Generated projects get their own .gitattributes.)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
