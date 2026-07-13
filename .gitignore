@@ -5,3 +5,6 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 uv.lock
+
+# local scratch instance generated from the template for manual poking — regenerable, never committed
+/sdlc_test/

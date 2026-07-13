@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parents[2]  # tests/end_to_end/conftest.py -> scaffold root
 COPIER = "copier@9.16.0"
 RUFF = "ruff@0.15.13"
 VULTURE = "vulture@2.16"
