@@ -9,8 +9,9 @@ metric arch axis import-linter's categorical layer contracts can't express):
   cycles (SCC>1)         tangle              -> break (import-linter gates layer cycles)
 
 `report` is the one-shot EXPLORER (ranked tables). `--assert` is the GATE: it fails when a module is a
-god-module (fan-in AND fan-out BOTH over a degree), a new import cycle appears, or a file blows the line
-ceiling — plus an advisory chokepoint warning that never blocks. Thresholds live in `pyproject
+god-module (fan-in AND fan-out BOTH over a degree), a new import cycle appears, a file blows the line
+ceiling, or a logic module has no strict path-mirror test (`tests/unit/<pkg>/<path>/test_foo.py`) — plus
+an advisory chokepoint warning that never blocks. Thresholds live in `pyproject
 [tool.structure]`, defaulted when absent. IMPORT-level only. Packages to graph are the positional argv
 (default `src`). Run: `python -m devtools.graph [pkgs...]` | `python -m devtools.graph --assert [pkgs...]`.
 """
@@ -25,11 +26,14 @@ from pathlib import Path
 import grimp
 import networkx as nx
 
+from devtools.omit import coverage_omit, matches_omit
+
 log = logging.getLogger("devtools.graph")
 
 # Fitness thresholds — SPEC [tool.structure] defaults, overridable in pyproject. Chosen so the blocking
 # rules start CLEAN on a fresh project and ratchet: fan-in&out both>8, file>750 lines, any import cycle.
 _DEFAULTS = {"bottleneck_degree": 8, "file_max": 750, "betweenness_max": 0.10}
+_STRUCTURAL = ("__init__.py", "__main__.py")  # package plumbing — exempt from the test-mirror rule
 _ADVISORY_PREVIEW = 15  # advisory lines shown before "… +N more" (avoid log spam)
 
 
@@ -78,6 +82,25 @@ def _cycles(g: nx.DiGraph) -> list[str]:
 
 def _oversized(files: list[tuple[str, int]], mx: int) -> list[str]:
     return [f"{f}: {n} lines > {mx} — god-file, split" for f, n in files if n > mx]
+
+
+def unmirrored(packages: list[str], test_root: str = "tests/unit") -> list[str]:
+    """LOGIC source modules with no STRICT path-mirror test — the test tree mirrors the source tree,
+    one home per module. A source `<pkg>/<path>/foo.py` is mirrored iff `tests/unit/<pkg>/<path>/test_foo.py`
+    EXISTS on disk (a same-purpose test under a different name does NOT count — rename it to the mirror path).
+    `__init__`/`__main__` are plumbing, exempt; coverage-OMITTED shells (runners / adapters / GPU / download /
+    viz glue — the same 'not logic' set the coverage gate omits, read from `[tool.coverage] omit`) are exempt
+    too, so a non-unit-testable shell isn't forced to carry a stub test."""
+    omit = coverage_omit()
+    out = []
+    for pkg in packages:
+        for f in sorted(Path(pkg).rglob("*.py")):
+            if f.name in _STRUCTURAL or matches_omit(f.as_posix(), omit):
+                continue
+            mirror = Path(test_root) / f.parent / f"test_{f.name}"
+            if not mirror.exists():
+                out.append(f"{f.as_posix()} — no mirrored {mirror.as_posix()}")
+    return out
 
 
 def _chokepoints(g: nx.DiGraph, mx: float) -> list[str]:
@@ -131,6 +154,7 @@ def _run_assert(packages: list[str]) -> int:
     cfg = load_structure_cfg()
     g, files = build_graph(packages), file_lines(packages)
     blocking, advisory = assert_fitness(g, files, cfg)
+    blocking += [f"test mirror: {m}" for m in unmirrored(packages)]  # a logic module with no mirror test blocks
     if advisory:
         shown = advisory[:_ADVISORY_PREVIEW]
         extra = f"\n  … +{len(advisory) - _ADVISORY_PREVIEW} more" if len(advisory) > _ADVISORY_PREVIEW else ""
@@ -166,7 +190,7 @@ def main():
         "--assert",
         action="store_true",
         dest="assert_",
-        help="fitness GATE: exit 1 on a god-module / import cycle / god-file (advisory: chokepoint)",
+        help="fitness GATE: exit 1 on a god-module / import cycle / god-file / test-mirror gap (advisory: chokepoint)",
     )
     args = ap.parse_args()
     packages = args.packages or ["src"]

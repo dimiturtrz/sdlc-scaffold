@@ -52,10 +52,11 @@ uvx copier update       # reads .copier-answers.yml, fetches the newest scaffold
 | `project_name` | — | repo / folder name (kebab-case) |
 | `packages` | `project_name` snake_cased | comma-list the guardrails target; add your own (`core,neuroscan,neuroviz`) |
 | `ship_example` | `true` | ship the demo package; `false` for guardrails-only adoption |
-| `enforce_arch_fitness` | `true` | `graph.py --assert` gate (god-module / cycle / god-file) + `[tool.structure]` |
+| `enforce_arch_fitness` | `true` | `graph.py --assert` gate (god-module / cycle / god-file / test-mirror) + `[tool.structure]` |
 | `enable_astgrep` | `false` | ast-grep module-shape gate (in-a-class, no import-time side effects) |
 | `enable_jscpd` | `false` | jscpd duplication (DRY) gate — advisory |
 | `enable_class_shape_smells` | `false` | LCOM4 / data-clumps / namespace-state advisory explorers |
+| `enable_beads` | `false` | beads (bd) issue tracking — CLAUDE/AGENTS section + gitignore |
 | `coverage_floor` | `80` | `coverage report --fail-under` |
 
 `package_name` (= `packages[0]`, the demo folder), the ruff select, and the pinned tool versions are

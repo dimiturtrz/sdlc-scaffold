@@ -237,3 +237,22 @@ dropping the generated project's own README — the redundant root-meta excludes
 (`_subdirectory` already scopes rendering).
 
 Result: **44 passed, 3 skipped** (`uv run pytest tests`, WSL). The guardrails now guard themselves.
+
+## Test-mirror gate + beads toggle (2026-07-13, follow-up)
+
+Two sibling-parity gaps closed after the refactor pass.
+
+**9fa — test-mirror rule.** Both mature siblings (cardioseg + mindscape) block on a logic module lacking a
+strict path-mirror test; the scaffold's `graph.py` did not. Ported mindscape's superset: `unmirrored()`
+flags any `<pkg>/<path>/foo.py` without `tests/unit/<pkg>/<path>/test_foo.py`; `__init__`/`__main__` and
+coverage-**omitted** shells are exempt (via a new shared `devtools/omit.py` reading `[tool.coverage] omit`,
+so the mirror gate and the coverage gate agree on what a shell is). Wired into `graph.py --assert` behind
+`enforce_arch_fitness`. The shipped example tests moved to their mirror path (`tests/unit/{pkg}/test_*.py`)
+so a fresh gen stays green. Unit-tested (`unmirrored` pos/neg + omit exemption + `matches_omit` globs) and
+an E2E inject-test (a mirror-less logic module → non-zero → remove → 0).
+
+**2w9 — enable_beads toggle.** All 3 repos use beads; the scaffold didn't ship it. Added a bool toggle
+that renders a beads section into CLAUDE.md/AGENTS.md + gitignores the Dolt engine (issues.jsonl stays
+tracked). Opt-in (default false); `bd init` is a documented post-gen step, not auto-run.
+
+Result: **49 passed, 3 skipped**. The scaffold now matches both mature siblings on the arch gate.

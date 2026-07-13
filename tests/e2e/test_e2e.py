@@ -55,7 +55,11 @@ def test_expected_layout(project):
     pkg = example_pkg(name)
     assert (path / pkg / "math_ops.py").exists()
     assert (path / pkg / "pipeline.py").exists()
+    # example tests ship at their STRICT mirror path (tests/unit/<pkg>/test_<name>.py)
+    assert (path / "tests" / "unit" / pkg / "test_math_ops.py").exists()
+    assert (path / "tests" / "unit" / pkg / "test_pipeline.py").exists()
     assert (path / "devtools" / "graph.py").exists()
+    assert (path / "devtools" / "omit.py").exists()
     assert (path / "devtools" / "README.md").exists()
     # toggles gate file presence
     assert (path / "devtools" / "sgconfig.yml").exists() == (answers["enable_astgrep"] == "true")
@@ -63,6 +67,10 @@ def test_expected_layout(project):
     class_shape = answers["enable_class_shape_smells"] == "true"
     for tool in ("lcom.py", "data_clumps.py", "state_candidates.py"):
         assert (path / "devtools" / tool).exists() == class_shape
+    # beads section is present in CLAUDE.md/AGENTS.md iff enable_beads
+    beads = answers["enable_beads"] == "true"
+    assert ("bd (beads)" in (path / "CLAUDE.md").read_text()) == beads
+    assert ("bd (beads)" in (path / "AGENTS.md").read_text()) == beads
 
 
 def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
@@ -107,7 +115,7 @@ def test_ship_example_false_omits_demo(scaffold, tmp_path_factory):
         "coverage_floor": "80",
     })
     assert not (out / "myapp").exists(), "demo package must be absent when ship_example=false"
-    assert not (out / "tests" / "unit" / "test_math_ops.py").exists()
+    assert not (out / "tests" / "unit" / "myapp").exists()
     # guardrails still shipped
     assert (out / "noxfile.py").exists()
     assert (out / "devtools" / "graph.py").exists()
@@ -255,6 +263,22 @@ def test_graph_assert_catches_cycle(full_project):
     target.write_text(original)
     assert result.returncode != 0, "graph --assert must FAIL on an injected import cycle"
     # and it passes again once reverted
+    ok = run(["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"], full_project)
+    assert ok.returncode == 0
+
+
+def test_graph_assert_catches_unmirrored(full_project):
+    # a new LOGIC module with no tests/unit/full_pkg/test_<name>.py mirror must block
+    orphan = full_project / "full_pkg" / "orphan.py"
+    orphan.write_text("class Orphan:\n    @staticmethod\n    def go():\n        return 1\n")
+    result = run(
+        ["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"],
+        full_project,
+        check=False,
+    )
+    orphan.unlink()
+    assert result.returncode != 0, "graph --assert must FAIL on a logic module lacking its mirror test"
+    assert "test mirror" in (result.stdout + result.stderr)
     ok = run(["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"], full_project)
     assert ok.returncode == 0
 

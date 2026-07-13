@@ -220,3 +220,50 @@ def test_assert_fitness_clean_vs_dirty(devtools):
     cyclic = nx.DiGraph([("a", "b"), ("b", "a")])
     blocking, _ = graph.assert_fitness(cyclic, [("big.py", 900)], cfg)
     assert blocking, "a cycle + an oversized file must block"
+
+
+# ---- graph.py test-mirror rule + omit.py (9fa) -----------------------------------------------------
+
+
+def test_unmirrored_flags_missing_mirror(devtools, tmp_path, monkeypatch):
+    graph = devtools["graph"]
+    monkeypatch.chdir(tmp_path)
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "foo.py").write_text("class Foo:\n    @staticmethod\n    def go(): ...\n")
+    assert graph.unmirrored(["pkg"]), "a logic module with no mirror test must be flagged"
+    # __init__ is plumbing — its presence must NOT be what fired
+    assert all("__init__" not in m for m in graph.unmirrored(["pkg"]))
+    # add the STRICT mirror -> silent
+    mirror = tmp_path / "tests" / "unit" / "pkg"
+    mirror.mkdir(parents=True)
+    (mirror / "test_foo.py").write_text("def test_foo(): pass\n")
+    assert graph.unmirrored(["pkg"]) == [], "a module with its strict path-mirror test is satisfied"
+
+
+def test_unmirrored_exempts_omitted_shell(devtools, tmp_path, monkeypatch):
+    graph = devtools["graph"]
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "pyproject.toml").write_text('[tool.coverage.run]\nomit = ["pkg/shell.py"]\n')
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "shell.py").write_text("class Shell:\n    @staticmethod\n    def run(): ...\n")
+    assert graph.unmirrored(["pkg"]) == [], "a coverage-omitted shell needs no mirror test"
+
+
+def test_matches_omit_glob_semantics(devtools):
+    matches_omit = devtools["omit"].matches_omit
+    assert matches_omit("pkg/runner.py", ["pkg/*.py"]), "* matches one segment"
+    assert not matches_omit("pkg/sub/runner.py", ["pkg/*.py"]), "* must NOT cross a segment"
+    assert matches_omit("pkg/sub/deep.py", ["pkg/**"]), "** crosses segments"
+    assert not matches_omit("pkg/keep.py", ["other/*.py"]), "non-matching glob is silent"
+
+
+def test_coverage_omit_reads_pyproject(devtools, tmp_path):
+    coverage_omit = devtools["omit"].coverage_omit
+    pp = tmp_path / "pyproject.toml"
+    pp.write_text('[tool.coverage.run]\nomit = ["a/*.py", "b/**"]\n')
+    assert coverage_omit(str(pp)) == ["a/*.py", "b/**"]
+    assert coverage_omit(str(tmp_path / "absent.toml")) == [], "absent file -> empty omit"

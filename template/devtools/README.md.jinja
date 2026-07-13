@@ -3,7 +3,8 @@
 Each tool is engine + config, invoked identically in `noxfile.py` and CI. Targets are the `packages`
 list (space-separated below as `<packages>`). Only the tools this project enabled are shipped.
 
-{% if enforce_arch_fitness %}- **graph.py** — import-graph arch fitness (god-module = fan-in AND fan-out over a degree / import cycle / god-file). Gate: `python -m devtools.graph --assert <packages>` (thresholds in `pyproject [tool.structure]`). Explorer: drop `--assert` for ranked fan-in/out/bottleneck/chokepoint tables.
+{% if enforce_arch_fitness %}- **graph.py** — import-graph arch fitness (god-module = fan-in AND fan-out over a degree / import cycle / god-file / **test-mirror gap**). Gate: `python -m devtools.graph --assert <packages>` (thresholds in `pyproject [tool.structure]`). Explorer: drop `--assert` for ranked fan-in/out/bottleneck/chokepoint tables.
+- **test-mirror rule** — a logic module `<pkg>/<path>/foo.py` must have a strict path-mirror test `tests/unit/<pkg>/<path>/test_foo.py` (one home per module). `__init__`/`__main__` and coverage-**omitted** shells (`[tool.coverage] omit`, read via **omit.py**) are exempt — a non-unit-testable shell isn't forced to carry a stub test.
 {% endif %}{% if enable_astgrep %}- **sg-rules/** + **sgconfig.yml** — ast-grep module-shape rules (behaviour in a class, no import-time side effects). `uvx --from ast-grep-cli ast-grep scan -c devtools/sgconfig.yml <packages>` (enforced).
 {% endif %}{% if enable_jscpd %}- **jscpd.json** — jscpd copy-paste (DRY) threshold. `npx jscpd <packages> --config devtools/jscpd.json` (advisory).
 {% endif %}{% if enable_class_shape_smells %}- **lcom.py** — LCOM4 cohesion: ranks concrete stateful classes whose methods split into disjoint-state groups. `python -m devtools.lcom <packages>`.

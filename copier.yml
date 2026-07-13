@@ -18,8 +18,7 @@ _exclude:
   - "{% if not enable_class_shape_smells %}devtools/data_clumps.py{% endif %}"
   - "{% if not enable_class_shape_smells %}devtools/state_candidates.py{% endif %}"
   - "{% if not ship_example %}{{ package_name }}{% endif %}"
-  - "{% if not ship_example %}tests/unit/test_math_ops.py{% endif %}"
-  - "{% if not ship_example %}tests/unit/test_pipeline.py{% endif %}"
+  - "{% if not ship_example %}tests/unit/{{ package_name }}{% endif %}"
 
 project_name:
   type: str
@@ -61,6 +60,11 @@ enable_jscpd:
 enable_class_shape_smells:
   type: bool
   help: "Ship the advisory class-shape smell explorers (LCOM4 cohesion / data-clumps / namespace-state)?"
+  default: false
+
+enable_beads:
+  type: bool
+  help: "Wire in beads (bd) issue tracking — a CLAUDE/AGENTS beads section + gitignore entries (run `bd init` once after generating)?"
   default: false
 
 coverage_floor:

@@ -49,6 +49,7 @@ COMBOS = {
         "enable_astgrep": "false",
         "enable_jscpd": "false",
         "enable_class_shape_smells": "false",
+        "enable_beads": "false",
         "coverage_floor": "80",
     },
     "full": {
@@ -59,6 +60,7 @@ COMBOS = {
         "enable_astgrep": "true",
         "enable_jscpd": "true",
         "enable_class_shape_smells": "true",
+        "enable_beads": "true",
         "coverage_floor": "80",
     },
 }

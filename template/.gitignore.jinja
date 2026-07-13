@@ -36,10 +36,12 @@ htmlcov/
 # Private/local-only docs (generic pattern — reveals no intent in the ignore list itself)
 *.local.md
 
+{% if enable_beads %}
 # Beads / Dolt engine bits (issues.jsonl is tracked; the embedded engine is not)
 .dolt/
+.beads/*.db
 .beads-credential-key
-{% if enable_jscpd %}
+{% endif %}{% if enable_jscpd %}
 # jscpd (node) — pulled transiently by npx for the duplication gate
 node_modules/
 {% endif %}

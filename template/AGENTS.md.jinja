@@ -1,7 +1,15 @@
 # {{ project_name }} — agent instructions
 
 Keep this file and `AGENTS.md` IN SYNC (different harnesses read each; same content).
+{% if enable_beads %}
+## Issue tracking — beads (bd)
 
+This project uses **bd (beads)** for issue tracking. Run `bd init` once, then `bd prime` for the full
+workflow. `.beads/issues.jsonl` is git-tracked; the Dolt engine is gitignored.
+
+- `bd ready` — available work · `bd show <id>` — details · `bd update <id> --claim` · `bd close <id>`
+- Use `bd` for ALL task tracking — not TodoWrite or markdown TODO lists.
+{% endif %}
 ## Build & Test
 
 `uv` is the env + dependency manager; `nox` is the task runner (every session calls `uvx`/`uv run`

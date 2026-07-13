@@ -31,6 +31,7 @@ Asked at copy time:
 | `enable_astgrep` | bool | false | ship ast-grep module-shape gate + `devtools/sg-rules` + `sgconfig.yml` |
 | `enable_jscpd` | bool | false | ship jscpd DRY gate + `devtools/jscpd.json` (advisory) |
 | `enable_class_shape_smells` | bool | false | ship the LCOM4 / data-clumps / namespace-state advisory explorers |
+| `enable_beads` | bool | false | wire beads (bd) — a CLAUDE/AGENTS beads section + gitignore entries (`bd init` after gen) |
 | `coverage_floor` | int | 80 | `coverage report --fail-under` value |
 
 Computed / never asked (`when: false`, one home in copier.yml):
@@ -50,6 +51,7 @@ Computed / never asked (`when: false`, one home in copier.yml):
 | 3 | vulture dead-code | vendored vulture | `min_confidence`, `ignore_decorators`, `ignore_names` core | `paths`, `exclude` (slot) |
 | 4 | coverage floor | vendored coverage/pytest-cov | `exclude_lines`, `show_missing` | `source`, `omit` (slot); `fail-under`=`coverage_floor` (answer) |
 | 5 | arch fitness | OURS `graph.py --assert` | (mechanism) | `[tool.structure]` thresholds (slot) |
+| 5b | test-mirror (part of #5) | OURS `graph.py` `unmirrored()` + `omit.py` | `__init__`/`__main__` exempt | `[tool.coverage] omit` shells exempt |
 | 6 | ast-grep module-shape (`enable_astgrep`) | vendored ast-grep + our `sg-rules` | rule yml | scan paths = `packages` |
 | 7 | jscpd DRY (`enable_jscpd`) | vendored jscpd | `jscpd.json` threshold | scan paths = `packages` |
 | 8 | class-shape explorers (`enable_class_shape_smells`) | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
@@ -118,7 +120,8 @@ Slots: `ruff-exclude`, `vulture-scan`, `coverage-scan`, `arch-thresholds`.
 A minimal-but-real example under the FIRST package (`packages[0]`), with a genuine intra-package edge:
 - `{packages[0]}/math_ops.py` — a leaf class (`mean`, `clamp`), imports nothing else.
 - `{packages[0]}/pipeline.py` — a class importing `math_ops` (the internal edge graph.py chews).
-- `tests/unit/test_math_ops.py` + `test_pipeline.py` — cover the above to satisfy `coverage_floor`.
+- `tests/unit/{packages[0]}/test_math_ops.py` + `test_pipeline.py` — at the STRICT mirror path (so the
+  test-mirror gate passes), covering the above to satisfy `coverage_floor`.
 
 `ship_example=false` omits the demo package + its unit tests (repo-adoption path). Anti-shortcut: gate
 failures are fixed in the TEMPLATE example/config, then regenerate — never hand-patch generated output.

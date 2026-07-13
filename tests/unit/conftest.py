@@ -33,6 +33,7 @@ def devtools(tmp_path_factory):
     import devtools.data_clumps as data_clumps
     import devtools.graph as graph
     import devtools.lcom as lcom
+    import devtools.omit as omit
     import devtools.state_candidates as state_candidates
 
     return {
@@ -40,4 +41,5 @@ def devtools(tmp_path_factory):
         "data_clumps": data_clumps,
         "state_candidates": state_candidates,
         "graph": graph,
+        "omit": omit,
     }
