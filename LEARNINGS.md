@@ -104,7 +104,69 @@ Still to flip (only the network hop remains):
 on Windows, run copier from PowerShell (real `git.exe`, not the Bash MSYS shim → the `WinError 193`).
 Do the versioned-rollout / CI-parity work on WSL; Windows is fine for authoring + single-shot gate runs.
 
+## Cardioseg-mirror gaps CLOSED (2026-07-13)
+
+Made the scaffold faithfully mirror cardioseg (most-mature) and verified a full-toggle generation hits
+every cardioseg gate. Done on WSL native git; node installed WITHOUT sudo (static tarball to `~/.local`,
+since WSL has no passwordless sudo — `apt` needs a password).
+
+**Template fixes shipped:**
+1. **Coverage ≥95 advisory tier** — `ci.yml` (`continue-on-error` + `::warning::`) and noxfile `cov`
+   (`success_codes=[0, 2]`). Floor 80 still blocks; 95 only warns.
+2. **Viewer separate-coverage lane** (when `has_viewer`) — main run `--ignore=tests/viewer` keeps the
+   floor calibrated to core+trainer; a separate `COVERAGE_FILE=.coverage.viewer` step measures the
+   viewer (advisory). Shipped a viewer test (`tests/viewer/test_render.py`) so the lane is real (100%).
+3. **nox arch-fitness passes all layers** (`*LAYERS`), and `graph.py --assert` now includes the viewer
+   in CI + pre-commit too (was core+trainer only) — consistent everywhere.
+4. **Scaffold-root `ruff.toml` (line-length 120)** — kills the 88-vs-120 format-target trap for the
+   static `template/devtools/graph.py`.
+5. **nox now runs ast-grep + jscpd** when enabled (was CI-only) → local `nox` == CI.
+
+**Full cardioseg-mirror generation** (`has_viewer=true, viewer_imports_trainer=false, arch_fitness=true,
+astgrep=true, jscpd=true, floor=80`) — every gate GREEN, verified with pasted output:
+
+| gate | solo | nox | pre-commit | CI |
+|---|---|---|---|---|
+| ruff enforced + advisory + format | ✅ | ✅ | ✅ | ✅ |
+| vulture conf80 (block) / conf60 (warn) | ✅ | ✅ | ✅(80) | ✅ |
+| coverage floor 80 + 95 advisory | ✅ | ✅ | — (by design) | ✅ |
+| viewer coverage lane | ✅ | ✅ | — | ✅ |
+| import-linter (3 contracts incl viewer≠trainer) | ✅ | ✅ | ✅ | ✅ |
+| graph.py --assert (all layers) | ✅ | ✅ | ✅ | ✅ |
+| ast-grep (in-a-class + no import-time side-effects) | ✅ | ✅ | ✅ | ✅ |
+| jscpd (DRY) | ✅ | ✅ | ✅ | ✅ |
+
+**New gates proven to actually GATE** (not just present): injected a top-level function → ast-grep
+non-zero (caught); injected a duplicated block → jscpd "Found 1 clones" non-zero (caught); both green
+after revert.
+
+**Channel matrix — deliberate, documented:** the fast lint-family gates bind to all of solo/nox/
+pre-commit/CI. **Coverage is intentionally NOT a pre-commit hook** — a full test-suite run on every
+commit is wrong; it lives in nox + CI. jscpd IS a pre-commit hook but **stricter there than CI** (CI
+marks it advisory `continue-on-error`; a commit hook blocks on any clone) — a "clean at commit" choice,
+and it needs node/npx on PATH. Remove the `jscpd-gate` hook to make it advisory-only.
+
+## DECISION NEEDED (item 8 — not auto-resolved, your call)
+
+**ruff `select` is a UNION superset, broader than cardiac's curated-narrow.** Current select:
+`F,E,W,B,C4,UP,I,T20,FBT,BLE001,S,C90,PLR,PLC,SIM,RUF`. This is the union of all 3 repos — it pulled
+`UP` (pyupgrade) and `SIM` (flake8-simplify) from **mindscape**, which **cardiac deliberately keeps OFF**
+("TRY/EM/SIM/UP — opinionated churn"). So the scaffold's ruff is *stricter* than cardiac, not a faithful
+cardiac mirror on this axis.
+
+- **Keep the union (current):** more rules caught out of the box; a fresh project starts maximally
+  strict. Cost: `UP`/`SIM` fire opinionated rewrites cardiac considers churn; a migrating cardiac-style
+  repo would see new findings.
+- **Narrow to cardiac (drop `UP,SIM`, and reconsider `C4`):** faithful to the most-mature repo's
+  deliberate choices; less churn. Cost: mindscape-style repos lose two families they run today.
+
+Left AS-IS (union) pending your decision. Changing it is a one-line edit in `pyproject.toml.jinja`
+(and the mirrored `SELECT`/`--select` strings in `ci.yml.jinja`, `noxfile.py.jinja`,
+`.pre-commit-config.yaml.jinja` — grep for the select string; note it lives in 4 files, itself an
+argument for extracting the select to a single source later).
+
 ## One-line status
 
-MVP done: versioned local template + generated sample, all gates green across the toggle matrix, drift-
-healing mechanism (copier answers + tags) armed. Ready to modulate items 1-3 above, then migrate repo #1.
+Scaffold now mirrors cardioseg at full toggle: every cardioseg gate present + green across solo/nox/
+pre-commit/CI, new gates proven to bite, drift-healing proven. Open: the ruff-select union-vs-narrow
+call (item 8), and the 4-place duplication of the select string (extract to one source).
