@@ -4,7 +4,7 @@ A [copier](https://copier.readthedocs.io) template for the personal-projects SDL
 ruff · vulture · coverage floor · import-linter layers · arch-fitness (`graph.py --assert`) ·
 optional ast-grep + jscpd · nox task runner · pre-commit gate binding.
 
-Derived from the common skeleton of cardiac-seg / mindscape / synthscape. See `SPEC.md` for the
+Derived from the common skeleton of cardiac-seg / mindscape / synthscape. See `docs/SPEC.md` for the
 gate contract (portable-superset vs project-local slot, exact toggle names, superset values).
 
 ## Use
@@ -33,4 +33,4 @@ Each toggle selects a ratchet stage — a fresh project can start minimal and gr
 
 Gate = engine + params + invocation. Config (params) is copied per-repo (template-owned superset +
 local slot); gate invocations ride pre-commit; our own gate *code* (`graph.py`) is stamped in.
-Versioned rollout (`copier update` + tags) heals drift in stages — see `LEARNINGS.md`.
+Versioned rollout (`copier update` + tags) heals drift in stages — see `docs/LEARNINGS.md`.

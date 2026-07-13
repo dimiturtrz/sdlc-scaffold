@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-REPO = Path(__file__).resolve().parents[2]  # tests/end_to_end/conftest.py -> scaffold root
+REPO = Path(__file__).resolve().parents[2]  # tests/e2e/conftest.py -> scaffold root
 
 
 def _copier_default(key):
