@@ -197,7 +197,43 @@ for the scaffold itself — a template edit that breaks any gate now fails a tes
 
 ## One-line status
 
-Scaffold mirrors cardioseg at full toggle, every gate green across solo/nox/pre-commit/CI, new gates
-proven to bite, drift-healing proven — and all of it is now a green E2E pytest suite (27 passed) with
-its own CI. Open: the ruff-select union-vs-narrow call (item 8), and the 4-place duplication of the
-select string (extract to one source).
+Scaffold ships layout-agnostic guardrails (one `packages` list, no imposed layering), every gate green
+across solo/nox/pre-commit/CI, new gates proven to bite, drift-healing proven — and both the gates AND
+their own fitness-function logic are under test (`uv run pytest`: 44 passed). Superseded below by the
+2026-07-13 refactor pass (this section's item-8 select call + 4-place duplication are resolved: the select
++ tool versions are single-sourced in `copier.yml`).
+
+## Refactor + guardrail-testing pass (2026-07-13)
+
+The scaffold was maintainable-refactored and its own tooling put under test.
+
+**Maintainability (Phase A).**
+- **Conditional filenames → `copier _exclude`.** `{% if toggle %}name{% endif %}` in paths was replaced
+  with clean names + jinja `_exclude` rules keyed on the toggles (rendered per-answers). The class-shape
+  trio became real `.py` files → ruff formats them in place (the temp-file copy-back dissolved).
+- **De-opinionated the layout.** The scaffold was shipping the 3-repo `core → trainer → viewer` layering
+  as imposed structure. Guardrails must be layout-agnostic, so: the layer *roles* + directional
+  import-linter contracts were dropped (import-linter is now opt-in, documented in `devtools/README.md`);
+  `graph.py --assert` stays as the layer-agnostic structural gate (god-module / cycle / god-file).
+- **`packages` is a declared LIST, not one name.** A repo with `core,neuroscan,neuroviz` names them all;
+  every gate (ruff/vulture/coverage/graph/ast-grep/jscpd/class-shape/setuptools) renders over the list.
+  `package_name` is a computed `when:false` var = `packages[0]`, keeping the demo folder a simple
+  interpolation. `ship_example` (default true) drops the demo package for clean repo-adoption.
+- **Single-sourced versions.** ruff/vulture/nox/pre-commit pins + the ruff select live once in
+  `copier.yml` (`when:false`), rendered into ci/nox/pre-commit and regex-parsed by the E2E conftest.
+- **Tidy.** `tests/end_to_end → tests/e2e` (matches the shipped convention); `SPEC.md`+`LEARNINGS.md → docs/`.
+
+**Testing the guardrails (Phase B).** `tests/unit/test_devtools.py` tests the LOGIC of the four shipped
+fitness functions — pos + neg each, imported from a generated full instance:
+- **lcom** — disjoint self-field groups → LCOM4==2; cohesive → 1; impl/abstract/trivial/<2 skipped.
+- **data_clumps** — a param set carried by ≥4 functions surfaces; support<4 silent; maximal beats subset.
+- **state_candidates** — a param threaded through the staticmethods flags; `__init__`/pydantic/command skip.
+- **graph** — `[tool.structure]` merges over defaults; god-module/cycle/oversized detected; assert clean vs dirty.
+The E2E gained a `graph --assert` inject-test (close an import cycle → non-zero → revert → 0), matching the
+ast-grep/jscpd bite-proofs. The scaffold CI runs `tests/unit` + `tests/e2e` under one `pytest`.
+
+Also fixed a latent bug: `_exclude: "README.md"` matched *any* depth (gitignore semantics), silently
+dropping the generated project's own README — the redundant root-meta excludes were removed
+(`_subdirectory` already scopes rendering).
+
+Result: **44 passed, 3 skipped** (`uv run pytest tests`, WSL). The guardrails now guard themselves.
