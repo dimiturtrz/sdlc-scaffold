@@ -75,17 +75,34 @@ Each real repo becomes a copier-managed project WITHOUT losing its rich local sl
    full superset (if the repo is clean for it) or temporarily override `select` in a local slot and ratchet.
 4. Add `.copier-answers.yml` → the repo is now update-able.
 
-## Deferred growth — git-versioned staged rollout (the ratchet, mechanized)
+## Git-versioned staged rollout — PROVEN on WSL (2026-07-13)
 
-Not built in the MVP (goal scoped it out). To enable:
-- Push `sdlc-scaffold` to a shared location (remote OR a stable local path). Tag releases `vN`.
-- Tighten a rule → `git tag v0.2.0`. In each repo: `copier update` 3-way-merges the change in; bump when
-  that repo is clean. **Per-repo `_commit` pin advancing independently = the "one family per PR, graduate
-  at zero" ratchet, mechanized across repos.**
-- Gate DELIVERY goes from `repo: local` → `repo: <scaffold> rev: vN` in `.pre-commit-config.yaml`, so gate
-  invocations are versioned centrally (the root `.pre-commit-hooks.yaml` is already stubbed for this).
-- MVP proved everything EXCEPT the network-fetch (`copier update` from a real remote + Actions fetching by
-  URL) — the last flip, verified after a first push.
+The MVP first left this untested (copier needed a local git-init just to `copier copy`; the `copier
+update` drift-heal was deferred). Finished it in a WSL clean-room (native LF git, no Windows shim
+friction). Test: hand-edit a LOCAL-SLOT in the sample (`MY_LOCAL_DIR` into ruff extend-exclude) →
+tighten a PORTABLE rule in the scaffold (`file_max 750→500`) → `git tag v0.2.0` → `copier update`.
+
+Result — all four held, no `.rej` conflicts, gates green post-update:
+- **Pin advanced**: sample `_commit: v0.1.0 → v0.2.0` (staged — each repo bumps when ready).
+- **Portable change flowed in**: `file_max = 500` landed in the sample's pyproject.
+- **Local-slot survived**: `MY_LOCAL_DIR` preserved through copier's 3-way merge — the seam works
+  because the portable edit and the local edit sat in different file regions, so the merge is clean.
+  (Caveat: the LOCAL-SLOT markers are a HUMAN convention; copier does a git-style 3-way merge on the
+  whole file, not marker-aware. Same-line edits to a portable line WOULD conflict → keep local edits
+  inside the marked slots, which are never the lines the template rewrites.)
+- **Per-repo `_commit` advancing independently = the ratchet mechanized** ("one family per PR, graduate
+  at zero", now across repos via tags).
+
+Still to flip (only the network hop remains):
+- Gate DELIVERY `repo: local` → `repo: <scaffold> rev: vN` in `.pre-commit-config.yaml` for central
+  versioned gates (root `.pre-commit-hooks.yaml` already stubbed).
+- `copier update` from a real REMOTE + Actions fetching by URL — verified after a first push.
+
+## Windows vs WSL
+
+`copier copy`/`update` and the whole git flow are friction-free on WSL (matches CI `ubuntu-latest`);
+on Windows, run copier from PowerShell (real `git.exe`, not the Bash MSYS shim → the `WinError 193`).
+Do the versioned-rollout / CI-parity work on WSL; Windows is fine for authoring + single-shot gate runs.
 
 ## One-line status
 
