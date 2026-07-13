@@ -13,9 +13,15 @@ list (space-separated below as `<packages>`). Only the tools this project enable
 
   The three class-shape tools are ADVISORY explorers — they print a ranked report and always exit 0, never blocking.
 {% endif %}
-## Directional layer contracts (opt-in)
+## Directional layer contracts — import-linter{% if not use_import_linter %} (not shipped here){% endif %}
 
-The shipped arch gate (`graph.py`) is layer-AGNOSTIC — it catches cycles, god-modules, and god-files in
-whatever packages you name. To enforce a *direction* (e.g. a viewer that must never import a trainer),
-that is project-specific and not shipped: add `import-linter` contracts under `[tool.importlinter]` in
-`pyproject.toml` plus a `lint-imports` call in `noxfile.py`.
+`graph.py`'s structural checks are layer-AGNOSTIC and catch *cycles*, but not a one-way *forbidden*
+import (`core -> trainer` is no cycle). That directional axis is import-linter's.
+{% if use_import_linter %}
+Shipped: `[tool.importlinter]` in `pyproject.toml` carries `root_packages` + a kernel-independence
+starter contract (the first package imports none of the others) inside a `# >>> LOCAL-SLOT: import-contracts`
+region — add your viewer/trainer or domain contracts there. Enforced in nox/CI/pre-commit via `lint-imports`.
+{% else %}
+Not shipped for this project (single package, or `enable_import_linter` off — nothing to forbid). If it
+grows layers, add `[tool.importlinter]` contracts + a `lint-imports` call yourself.
+{% endif %}

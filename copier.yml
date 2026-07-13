@@ -47,6 +47,18 @@ enforce_arch_fitness:
   help: "Ship the arch-fitness gate (graph.py --assert + [tool.structure])?"
   default: true
 
+enable_import_linter:
+  type: bool
+  help: "Ship the import-linter directional layer gate (forbidden-import contracts; only bites with >1 package)?"
+  default: true
+
+# import-linter only makes sense with >1 package (nothing to forbid in a single package) — computed guard
+# gating the [tool.importlinter] block + the lint-imports invocation across pyproject/nox/ci/pre-commit.
+use_import_linter:
+  type: bool
+  default: "{{ enable_import_linter and (packages.split(',') | length) > 1 }}"
+  when: false
+
 enable_astgrep:
   type: bool
   help: "Ship the ast-grep module-shape gate (in-a-class + no import-time side effects)?"

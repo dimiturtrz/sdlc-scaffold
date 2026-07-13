@@ -63,10 +63,23 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 
-# Directional layer contracts (e.g. "viewer never imports trainer") are project-specific, so the
-# scaffold does not impose them. If your project has layers to enforce, add import-linter here and a
-# `lint-imports` call in noxfile.py — see devtools/README.md. The layer-agnostic structural checks
-# (cycles, god-modules, oversized files) ship by default via devtools/graph.py --assert below.
+{% if use_import_linter %}
+# Directional layer gate (import-linter): forbidden-import CONTRACTS graph.py can't express — a one-way
+# `core -> trainer` import is no cycle, so it passes the graph gate but must fail here. The gate is
+# universal (all house repos run it); the contracts are project-local, hence the slot.
+[tool.importlinter]
+root_packages = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+
+# >>> LOCAL-SLOT: import-contracts — your directional layer rules. Ships the kernel-independence starter
+# (the FIRST package imports none of the others), the pattern all 3 house repos share. Add viewer/trainer
+# or domain contracts here; edit freely — copier update won't overwrite this region.
+[[tool.importlinter.contracts]]
+name = "{{ packages.split(',')[0] | trim }} is an independent kernel (imports none of the other packages)"
+type = "forbidden"
+source_modules = ["{{ packages.split(',')[0] | trim }}"]
+forbidden_modules = [{% for p in packages.split(",")[1:] %}"{{ p | trim }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+# <<< LOCAL-SLOT: import-contracts
+{% endif %}
 {% if enforce_arch_fitness %}
 # Architecture fitness thresholds read by devtools/graph.py --assert.
 [tool.structure]
@@ -74,6 +87,7 @@ exclude_lines = [
 # so a per-project override survives `copier update` without a merge conflict.
 bottleneck_degree = 8    # fan-in AND fan-out both over this = god-module
 file_max = 750           # god-file line ceiling — raise as real files grow
+file_min = 0             # advisory line floor — 0 = OFF (no honest universal floor; raise per repo if wanted)
 betweenness_max = 0.10   # advisory chokepoint threshold
 # <<< LOCAL-SLOT: arch-thresholds
 {% endif %}

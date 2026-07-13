@@ -71,6 +71,8 @@ def test_expected_layout(project):
     beads = answers["enable_beads"] == "true"
     assert ("bd (beads)" in (path / "CLAUDE.md").read_text()) == beads
     assert ("bd (beads)" in (path / "AGENTS.md").read_text()) == beads
+    # import-linter only ships with >1 package (these combos are single-package -> absent even when enabled)
+    assert "[tool.importlinter]" not in (path / "pyproject.toml").read_text()
 
 
 def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
@@ -100,6 +102,11 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
     pyproject = (out / "pyproject.toml").read_text()
     assert 'source = ["pkg_a", "pkg_b"]' in pyproject
     assert 'include = ["pkg_a*", "pkg_b*"]' in pyproject
+    # import-linter ships with >1 package: root_packages = the list + kernel-independence starter contract
+    assert "[tool.importlinter]" in pyproject
+    assert 'root_packages = ["pkg_a", "pkg_b"]' in pyproject
+    assert 'source_modules = ["pkg_a"]' in pyproject
+    assert 'forbidden_modules = ["pkg_b"]' in pyproject
     # the demo package ships under the FIRST entry
     assert (out / "pkg_a" / "math_ops.py").exists()
 
@@ -284,6 +291,42 @@ def test_graph_assert_catches_unmirrored(full_project):
     assert "test mirror" in (result.stdout + result.stderr)
     ok = run(["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"], full_project)
     assert ok.returncode == 0
+
+
+def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):
+    # a real 2-package project: kern (kernel, packages[0]) + app; contract forbids kern -> app
+    out = tmp_path_factory.mktemp("il") / "proj"
+    generate(scaffold, out, {
+        "project_name": "il",
+        "packages": "kern,app",
+        "ship_example": "true",
+        "enforce_arch_fitness": "true",
+        "enable_astgrep": "false",
+        "enable_jscpd": "false",
+        "enable_class_shape_smells": "false",
+        "enable_beads": "false",
+        "coverage_floor": "80",
+    })
+    # ship_example filled kern/ (the kernel); add the second package `app` (downward edge app -> kern is fine)
+    (out / "app").mkdir()
+    (out / "app" / "__init__.py").write_text("")
+    (out / "app" / "thing.py").write_text(
+        "from kern.math_ops import MathOps\n\n\nclass Thing:\n    @staticmethod\n    def go() -> float:\n        return MathOps.mean([1.0])\n"
+    )
+    (out / "tests" / "unit" / "app").mkdir(parents=True)
+    (out / "tests" / "unit" / "app" / "test_thing.py").write_text(
+        "from app.thing import Thing\n\n\ndef test_go():\n    assert Thing.go() == 1.0\n"
+    )
+    git_init_commit(out)
+    # clean: the kernel imports nothing above it
+    run(["uvx", "--from", "import-linter", "lint-imports"], out)
+    # inject an UPWARD import (kernel imports the app package) -> kernel-independence contract violated
+    kernel = out / "kern" / "math_ops.py"
+    original = kernel.read_text()
+    kernel.write_text(original + "\n\nfrom app.thing import Thing as _Up  # noqa: E402, F401\n")
+    bad = run(["uvx", "--from", "import-linter", "lint-imports"], out, check=False)
+    kernel.write_text(original)
+    assert bad.returncode != 0, "import-linter must FAIL when the kernel imports a higher package"
 
 
 # ---- versioned rollout: drift heals, local slot survives -------------------------------------------

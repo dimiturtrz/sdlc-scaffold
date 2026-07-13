@@ -43,6 +43,12 @@ jobs:
         continue-on-error: true
         run: |
           uvx vulture@{{ vulture_version }} --min-confidence 60 | sed -E 's#^([^:]+):([0-9]+): (.*)$#::warning file=\1,line=\2::\3#'
+      {% if use_import_linter %}
+      # Import layers — ENFORCED: forbidden-import (directional) contracts, the axis graph.py's cycle
+      # check can't express (a one-way core->trainer import is no cycle). Contracts in [tool.importlinter].
+      - name: Import layers — enforced (import-linter)
+        run: uvx --from import-linter lint-imports
+      {% endif %}
       {% if enable_astgrep %}
       # Module shape — ast-grep: the SYNTACTIC axis ruff has no plugin API for (in-a-class house rule +
       # no import-time side effects). Rules are data under devtools/sg-rules/*.yml, severity=error (BLOCKS).
@@ -54,8 +60,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Duplication — advisory (jscpd, DRY axis)
-        continue-on-error: true
+      - name: Duplication — enforced (jscpd, DRY axis; blocks over threshold)
         run: npx --yes jscpd {{ pkgs }} --config devtools/jscpd.json
       {% endif %}
 

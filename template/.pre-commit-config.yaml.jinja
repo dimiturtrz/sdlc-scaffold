@@ -26,7 +26,14 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-
+      {% if use_import_linter %}
+      - id: importlinter-gate
+        name: import-linter — directional layers
+        entry: uvx --from import-linter lint-imports
+        language: system
+        pass_filenames: false
+        always_run: true
+      {% endif %}
       {% if enforce_arch_fitness %}
       - id: arch-fitness
         name: architecture fitness (graph.py --assert)
@@ -66,5 +73,6 @@ repos:
         pass_filenames: false
         always_run: true
       {% endif %}
-      {# jscpd is advisory by default (cardiac/synth majority) -> CI + nox only, NOT a blocking commit
-         hook. A repo that wants it stricter (mindscape-style, blocks >1%) adds a jscpd hook here. #}
+      {# jscpd is ENFORCED in CI + nox (blocks over the jscpd.json threshold, the cardiac/mindscape
+         majority) but kept OFF the commit hook — it needs Node and is slower than the static gates. A
+         repo that wants it at commit time too adds a jscpd hook here. #}

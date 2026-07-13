@@ -183,7 +183,7 @@ def test_structure_cfg_merges_over_defaults(devtools, tmp_path):
 def test_structure_cfg_all_defaults_when_absent(devtools, tmp_path):
     graph = devtools["graph"]
     cfg = graph.load_structure_cfg(str(tmp_path / "nope.toml"))
-    assert cfg == {"bottleneck_degree": 8, "file_max": 750, "betweenness_max": 0.10}
+    assert cfg == {"bottleneck_degree": 8, "file_max": 750, "file_min": 0, "betweenness_max": 0.10}
 
 
 def test_god_module_detected(devtools):
@@ -211,9 +211,17 @@ def test_oversized_file_detected(devtools):
     assert graph._oversized([("small.py", 100)], 750) == []
 
 
+def test_undersized_floor_advisory(devtools):
+    graph = devtools["graph"]
+    assert graph._undersized([("tiny.py", 3)], 0) == [], "floor OFF at file_min<=0 (the default)"
+    assert graph._undersized([("tiny.py", 3)], 10), "under the floor flags (advisory)"
+    assert graph._undersized([("ok.py", 50)], 10) == [], "above the floor is silent"
+    assert graph._undersized([("pkg/__init__.py", 1)], 10) == [], "package plumbing is exempt"
+
+
 def test_assert_fitness_clean_vs_dirty(devtools):
     graph = devtools["graph"]
-    cfg = {"bottleneck_degree": 8, "file_max": 750, "betweenness_max": 0.10}
+    cfg = {"bottleneck_degree": 8, "file_max": 750, "file_min": 0, "betweenness_max": 0.10}
     clean = nx.DiGraph([("a", "b"), ("b", "c")])
     blocking, _ = graph.assert_fitness(clean, [("a.py", 100)], cfg)
     assert blocking == [], "a clean graph + small files has no blocking violations"

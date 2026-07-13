@@ -53,6 +53,7 @@ uvx copier update       # reads .copier-answers.yml, fetches the newest scaffold
 | `packages` | `project_name` snake_cased | comma-list the guardrails target; add your own (`core,neuroscan,neuroviz`) |
 | `ship_example` | `true` | ship the demo package; `false` for guardrails-only adoption |
 | `enforce_arch_fitness` | `true` | `graph.py --assert` gate (god-module / cycle / god-file / test-mirror) + `[tool.structure]` |
+| `enable_import_linter` | `true` | directional forbidden-import contracts (only bites with >1 package) |
 | `enable_astgrep` | `false` | ast-grep module-shape gate (in-a-class, no import-time side effects) |
 | `enable_jscpd` | `false` | jscpd duplication (DRY) gate — advisory |
 | `enable_class_shape_smells` | `false` | LCOM4 / data-clumps / namespace-state advisory explorers |
@@ -73,8 +74,10 @@ computed/single-sourced (`when: false`) — never asked, one home in `copier.yml
 - `{packages}/` + `tests/` — a minimal-but-real example that passes every gate on generation
   (omitted when `ship_example=false`).
 
-Directional layer contracts (e.g. viewer never imports trainer) are **opt-in** — add import-linter
-yourself; the scaffold's shipped arch gate is layer-agnostic. See the generated `devtools/README.md`.
+Directional layer contracts (e.g. the kernel imports none of the others; a viewer never imports a
+trainer) ship via **import-linter** when `enable_import_linter` and you declare >1 package —
+`[tool.importlinter]` carries a kernel-independence starter + a contracts LOCAL-SLOT. A one-way forbidden
+import is no cycle, so it's the axis `graph.py` can't see. See the generated `devtools/README.md`.
 
 ## Design
 

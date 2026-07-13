@@ -32,8 +32,8 @@ log = logging.getLogger("devtools.graph")
 
 # Fitness thresholds — SPEC [tool.structure] defaults, overridable in pyproject. Chosen so the blocking
 # rules start CLEAN on a fresh project and ratchet: fan-in&out both>8, file>750 lines, any import cycle.
-_DEFAULTS = {"bottleneck_degree": 8, "file_max": 750, "betweenness_max": 0.10}
-_STRUCTURAL = ("__init__.py", "__main__.py")  # package plumbing — exempt from the test-mirror rule
+_DEFAULTS = {"bottleneck_degree": 8, "file_max": 750, "file_min": 0, "betweenness_max": 0.10}
+_STRUCTURAL = ("__init__.py", "__main__.py")  # package plumbing — exempt from the test-mirror rule + line floor
 _ADVISORY_PREVIEW = 15  # advisory lines shown before "… +N more" (avoid log spam)
 
 
@@ -103,6 +103,18 @@ def unmirrored(packages: list[str], test_root: str = "tests/unit") -> list[str]:
     return out
 
 
+def _undersized(files: list[tuple[str, int]], mn: int) -> list[str]:
+    """Advisory line floor. OFF at mn<=0 (the default) — no honest universal floor; small files are often
+    SSOT / strategy / shared-vocab leaves, and 'too thin' is a responsibility call, not a line count."""
+    if mn <= 0:
+        return []
+    return [
+        f"{f}: {n} lines < {mn} — earn its keep? (fold, or accept a small leaf)"
+        for f, n in files
+        if n < mn and not f.endswith(_STRUCTURAL)
+    ]
+
+
 def _chokepoints(g: nx.DiGraph, mx: float) -> list[str]:
     return [
         f"{n}: betweenness {v:.3f} > {mx} — chokepoint, consider a boundary here"
@@ -113,9 +125,9 @@ def _chokepoints(g: nx.DiGraph, mx: float) -> list[str]:
 
 def assert_fitness(g: nx.DiGraph, files: list[tuple[str, int]], cfg: dict) -> tuple[list[str], list[str]]:
     """(blocking, advisory) fitness violations. BLOCKING = god-module, import cycle, god-file (clean on a
-    fresh project, so they ratchet); ADVISORY = the chokepoint warning (print-only, never blocks)."""
+    fresh project, so they ratchet); ADVISORY = line-floor (off by default) + chokepoint (never blocks)."""
     blocking = _god_modules(g, cfg["bottleneck_degree"]) + _cycles(g) + _oversized(files, cfg["file_max"])
-    advisory = _chokepoints(g, cfg["betweenness_max"])
+    advisory = _undersized(files, cfg["file_min"]) + _chokepoints(g, cfg["betweenness_max"])
     return blocking, advisory
 
 

@@ -76,8 +76,9 @@ presets for the 3 repos (packages-list model, no viewer/import-linter flags):
    — cardiac / mindscape: `packages=core,<trainer>,<viewer>` (they have all three dirs); synth:
    `packages=core,<trainer>`. Gate toggles: `enforce_arch_fitness=true`; astgrep/jscpd/class-shape per repo.
 2. `git diff` — ACCEPT the portable superset blocks (ruff select, vulture ignores, coverage exclude_lines);
-   KEEP the LOCAL-SLOT regions (cardiac's coverage omit, domain vulture `ignore_names`, arch thresholds).
-   Directional layer contracts are NOT shipped — a repo that wants them adds import-linter itself.
+   KEEP the LOCAL-SLOT regions (cardiac's coverage omit, domain vulture `ignore_names`, arch thresholds,
+   import-linter contracts). import-linter ships when `enable_import_linter` + >1 package — the kernel
+   starter contract is a LOCAL-SLOT the repo extends with its viewer/trainer/domain rules.
 3. Reconcile select drift: real repos are mid-ratchet. Jump to the curated-narrow select if clean, or
    override `select` in a local slot and ratchet.
 4. Commit `.copier-answers.yml` → the repo is now `copier update`-able.
@@ -280,3 +281,24 @@ Private-repo auth for all three: a git credential-store entry from the PAT, writ
 removed after. The one added cost vs public is a read-token/deploy-key secret in any CONSUMER's CI.
 
 Remaining: `knl` — script the remote path as a scaffold smoke/CI so it's regression-guarded, not manual.
+
+## Consolidation audit vs the 3 repos (2026-07-14)
+
+Re-audited cardiac-seg / mindscape / synthscape against the scaffold. The packages-list model is
+VALIDATED (all are multi-package: cardiac 3, mindscape 4, synth 2). Ruff narrow-select is the common
+FLOOR (synth ships it verbatim; cardiac/mindscape ratcheted past via the `ruff_select` answer). Three
+real gaps found + fixed:
+
+- **import-linter re-added (d59).** ALL 3 repos enforce it (≥ the "core is an independent kernel"
+  contract). The de-opinionate had dropped it, conflating the CONTRACTS (project-specific) with the GATE
+  (universal) — and `graph.py`'s cycle check does NOT cover a one-way forbidden import. Now
+  `enable_import_linter` (default true) ships `[tool.importlinter]` = `root_packages` + a kernel-
+  independence starter contract in a LOCAL-SLOT, guarded to >1 package (computed `use_import_linter`),
+  wired into nox/CI/pre-commit. Bite-test: inject a kernel→app import → `lint-imports` fails.
+- **file_min / _undersized (hz1).** All 3 have the advisory line-floor (off at file_min=0) in graph.py +
+  `[tool.structure]`; the scaffold lacked it. Ported (advisory, default off), unit-tested.
+- **jscpd enforced (it1).** cardiac + mindscape BLOCK on jscpd; only synth is advisory — the scaffold's
+  "advisory majority" default was a misread. Flipped to enforced in ci+nox (still off the commit hook: Node).
+
+Correctly NOT consolidated (single-repo): cardiac's `ty` type-checker, mindscape's `devtools/analytics.py`.
+Suite after fixes: **52 passed, 3 skipped**.

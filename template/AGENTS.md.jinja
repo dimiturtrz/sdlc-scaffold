@@ -28,9 +28,11 @@ The scaffold ships the **guardrails**, not a layering.{% if enforce_arch_fitness
 internal import graph honest (no cycles, no god-modules, no oversized files); thresholds live in
 `[tool.structure]`.{% endif %}
 
-If the project grows layers you want to enforce directionally (e.g. a viewer that must never import a
-trainer), that is **opt-in**: add `import-linter` contracts under `[tool.importlinter]` plus a
-`lint-imports` call in `noxfile.py` — see `devtools/README.md`. The scaffold does not impose it.
+{% if use_import_linter %}Directional layer rules (the kernel imports none of the others; a viewer never imports a trainer) are
+enforced by **import-linter** — a one-way forbidden import is no cycle, so it's the axis `graph.py` can't
+see. Contracts live in `[tool.importlinter]` (a `# >>> LOCAL-SLOT: import-contracts` region you extend),
+run via `lint-imports` in nox/CI/pre-commit.{% else %}Directional layer contracts (import-linter) are not shipped for this project (single package, or the
+toggle is off). Add `[tool.importlinter]` + a `lint-imports` call if it grows layers.{% endif %}
 
 ## Static-analysis gates — the ratchet
 
@@ -44,9 +46,10 @@ never a blanket ignore). The linter is a bug-finder, not cosmetics.
   (FBT), specific-exception-or-crash (BLE001/S), low complexity (C90/PLR), imports-at-top (PLC0415).
 - **vulture** (pinned `{{ vulture_version }}`) — dead-code at `min_confidence = 60`.
 - **coverage** — pytest-cov with a `--fail-under={{ coverage_floor }}` floor.
-{% if enforce_arch_fitness %}- **arch-fitness** — `python -m devtools.graph --assert`: god-module (fan-in/out), god-file (line
-  ceiling), and import-cycle thresholds from `[tool.structure]`. The layer-agnostic structural gate
-  (directional layer contracts are opt-in via import-linter — see above).
+{% if use_import_linter %}- **import-linter** — directional forbidden-import contracts (`[tool.importlinter]`); the layer axis graph.py can't express.
+{% endif %}{% if enforce_arch_fitness %}- **arch-fitness** — `python -m devtools.graph --assert`: god-module (fan-in/out), god-file, import-cycle,
+  and test-mirror (a logic module needs its `tests/unit/<pkg>/…/test_<name>.py`); thresholds in
+  `[tool.structure]`. Advisory: line-floor (off) + chokepoint.
 {% endif %}
 ## Conventions
 

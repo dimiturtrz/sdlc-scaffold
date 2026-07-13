@@ -31,6 +31,7 @@ Asked at copy time:
 | `enable_astgrep` | bool | false | ship ast-grep module-shape gate + `devtools/sg-rules` + `sgconfig.yml` |
 | `enable_jscpd` | bool | false | ship jscpd DRY gate + `devtools/jscpd.json` (advisory) |
 | `enable_class_shape_smells` | bool | false | ship the LCOM4 / data-clumps / namespace-state advisory explorers |
+| `enable_import_linter` | bool | true | ship import-linter directional contracts (guarded to >1 package via computed `use_import_linter`) |
 | `enable_beads` | bool | false | wire beads (bd) — a CLAUDE/AGENTS beads section + gitignore entries (`bd init` after gen) |
 | `coverage_floor` | int | 80 | `coverage report --fail-under` value |
 
@@ -55,9 +56,13 @@ Computed / never asked (`when: false`, one home in copier.yml):
 | 6 | ast-grep module-shape (`enable_astgrep`) | vendored ast-grep + our `sg-rules` | rule yml | scan paths = `packages` |
 | 7 | jscpd DRY (`enable_jscpd`) | vendored jscpd | `jscpd.json` threshold | scan paths = `packages` |
 | 8 | class-shape explorers (`enable_class_shape_smells`) | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
+| 9 | import-linter (`enable_import_linter` + >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
 
-Directional layer contracts (import-linter) are **not** a shipped gate — opt-in, documented in the
-generated `devtools/README.md`. `graph.py` covers the layer-agnostic structural axis (cycles included).
+import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import
+contracts — a one-way `core -> trainer` import is no cycle, so it passes `graph.py` but must fail here.
+The GATE is universal; the CONTRACTS are project-local (kernel-independence starter + slot). Guarded to
+>1 package (nothing to forbid in a single package) via the computed `use_import_linter`. jscpd is
+ENFORCED (blocks over threshold) in ci+nox — the cardiac/mindscape majority — not a commit hook (Node).
 
 ## PORTABLE SUPERSET VALUES
 
@@ -96,6 +101,7 @@ exclude_lines = [
 ```toml
 bottleneck_degree = 8    # fan-in AND fan-out both over this = god-module
 file_max = 750           # god-file line ceiling
+file_min = 0             # advisory line floor — 0 = OFF (no honest universal floor)
 betweenness_max = 0.10   # advisory chokepoint threshold
 ```
 
