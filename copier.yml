@@ -4,6 +4,8 @@ _templates_suffix: .jinja
 _answers_file: .copier-answers.yml
 
 # Exclude scaffold-meta from generated output (belongs to the template repo, not the project).
+# Toggle-keyed entries render to "" (a gitignore no-op) when the feature is ON, and to the path
+# when OFF — so clean filenames live in template/ and copier drops the ones a project didn't ask for.
 _exclude:
   - "copier.yml"
   - "SPEC.md"
@@ -12,6 +14,14 @@ _exclude:
   - ".venv"
   - "__pycache__"
   - "*.pyc"
+  - "{% if not has_viewer %}{{ viewer_name }}{% endif %}"
+  - "{% if not has_viewer %}tests/viewer{% endif %}"
+  - "{% if not enable_astgrep %}devtools/sg-rules{% endif %}"
+  - "{% if not enable_astgrep %}devtools/sgconfig.yml{% endif %}"
+  - "{% if not enable_jscpd %}devtools/jscpd.json{% endif %}"
+  - "{% if not enable_class_shape_smells %}devtools/lcom.py{% endif %}"
+  - "{% if not enable_class_shape_smells %}devtools/data_clumps.py{% endif %}"
+  - "{% if not enable_class_shape_smells %}devtools/state_candidates.py{% endif %}"
 
 project_name:
   type: str
