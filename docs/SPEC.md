@@ -47,6 +47,8 @@ Asked at copy time:
 | `domain` | enum | `ml` | `ml` = numpy dep + ML-workflow gitignore (data/`paths.yaml`/MLflow/`runs/`) + data-skip CI env; `none` = domain-neutral |
 | `coverage_floor` | int | 80 | `coverage report --fail-under` value |
 | `author` | str | `project_name` | copyright holder for the generated MIT `LICENSE` (bd c64 — a scaffold with no LICENSE leaves every gen all-rights-reserved) |
+| `lint_paths` / `jscpd_paths` | str | `packages` (space-joined) | R1 hygiene scan scope (ruff / jscpd) — Enter to accept, or widen to a viewer/tests tree. ASKED (not computed) so a non-default value persists + survives `copier update` (bd fsl) |
+| `data_env_var` | str (ml only) | `{PROJECT_UPPER}_DATA` | ml data-skip CI env var NAME — asked for `domain=ml` only, persisted so a repo's real name (e.g. `CARDIAC_DATA`) survives update instead of reverting to the derived default (bd skr GAP3a / fsl) |
 
 That's the whole prompt surface. **The quality gates + beads are NON-optional (no toggles): arch-fitness,
 import-linter, ast-grep, jscpd, class-shape, beads are always shipped** — the house bar (bd rji). Their
@@ -72,8 +74,6 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
 | `ruff_version` / `vulture_version` / `nox_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
-| `lint_paths` / `jscpd_paths` | `packages` (space-joined) | R1 hygiene scan scope, widenable in `.copier-answers.yml` (9mu) |
-| `data_env_var` | `{PROJECT_UPPER}_DATA` | the ml data-skip CI env var NAME — a per-repo FACT (a repo whose adapters read a different name overrides it so tests SKIP not ERROR; bd skr GAP3a) |
 
 ## Gate inventory
 

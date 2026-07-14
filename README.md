@@ -125,6 +125,10 @@ Five questions, asked once:
 | `coverage_floor` | `80` | `coverage report --fail-under` |
 | `author` | `project_name` | copyright holder for the generated MIT `LICENSE` |
 
+Three more default from `packages`/name and are usually accepted with Enter — `lint_paths` / `jscpd_paths`
+(widen the hygiene-lint scope to a viewer or tests tree) and `data_env_var` (the env var your ML data
+adapters read, ml only). They're stored answers, so a non-default survives `copier update`.
+
 Every gate is on from the first generation — there are no feature toggles. import-linter is the sole
 self-gating one (it needs >1 package to have anything to forbid).
 

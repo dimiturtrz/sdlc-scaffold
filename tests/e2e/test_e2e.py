@@ -94,6 +94,7 @@ def test_expected_layout(project):
     assert ('"jaxtyping"' in pyproject_text) == ml
     assert ('"beartype"' in pyproject_text) == ml
     assert ('"F722"' in pyproject_text) == ml, "F722 ignore is ML-only (jaxtyping shape strings)"
+    assert ('"F821"' in pyproject_text) == ml, "F821 ignore is ML-only (single-axis jaxtyping shapes — kqk)"
     assert ("[tool.shape_contracts]" in pyproject_text) == ml
     assert ("jaxtyped(typechecker=" in (path / "devtools" / "README.md").read_text()) == ml, (
         "the @shapecheck helper snippet is ML-only"
@@ -120,7 +121,7 @@ def test_expected_layout(project):
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
     # skr GAP1: an explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the enforced-lint CLI
     # repeats the ml F722 waiver (jaxtyping dim strings) — else a fresh ml gen red-CIs on its own config.
-    assert ("--ignore F722" in ci_text) == ml, "enforced-lint carries the F722 CLI waiver iff ml (skr GAP1)"
+    assert ("--ignore F722,F821" in ci_text) == ml, "enforced-lint CLI waives F722+F821 iff ml (skr GAP1 + kqk)"
     # skr GAP3a: the data-skip env uses the per-repo data_env_var NAME (default project-derived), ml-only.
     proj_upper = answers["project_name"].upper().replace("-", "_")
     assert (f"{proj_upper}_DATA: /tmp/nodata" in ci_text) == ml, "ml CI sets the derived data-skip env (skr GAP3a)"
@@ -522,3 +523,37 @@ def test_copier_update_heals_portable_preserves_local(tmp_path):
     assert "file_max = 500" in result, "portable change should flow in"
     assert "MY_LOCAL_DIR" in result, "local-slot edit must survive the 3-way merge"
     assert not list(project.rglob("*.rej")), "no merge conflicts expected"
+
+
+def test_copier_update_preserves_nondefault_fact_vars(tmp_path):
+    """fsl (P1): a non-default lint_paths / data_env_var must PERSIST in .copier-answers.yml and SURVIVE
+    `copier update` — a when:false computed var is neither stored nor honored on the update path, so a
+    widened lint scope / custom data-env name was silently lost (tests errored instead of skipping)."""
+    scaffold = tmp_path / "scaf"
+    scaffold.mkdir()
+    make_scaffold(scaffold)  # tags v0.1.0
+
+    project = tmp_path / "proj"
+    generate(scaffold, project, {**COMBOS["full"], "lint_paths": "core viewer tests", "data_env_var": "CUSTOM_DATA"})
+    git_init_commit(project)
+
+    # the FACT values are asked (when:true) -> persisted in the answers file
+    answers = (project / ".copier-answers.yml").read_text()
+    assert "lint_paths: core viewer tests" in answers, "non-default lint_paths must persist (fsl)"
+    assert "data_env_var: CUSTOM_DATA" in answers, "non-default data_env_var must persist (fsl)"
+
+    # bump a portable rule, tag v0.2.0
+    tp = scaffold / "template" / "pyproject.toml.jinja"
+    tp.write_text(tp.read_text().replace("file_max = 750", "file_max = 500"))
+    run(["git", "commit", "-aqm", "v0.2.0"], scaffold)
+    run(["git", "tag", "v0.2.0"], scaffold)
+
+    run(["uvx", COPIER, "update", "--defaults", "--trust"], project)
+
+    # the FACTS SURVIVE the update (the whole point of fsl)
+    ci = (project / ".github" / "workflows" / "ci.yml").read_text()
+    assert "check core viewer tests --select" in ci, "widened lint_paths survives copier update (fsl)"
+    assert "CUSTOM_DATA: /tmp/nodata" in ci, "custom data_env_var survives copier update (fsl)"
+    answers2 = (project / ".copier-answers.yml").read_text()
+    assert "lint_paths: core viewer tests" in answers2 and "data_env_var: CUSTOM_DATA" in answers2
+    assert "file_max = 500" in (project / "pyproject.toml").read_text(), "portable rule still flows in"

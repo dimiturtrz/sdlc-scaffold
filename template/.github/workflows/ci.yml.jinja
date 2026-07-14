@@ -25,11 +25,11 @@ jobs:
           enable-cache: true
       # ENFORCED (blocks the merge): the full house select over shipped source. Clean on a fresh gen;
       # catches REGRESSION (new unused import / undefined name / unsorted imports / magic number / ...).
-      # An explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the ml F722 waiver (jaxtyping
-      # `Float[Tensor, "b c h w"]` dim strings misread as bad forward refs) must be repeated on the CLI —
-      # else a fresh ml gen with any jaxtyping annotation red-CIs on its own shipped config (bd skr GAP1).
+      # An explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the ml jaxtyping waiver must be
+      # repeated on the CLI — F722 (multi-token dim strings "b c h w") + F821 (single-axis "n" = an undefined
+      # forward-ref). Else a fresh ml gen with any jaxtyping annotation red-CIs on its own config (skr/kqk).
       - name: Lint — enforced (shipped source, full select)
-        run: uvx ruff@{{ ruff_version }} check {{ lint_paths }} --select {{ ruff_select }}{% if enable_ml %} --ignore F722{% endif %}
+        run: uvx ruff@{{ ruff_version }} check {{ lint_paths }} --select {{ ruff_select }}{% if enable_ml %} --ignore F722,F821{% endif %}
       # ADVISORY (never blocks): full curated config over the whole tree, surfaces any pending families +
       # the advisory-only codes (E501/SLF001 — cosmetic / house-gate-conflicting, bd 4c2/8ex): reported,
       # never a merge gate.

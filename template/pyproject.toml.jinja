@@ -34,9 +34,13 @@ extend-exclude = ["docs"{% if enable_ml %}, "learning", "research", "interpretat
 [tool.ruff.lint]
 select = [{% for c in ruff_select.split(",") %}"{{ c }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 {% if enable_ml %}ignore = [
-    # jaxtyping shape strings — `Float[Tensor, "b c h w"]` is a deliberate runtime-checked annotation;
-    # F722 misreads the dim string as a malformed forward ref. jaxtyping's own FAQ prescribes disabling it.
+    # jaxtyping shape strings are deliberate runtime-checked annotations that ruff's forward-ref parser
+    # misreads (jaxtyping's own FAQ prescribes disabling both): F722 = a multi-token dim string
+    # `Float[Tensor, "b c h w"]` (invalid forward-ref syntax); F821 = a single-axis `Float[Tensor, "n"]`
+    # (a valid forward-ref to the undefined name `n`). Needed so a 1-D shape passes the now-blocking
+    # shape-contracts gate (bd kqk) — the shape gate REQUIRES an annotation the lint would otherwise reject.
     "F722",
+    "F821",
 ]{% else %}ignore = []{% endif %}
 
 # pep8-naming (N): case convention is a UNIVERSAL rule; the allowlisted idioms are per-repo FACTS. Every

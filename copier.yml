@@ -34,28 +34,20 @@ use_import_linter:
 
 # Hygiene-gate scan scope (bd 9mu). ruff + jscpd are R1 HYGIENE gates — they may run WIDER than the R2/R3
 # arch set (`packages`, used by graph.py / ast-grep): a repo with a viewer or a tests tree worth linting
-# keeps them covered here rather than LOSING that coverage to adopt (owner no-dodge / superset rule — the
-# R1 > R2/R3 scope principle vip.3 floated but didn't wire). Default = `packages` (space-joined); a repo
-# widens by setting these in its .copier-answers.yml (e.g. "core trainer viewer tests" / a web-TS dir).
+# keeps them covered here rather than LOSING that coverage to adopt (owner no-dodge / superset rule).
+# ASKED (when:true) so a non-default value PERSISTS in .copier-answers.yml and survives `copier update`
+# (bd fsl — a `when:false` computed var is neither stored nor honored on the update path, so a widened
+# scope was silently lost). Default = `packages` (space-joined); accept it with Enter, or widen (e.g.
+# "core trainer viewer tests" / a web-TS dir). `--data lint_paths=...` overrides non-interactively.
 lint_paths:
   type: str
+  help: "Scope for the R1 hygiene lints (ruff enforced) — space-separated; default = packages, widen for a viewer/tests tree"
   default: "{{ packages.split(',') | map('trim') | join(' ') }}"
-  when: false
 
 jscpd_paths:
   type: str
+  help: "Scope for the jscpd DRY gate — space-separated; default = packages, widen e.g. to a web-TS source dir"
   default: "{{ packages.split(',') | map('trim') | join(' ') }}"
-  when: false
-
-# Data-skip env var NAME (bd skr GAP3a). domain=ml tests read their data root from an env var so a runner
-# with no dataset points it at an empty dir and data-gated tests SKIP (not error). The var NAME is a per-repo
-# FACT — a repo whose code reads CARDIAC_DATA can't adopt a CI that sets CARDIOSEG_DATA (tests would error,
-# not skip). Default = the project-name-derived name; a repo overrides it in .copier-answers.yml to match
-# whatever name its adapters actually read. Only used when enable_ml (the data-skip env block is ml-gated).
-data_env_var:
-  type: str
-  default: "{{ project_name | upper | replace('-','_') }}_DATA"
-  when: false
 
 domain:
   type: str
@@ -70,6 +62,18 @@ enable_ml:
   type: bool
   default: "{{ domain == 'ml' }}"
   when: false
+
+# Data-skip env var NAME (bd skr GAP3a). domain=ml tests read their data root from an env var so a runner
+# with no dataset points it at an empty dir and data-gated tests SKIP (not error). The var NAME is a per-repo
+# FACT — a repo whose code reads CARDIAC_DATA can't adopt a CI that sets CARDIOSEG_DATA (tests would ERROR,
+# not skip, with no LOCAL-SLOT to inject it). ASKED for ml (when=enable_ml) so the value PERSISTS + survives
+# `copier update` (bd fsl); not asked for domain=none (the data-skip env block is ml-gated, so it's unused).
+# MUST come after `enable_ml` — copier evaluates vars top-to-bottom, so `when` can only see vars above it.
+data_env_var:
+  type: str
+  help: "Env var name the ml data adapters read for the dataset root (CI points it at an empty dir so data-gated tests skip)"
+  default: "{{ project_name | upper | replace('-','_') }}_DATA"
+  when: "{{ enable_ml }}"
 
 coverage_floor:
   type: int
