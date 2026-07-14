@@ -1,5 +1,8 @@
 # sdlc-scaffold
 
+**v1.0** — feature-complete guardrail set (all seven properties gated), stable copier contract. In use by
+three converged repos; upgrades flow by `copier update`.
+
 A [copier](https://copier.readthedocs.io) template that installs a codebase's **structural guardrails** —
 a set of executable checks that keep the code within stated architectural bounds as it grows, enforced
 identically at commit, locally, and in CI. It ships the guardrails, not a program: no application code, no
