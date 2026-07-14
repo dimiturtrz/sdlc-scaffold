@@ -19,6 +19,8 @@ import logging
 from collections import Counter
 from pathlib import Path
 
+from devtools.omit import coverage_omit, matches_omit
+
 log = logging.getLogger("devtools.state_candidates")
 
 _SELF = {"self", "cls"}
@@ -53,11 +55,20 @@ def _is_pydantic_config(cls: ast.ClassDef) -> bool:
     return any(isinstance(b, ast.Name) and b.id == "BaseModel" for b in cls.bases)
 
 
+def _is_autograd_function(cls: ast.ClassDef) -> bool:
+    """A torch.autograd.Function (base `Function` / `autograd.Function`): forward/backward thread `ctx`
+    by the framework API — a contract, not promotable instance state. Skip like a pydantic config."""
+    return any(
+        (isinstance(b, ast.Name) and b.id == "Function") or (isinstance(b, ast.Attribute) and b.attr == "Function")
+        for b in cls.bases
+    )
+
+
 def shared_state(cls: ast.ClassDef) -> dict[str, int]:
     """Param names carried by >=2 and >=half of a class's staticmethods = its latent instance state.
-    Empty if the class has an __init__ (already stateful), is a pydantic config, is a CLI command, or
-    has too few methods."""
-    if _is_pydantic_config(cls):
+    Empty if the class has an __init__ (already stateful), is a pydantic config, an autograd.Function, a
+    CLI command, or has too few methods."""
+    if _is_pydantic_config(cls) or _is_autograd_function(cls):
         return {}
     if any(isinstance(n, ast.FunctionDef) and n.name == "__init__" for n in cls.body):
         return {}
@@ -84,10 +95,15 @@ def analyze(path: Path) -> list[tuple[int, str, int, dict[str, int]]]:
 
 
 def scan(packages: list[str]) -> list[tuple[int, str, str, int, dict[str, int]]]:
-    """Ranked (score, class, file, n_methods, shared) across every .py under the packages, high score first."""
+    """Ranked (score, class, file, n_methods, shared) across every .py under the packages, high score
+    first. Coverage-omitted shells (`[tool.coverage] omit`, via omit.py — the same 'not logic' set the
+    test-mirror gate exempts) are skipped: a runner/adapter's shared params are its data, not identity."""
+    omit = coverage_omit()
     rows = []
     for pkg in packages:
         for path in sorted(Path(pkg).rglob("*.py")):
+            if matches_omit(str(path), omit):
+                continue
             rows.extend((sc, name, str(path), n, sh) for sc, name, n, sh in analyze(path))
     return sorted(rows, reverse=True)
 

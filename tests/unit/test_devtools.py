@@ -79,6 +79,21 @@ def test_lcom4_ignores_fewer_than_two_methods(devtools):
     assert lcom._is_split_candidate(_cls(src)) is None
 
 
+def test_lcom_transformer_contract_excluded(devtools):
+    lcom = devtools["lcom"]
+    # fit writes learned state, transform reads different state -> raw LCOM4=2, but it's the sklearn
+    # duck-typed contract (the split IS the interface), so it's exempt (bd 76i)
+    src = "class Scaler:\n    def fit(self, X):\n        self.mean = X\n    def transform(self, X):\n        return self.scale\n"
+    assert lcom.lcom4(_cls(src))[0] == 2, "fit/transform touch disjoint state -> raw LCOM4 is 2"
+    assert lcom._is_split_candidate(_cls(src)) is None, "but fit+transform is exempt as the sklearn contract"
+
+
+def test_lcom_fit_call_contract_excluded(devtools):
+    lcom = devtools["lcom"]
+    src = "class Est:\n    def fit(self, X):\n        self.a = X\n    def __call__(self, X):\n        return self.b\n"
+    assert lcom._is_split_candidate(_cls(src)) is None, "fit + __call__ is the same duck-typed contract"
+
+
 # ---- data_clumps.py — Fowler data clumps (vq7) -----------------------------------------------------
 
 
@@ -166,6 +181,32 @@ def test_shared_state_skips_pydantic_and_command(devtools):
     command = "class Cmd:\n    @staticmethod\n    def add_args(cfg, p): ...\n    @staticmethod\n    def run(cfg, a): ...\n"
     assert shared_state(_cls(pydantic)) == {}
     assert shared_state(_cls(command)) == {}
+
+
+def test_shared_state_skips_autograd_function(devtools):
+    shared_state = devtools["state_candidates"].shared_state
+    # forward/backward thread ctx by the torch.autograd.Function contract, not latent instance state (76i)
+    src = (
+        "class GradReverse(Function):\n"
+        "    @staticmethod\n    def forward(ctx, x):\n        return x\n"
+        "    @staticmethod\n    def backward(ctx, g):\n        return g\n"
+    )
+    assert shared_state(_cls(src)) == {}, "autograd.Function threads ctx by contract, not latent state"
+
+
+def test_scan_skips_coverage_omit_shells(devtools, tmp_path, monkeypatch):
+    sc = devtools["state_candidates"]
+    monkeypatch.chdir(tmp_path)
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "shell.py").write_text(_BAG)  # a namespace bag that WOULD flag (load/save thread cfg)
+    # coverage-omitted -> the shell is skipped (its shared params are data, not object identity)
+    (tmp_path / "pyproject.toml").write_text('[tool.coverage.run]\nomit = ["pkg/shell.py"]\n')
+    assert sc.scan(["pkg"]) == [], "a coverage-omitted shell is not a state-promotion candidate"
+    # not omitted -> the same bag surfaces (proves the skip fires, not a broken scan)
+    (tmp_path / "pyproject.toml").write_text("[tool.coverage.run]\nomit = []\n")
+    assert sc.scan(["pkg"]), "un-omitted, the namespace bag is flagged"
 
 
 # ---- graph.py — arch-fitness gate (pjs) ------------------------------------------------------------

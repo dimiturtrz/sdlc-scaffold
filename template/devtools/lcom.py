@@ -136,10 +136,24 @@ def lcom4(cls: ast.ClassDef) -> tuple[int, list[list[str]]]:
     return len(comps), comps
 
 
+def _is_sklearn_contract(cls: ast.ClassDef) -> bool:
+    """A duck-typed sklearn/transform contract: `fit` + (`transform` | `__call__`). The disjoint split
+    between fit-state (writes learned params) and transform-read IS the interface, not a fused class —
+    exempt it like a subclassed interface-impl (a name-based heuristic; the contract has no base class)."""
+    names = {m.name for m in cls.body if isinstance(m, ast.FunctionDef)}
+    return "fit" in names and ("transform" in names or "__call__" in names)
+
+
 def _is_split_candidate(cls: ast.ClassDef) -> tuple[int, list[list[str]]] | None:
     """(lcom4, components) if `cls` is a concrete stateful class that genuinely splits, else None."""
     methods = _instance_methods(cls)
-    if len(methods) < _MIN_METHODS or _is_impl(cls) or _is_abstract(cls) or all(_is_trivial(m) for m in methods):
+    if (
+        len(methods) < _MIN_METHODS
+        or _is_impl(cls)
+        or _is_abstract(cls)
+        or _is_sklearn_contract(cls)
+        or all(_is_trivial(m) for m in methods)
+    ):
         return None
     score, comps = lcom4(cls)
     return (score, comps) if score >= _MIN_SPLIT else None
