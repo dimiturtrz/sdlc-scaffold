@@ -93,9 +93,10 @@ jobs:
       # Class-shape smells — ADVISORY explorers (never block): LCOM4 cohesion, Fowler data-clumps, and
       # namespace-classes with latent shared state. Heuristics that rank refactor candidates — surfaced
       # for the reviewer, never a merge gate. Each only prints a ranked report and exits 0.
-      - name: Class-shape smells — advisory (LCOM / data-clumps / namespace-state)
+      - name: Class-shape + magic-literal smells — advisory (LCOM / data-clumps / namespace-state / literals)
         continue-on-error: true
         run: |
           uv run python -m devtools.state_candidates {{ pkgs }}
           uv run python -m devtools.lcom {{ pkgs }}
           uv run python -m devtools.data_clumps {{ pkgs }}
+          uv run python -m devtools.magic_literals {{ pkgs }}

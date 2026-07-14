@@ -62,6 +62,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 7 | jscpd DRY | vendored jscpd | `jscpd.json` threshold | scan paths = `packages` |
 | 8 | class-shape explorers | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
 | 9 | import-linter (self-gates on >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
+| 10 | magic-literals (advisory; opt-in ratchet) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; `--max-strings`/`--max-key-sets` ceilings a repo sets in its own CI |
 
 import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import
 contracts — a one-way `core -> trainer` import is no cycle, so it passes `graph.py` but must fail here.
@@ -75,9 +76,9 @@ via the computed `use_import_linter`. Every other gate is unconditional (no togg
 ### ruff (`[tool.ruff]` + `[tool.ruff.lint]`)
 ```toml
 line-length = 120
-# select = ruff_select (copier.yml, single source) — curated-narrow, the cardiac/synth majority:
-# specific codes, NOT broad families (deliberately excludes UP/SIM/C4 opinionated churn).
-select = ["F","B","E501","I","T201","FBT","BLE001","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100"]
+# select = ruff_select (copier.yml, single source) — curated-narrow: specific codes, NOT broad families
+# (excludes UP/C4 opinionated churn). SIM is IN — the 2/3 majority (cardiac-seg + mindscape) graduated it (bd 7g0).
+select = ["F","B","E501","I","T201","FBT","BLE001","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","SIM"]
 ignore = ["RUF001","RUF002","RUF003"]    # intentional ≈ × unicode
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]                 # re-export facades

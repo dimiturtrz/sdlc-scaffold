@@ -33,6 +33,7 @@ def devtools(tmp_path_factory):
     import devtools.data_clumps as data_clumps
     import devtools.graph as graph
     import devtools.lcom as lcom
+    import devtools.magic_literals as magic_literals
     import devtools.omit as omit
     import devtools.state_candidates as state_candidates
 
@@ -42,4 +43,5 @@ def devtools(tmp_path_factory):
         "state_candidates": state_candidates,
         "graph": graph,
         "omit": omit,
+        "magic_literals": magic_literals,
     }

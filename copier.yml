@@ -49,12 +49,13 @@ coverage_floor:
   default: 80
 
 # Single source of truth for the ruff select codes — rendered into pyproject.toml, ci.yml, noxfile.py
-# and .pre-commit-config.yaml so the list lives in ONE place. Curated-narrow (the cardiac/synthscape
-# majority): specific codes, NOT broad families; deliberately excludes UP/SIM/C4 (opinionated churn).
+# and .pre-commit-config.yaml so the list lives in ONE place. Curated-narrow: specific codes, NOT broad
+# families; deliberately excludes UP/C4 (opinionated churn). SIM (flake8-simplify) is IN — the 2/3
+# majority (cardiac-seg + mindscape both run it) graduated it to the house bar (bd 7g0).
 # `when: false` = never asked, always this value.
 ruff_select:
   type: str
-  default: "F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100"
+  default: "F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,SIM"
   when: false
 
 # Single source of truth for the pinned tool versions — rendered into ci.yml / noxfile.py /

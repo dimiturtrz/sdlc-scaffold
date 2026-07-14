@@ -305,3 +305,54 @@ def test_coverage_omit_reads_pyproject(devtools, tmp_path):
     pp.write_text('[tool.coverage.run]\nomit = ["a/*.py", "b/**"]\n')
     assert coverage_omit(str(pp)) == ["a/*.py", "b/**"]
     assert coverage_omit(str(tmp_path / "absent.toml")) == [], "absent file -> empty omit"
+
+
+# ---- magic_literals.py — recurring string vocab + repeated dict key-sets (7g0) ----------------------
+
+
+def test_magic_literals_flags_recurring_token(devtools, tmp_path):
+    magic = devtools["magic_literals"]
+    # a value-position token appearing >= 4x is vocabulary; 3x is incidental
+    hot = "".join(f"def f{i}():\n    return g('widget')\n" for i in range(4))
+    cold = "".join(f"def c{i}():\n    return g('gadget')\n" for i in range(3))
+    pkg = _write_pkg(tmp_path, "ml_tokens", hot + cold)
+    strings = dict(magic.scan_strings([pkg]))
+    assert strings == {"widget": 4}, f"only the >=4x token is vocabulary, got {strings}"
+
+
+def test_magic_literals_defers_comparison_key_and_subscript(devtools, tmp_path):
+    magic = devtools["magic_literals"]
+    # the SAME token 4x but all in contexts owned elsewhere (comparison=ruff, dict key + subscript=schema)
+    src = (
+        "def a(x, d):\n"
+        "    if x == 'kind':\n"        # comparison operand -> ruff PLR2004
+        "        return d['kind']\n"   # subscript -> field ref
+        "    return {'kind': 1}\n"     # dict key -> key-set smell, not a value token
+        "def b(x):\n"
+        "    return x == 'kind'\n"     # comparison operand again
+    )
+    pkg = _write_pkg(tmp_path, "ml_excluded", src)
+    assert magic.scan_strings([pkg]) == [], "tokens only in comparison/key/subscript are deferred, not counted"
+
+
+def test_magic_literals_finds_repeated_key_set(devtools, tmp_path):
+    magic = devtools["magic_literals"]
+    # the same constant-string key-set built in 2 sites = an implicit record schema
+    src = "def a():\n    return {'x': 1, 'y': 2}\ndef b():\n    return {'x': 3, 'y': 4}\n"
+    pkg = _write_pkg(tmp_path, "ml_keysets", src)
+    rows = magic.scan_key_sets([pkg])
+    assert len(rows) == 1
+    n_sites, keys, _ = rows[0]
+    assert n_sites == 2
+    assert keys == ("x", "y")
+    # a single construction site is not a reused schema
+    solo = _write_pkg(tmp_path, "ml_solo", "def a():\n    return {'x': 1, 'y': 2}\n")
+    assert magic.scan_key_sets([solo]) == []
+
+
+def test_magic_literals_ratchet_bites_over_ceiling(devtools):
+    check = devtools["magic_literals"].check_ratchet
+    assert check(5, 2, 4, 9) == ["strings 5 > 4"], "over the string ceiling must report"
+    assert check(2, 12, 9, 11) == ["key-sets 12 > 11"], "over the key-set ceiling must report"
+    assert check(5, 12, 9, 20) == [], "under both ceilings is silent"
+    assert check(999, 999, None, None) == [], "no ceilings = advisory (report-only), never bites"

@@ -55,6 +55,10 @@ def lint(session: nox.Session) -> None:
     # Advisory class-shape explorers — print a ranked report, always exit 0 (never block).
     for _tool in ("state_candidates", "lcom", "data_clumps"):
         session.run("uv", "run", "python", "-m", f"devtools.{_tool}", *LAYERS, external=True)
+    # Advisory magic-literal detector — recurring string vocab + repeated dict schemas (StrEnum/record
+    # candidates), the non-comparison axis ruff PLR2004 can't see. Report-only (no --max-* ceilings);
+    # a repo opts into the count-ratchet by passing --max-strings/--max-key-sets in its own CI.
+    session.run("uv", "run", "python", "-m", "devtools.magic_literals", *LAYERS, external=True)
 
 
 @nox.session(venv_backend="none")

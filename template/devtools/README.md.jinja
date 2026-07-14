@@ -12,6 +12,7 @@ list (space-separated below as `<packages>`). Every tool ships — the gates are
 - **state_candidates.py** — namespace classes with latent shared instance state. `python -m devtools.state_candidates <packages>`.
 
   The three class-shape tools are ADVISORY explorers — they print a ranked report and always exit 0, never blocking.
+- **magic_literals.py** — the non-comparison, cross-file axis ruff PLR2004 can't see: recurring identifier-shaped string literals (>= 4x → `StrEnum`/named-constant candidate) + repeated dict key-sets (a drift-prone implicit record → dataclass/TypedDict). `python -m devtools.magic_literals <packages>` (advisory report). Opt into a regression **count-ratchet** by passing `--max-strings N --max-key-sets N` in CI — the current floor freezes as a ceiling, a NEW recurring literal fails the merge (migrate it, or raise the ceiling with a reason).
 
 ## Directional layer contracts — import-linter{% if not use_import_linter %} (not shipped here){% endif %}
 

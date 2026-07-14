@@ -66,7 +66,7 @@ def test_expected_layout(project):
     # the gates are always-on now — every gate's files always ship
     assert (path / "devtools" / "sgconfig.yml").exists()
     assert (path / "devtools" / "jscpd.json").exists()
-    for tool in ("lcom.py", "data_clumps.py", "state_candidates.py"):
+    for tool in ("lcom.py", "data_clumps.py", "state_candidates.py", "magic_literals.py"):
         assert (path / "devtools" / tool).exists()
     # beads is always wired -> the CLAUDE/AGENTS beads section is always present
     assert "bd (beads)" in (path / "CLAUDE.md").read_text()
@@ -181,6 +181,12 @@ def test_class_shape_smells(project):
     # advisory explorers — must run clean (exit 0); findings are fine, they never block
     for tool in ("state_candidates", "lcom", "data_clumps"):
         run(["uv", "run", "python", "-m", f"devtools.{tool}", *layers(name)], path)
+
+
+def test_magic_literals_advisory_runs_clean(project):
+    name, path = project
+    # advisory report (no --max-* ceilings) — always exit 0, like the class-shape explorers
+    run(["uv", "run", "python", "-m", "devtools.magic_literals", *layers(name)], path)
 
 
 # ---- gates, via the runners ------------------------------------------------------------------------
@@ -298,6 +304,21 @@ def test_graph_assert_catches_unmirrored(full_project):
     result = assert_bites(full_project, GRAPH_ASSERT, mutate)
     assert "test mirror" in (result.stdout + result.stderr)
     assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+# magic_literals is advisory by default; passing --max-strings opts into the count-ratchet, which BITES.
+MAGIC_RATCHET = ["uv", "run", "python", "-m", "devtools.magic_literals", "full_pkg", "--max-strings", "0"]
+
+
+def test_magic_literals_ratchet_bites(full_project):
+    # the clean seed has no recurring identifier-vocab -> passes even at a zero ceiling
+    assert run(MAGIC_RATCHET, full_project).returncode == 0, "clean seed is under the zero string ceiling"
+    # inject a token repeated >=4x in value position -> a recurring literal over the ceiling (AST-only, so
+    # the undefined `_use` never runs). Restores before asserting (assert_bites), keeping the fixture clean.
+    inject = "\n" + "\n".join(f"def _m{i}():\n    return _use('widget')\n" for i in range(4)) + "\n"
+    result = assert_bites(full_project, MAGIC_RATCHET, lambda p: _append(p / "full_pkg" / "math_ops.py", inject))
+    assert "ratchet exceeded" in (result.stdout + result.stderr)
+    assert run(MAGIC_RATCHET, full_project).returncode == 0, "passes again once reverted"
 
 
 def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):

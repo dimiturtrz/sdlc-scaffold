@@ -1,8 +1,8 @@
 # sdlc-scaffold
 
 A [copier](https://copier.readthedocs.io) template for the personal-projects SDLC guardrail stack:
-ruff · vulture · coverage floor · arch-fitness (`graph.py --assert`) · optional ast-grep + jscpd +
-class-shape explorers · nox task runner · pre-commit gate binding · versioned rollout via `copier update`.
+ruff · vulture · coverage floor · arch-fitness (`graph.py --assert`) · ast-grep + jscpd +
+class-shape explorers + magic-literals · nox task runner · pre-commit gate binding · versioned rollout via `copier update`.
 
 It ships **guardrails, not package architecture** — the gates target whatever `packages` you declare and
 impose no import layering. (One structural choice the arch gate *does* make, and it's configurable: the
@@ -61,7 +61,7 @@ package). The ruff select + pinned tool versions are single-sourced (`when: fals
 
 - `pyproject.toml` — portable ruff/vulture/coverage superset blocks + marked LOCAL-SLOT regions.
 - `noxfile.py` / `.pre-commit-config.yaml` / `.github/workflows/ci.yml` — the same gates as local, commit, merge.
-- `devtools/` — the fitness tools (`graph.py`, `omit.py`, ast-grep rules, jscpd config, class-shape explorers) + a `README.md`.
+- `devtools/` — the fitness tools (`graph.py`, `omit.py`, ast-grep rules, jscpd config, class-shape explorers, `magic_literals.py`) + a `README.md`.
 - `tests/{unit,integration,e2e}/`, `docs/`, `CLAUDE.md`/`AGENTS.md` — the skeleton. **No package code** — you bring it.
 
 Directional layer contracts (e.g. the kernel imports none of the others; a viewer never imports a
