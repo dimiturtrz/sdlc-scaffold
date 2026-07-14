@@ -32,6 +32,21 @@ use_import_linter:
   default: "{{ (packages.split(',') | length) > 1 }}"
   when: false
 
+# Hygiene-gate scan scope (bd 9mu). ruff + jscpd are R1 HYGIENE gates — they may run WIDER than the R2/R3
+# arch set (`packages`, used by graph.py / ast-grep): a repo with a viewer or a tests tree worth linting
+# keeps them covered here rather than LOSING that coverage to adopt (owner no-dodge / superset rule — the
+# R1 > R2/R3 scope principle vip.3 floated but didn't wire). Default = `packages` (space-joined); a repo
+# widens by setting these in its .copier-answers.yml (e.g. "core trainer viewer tests" / a web-TS dir).
+lint_paths:
+  type: str
+  default: "{{ packages.split(',') | map('trim') | join(' ') }}"
+  when: false
+
+jscpd_paths:
+  type: str
+  default: "{{ packages.split(',') | map('trim') | join(' ') }}"
+  when: false
+
 domain:
   type: str
   help: "Project domain — `ml` adds the numpy dep + ML-workflow gitignore (data-outside-repo/paths.yaml, MLflow, training runs) + the data-skip CI env; `none` = a domain-neutral Python scaffold."

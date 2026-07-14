@@ -13,12 +13,16 @@ RUFF = "ruff@{{ ruff_version }}"
 VULTURE = "vulture@{{ vulture_version }}"
 SELECT = "{{ ruff_select }}"
 LAYERS = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+# ruff + jscpd are R1 HYGIENE gates — they may scan WIDER than the R2/R3 arch set LAYERS (a viewer / tests
+# tree worth linting). Default = LAYERS; widen via lint_paths/jscpd_paths in .copier-answers.yml (bd 9mu).
+LINT_LAYERS = [{% for p in lint_paths.split(" ") %}"{{ p }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+JSCPD_LAYERS = [{% for p in jscpd_paths.split(" ") %}"{{ p }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 
 
 @nox.session(venv_backend="none")
 def lint(session: nox.Session) -> None:
     """ruff check (enforced) + ruff format --check (advisory) + vulture{% if use_import_linter %} + import-linter{% endif %} + arch-fitness + ast-grep + jscpd."""
-    session.run("uvx", RUFF, "check", *LAYERS, "--select", SELECT, external=True)
+    session.run("uvx", RUFF, "check", *LINT_LAYERS, "--select", SELECT, external=True)
     # Advisory (mirrors CI, never blocks): full curated config over the whole tree + format drift.
     session.run("uvx", RUFF, "check", ".", "--statistics", external=True, success_codes=[0, 1])
     session.run("uvx", RUFF, "format", "--check", ".", external=True, success_codes=[0, 1])
@@ -49,7 +53,7 @@ def lint(session: nox.Session) -> None:
         "npx",
         "--yes",
         "jscpd",
-        *LAYERS,
+        *JSCPD_LAYERS,
         "--config",
         "devtools/jscpd.json",
         external=True,
@@ -60,9 +64,9 @@ def lint(session: nox.Session) -> None:
 {% if enable_ml %}    # Advisory shape-contract gate — public array/tensor boundaries lacking a jaxtyping shape (aliases in
     # [tool.shape_contracts]). Report-only until a repo's tree is clean, then it graduates to `--assert`.
     session.run("uv", "run", "python", "-m", "devtools.shape_contracts", *LAYERS, external=True)
-{% endif %}    # Advisory magic-literal detector — recurring string vocab + repeated dict schemas (StrEnum/record
-    # candidates), the non-comparison axis ruff PLR2004 can't see. Report-only (no --max-* ceilings);
-    # a repo opts into the count-ratchet by passing --max-strings/--max-key-sets in its own CI.
+{% endif %}    # ENFORCED magic-literal ratchet — recurring string vocab + repeated dict schemas (StrEnum/record
+    # candidates), the non-comparison axis ruff PLR2004 can't see. Blocks over the [tool.magic_literals]
+    # ceiling (a per-repo FACT; fresh repo = 0/0). Migrate a new literal or raise the ceiling with a reason.
     session.run("uv", "run", "python", "-m", "devtools.magic_literals", *LAYERS, external=True)
 
 

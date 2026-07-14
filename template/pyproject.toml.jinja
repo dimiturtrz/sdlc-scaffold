@@ -122,6 +122,17 @@ betweenness_max = 0.10   # advisory chokepoint threshold
 test_layout = "mirror"   # every logic module needs a unit test: "mirror" = tests/unit/<pkg>/<path>/test_<name>.py
                          # (strict, one home); "flat" = test_<name>.py anywhere under tests/; "off" = no check
 # <<< LOCAL-SLOT: arch-thresholds
+
+# magic-literals ENFORCED ratchet (devtools/magic_literals.py) — the recurring-string / repeated-key-set
+# floor is frozen as a ceiling; a NEW magic literal pushes the count over and fails the merge (migrate it
+# to a StrEnum/constant, or raise the ceiling in the same commit with a reason). The MECHANISM is a base
+# gate (all repos run it enforced); the NUMBERS are a per-repo FACT (each repo's legitimate non-enum-able
+# floor differs — column names, framework vocab, path segments). A fresh repo ships 0/0 and ratchets up.
+[tool.magic_literals]
+# >>> LOCAL-SLOT: magic-ceilings — this repo's frozen literal floor (raise only with a documented reason)
+max_strings = 0
+max_key_sets = 0
+# <<< LOCAL-SLOT: magic-ceilings
 {% if enable_ml %}
 # Shape-contract gate (devtools/shape_contracts.py) — a public array/tensor boundary must carry a
 # jaxtyping shape, not a bare `np.ndarray`/`Tensor`. The universal `ndarray`/`Tensor` are builtin; a

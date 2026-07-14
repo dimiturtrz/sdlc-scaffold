@@ -75,17 +75,17 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 
 | # | gate | engine | portable params | local-slot / answer |
 |---|---|---|---|---|
-| 1 | ruff lint (enforced) | vendored ruff | `line-length`, `select` (=`ruff_select`), `ignore`, `per-file-ignores` | `extend-exclude` (slot) |
+| 1 | ruff lint (enforced) | vendored ruff | `line-length`, `select` (=`ruff_select`), `ignore`, `per-file-ignores` | `extend-exclude` (slot); scope=`lint_paths` (R1 hygiene, default `packages`, widenable — 9mu) |
 | 2 | ruff format --check (advisory) | vendored ruff | (never blocks) | — |
 | 3 | vulture dead-code | vendored vulture | `min_confidence`, `ignore_decorators`, `ignore_names` core | `paths`, `exclude` (slot) |
 | 4 | coverage floor | vendored coverage/pytest-cov | `exclude_lines`, `show_missing` | `source`, `omit` (slot); `fail-under`=`coverage_floor` (answer) |
 | 5 | arch fitness | OURS `graph.py --assert` | (mechanism) | `[tool.structure]` thresholds (slot) |
 | 5b | test-mirror (part of #5) | OURS `graph.py` `unmirrored()` + `omit.py` | `__init__`/`__main__` exempt | `[tool.coverage] omit` shells exempt |
 | 6 | ast-grep module-shape | vendored ast-grep + our `sg-rules` | rule yml | scan paths = `packages` |
-| 7 | jscpd DRY | vendored jscpd | `jscpd.json` threshold | scan paths = `packages` |
+| 7 | jscpd DRY | vendored jscpd | `jscpd.json` threshold | scope=`jscpd_paths` (R1 hygiene, default `packages`, widenable to a web-TS dir — 9mu) |
 | 8 | class-shape explorers | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
 | 9 | import-linter (self-gates on >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
-| 10 | magic-literals (advisory; opt-in ratchet) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; `--max-strings`/`--max-key-sets` ceilings a repo sets in its own CI |
+| 10 | magic-literals (ENFORCED ratchet) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; ceilings = `[tool.magic_literals] max_strings/max_key_sets` (FACT slot, fresh=0/0 — 2cj); `--max-*` CLI overrides |
 | 11 | shape-contracts (advisory; ML-only) | OURS `shape_contracts.py` | builtin `ndarray`/`Tensor` + jaxtyping vocab | ships iff `enable_ml`; `[tool.shape_contracts] array_aliases` (slot); `--assert` graduates to blocking per repo |
 
 import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import

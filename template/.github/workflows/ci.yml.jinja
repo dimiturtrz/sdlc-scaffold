@@ -26,7 +26,7 @@ jobs:
       # ENFORCED (blocks the merge): the full house select over shipped source. Clean on a fresh gen;
       # catches REGRESSION (new unused import / undefined name / unsorted imports / magic number / ...).
       - name: Lint — enforced (shipped source, full select)
-        run: uvx ruff@{{ ruff_version }} check {{ pkgs }} --select {{ ruff_select }}
+        run: uvx ruff@{{ ruff_version }} check {{ lint_paths }} --select {{ ruff_select }}
       # ADVISORY (never blocks): full curated config over the whole tree, surfaces any pending families.
       - name: Lint — advisory full (non-blocking)
         run: uvx ruff@{{ ruff_version }} check . --statistics || true
@@ -58,7 +58,7 @@ jobs:
         with:
           node-version: "20"
       - name: Duplication — enforced (jscpd, DRY axis; blocks over threshold)
-        run: npx --yes jscpd {{ pkgs }} --config devtools/jscpd.json
+        run: npx --yes jscpd {{ jscpd_paths }} --config devtools/jscpd.json
 
   tests:
     runs-on: ubuntu-latest
@@ -90,15 +90,20 @@ jobs:
       # categorical contracts can't express. Thresholds in [tool.structure]. Runs here for the synced env.
       - name: Architecture fitness — enforced (devtools/graph.py --assert)
         run: uv run python -m devtools.graph --assert {{ pkgs }}
+      # Magic literals — ENFORCED ratchet: the recurring-string / repeated-key-set count is frozen as a
+      # ceiling in [tool.magic_literals]; a NEW magic literal pushes it over and blocks. Mechanism is the
+      # base gate; the ceiling NUMBERS are a per-repo FACT (fresh repo = 0/0). The non-comparison axis
+      # ruff PLR2004 can't see.
+      - name: Magic literals — enforced (ratchet over [tool.magic_literals] ceiling)
+        run: uv run python -m devtools.magic_literals {{ pkgs }}
       # Class-shape smells — ADVISORY explorers (never block): LCOM4 cohesion, Fowler data-clumps, and
-      # namespace-classes with latent shared state. Heuristics that rank refactor candidates — surfaced
-      # for the reviewer, never a merge gate. Each only prints a ranked report and exits 0.
-      - name: Class-shape + magic-literal smells — advisory (LCOM / data-clumps / namespace-state / literals)
+      # namespace-classes with latent shared state{% if enable_ml %} + shape-contracts (bare array/tensor boundaries){% endif %}.
+      # Heuristics that rank refactor candidates — surfaced for the reviewer, never a merge gate.
+      - name: Class-shape smells — advisory (LCOM / data-clumps / namespace-state{% if enable_ml %} / shape-contracts{% endif %})
         continue-on-error: true
         run: |
           uv run python -m devtools.state_candidates {{ pkgs }}
           uv run python -m devtools.lcom {{ pkgs }}
           uv run python -m devtools.data_clumps {{ pkgs }}
-          uv run python -m devtools.magic_literals {{ pkgs }}
 {% if enable_ml %}          uv run python -m devtools.shape_contracts {{ pkgs }}
 {% endif %}

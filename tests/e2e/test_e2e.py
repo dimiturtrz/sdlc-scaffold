@@ -103,6 +103,12 @@ def test_expected_layout(project):
     assert 'select = [' in pyproject_text
     for code in ('"N"', '"SLF001"', '"PTH123"', '"PERF401"', '"ICN001"'):
         assert code in pyproject_text, f"union select must carry {code} (cardiac ratchet pulled up)"
+    # 2cj: magic_literals is a BASE ENFORCED gate — the [tool.magic_literals] ceiling FACT ships 0/0
+    assert "[tool.magic_literals]" in pyproject_text, "magic-literals ratchet is a base gate (2cj)"
+    assert "max_strings = 0" in pyproject_text and "max_key_sets = 0" in pyproject_text, "fresh repo = 0/0"
+    # 9mu: ruff enforced + jscpd default to the arch set but are hygiene-widenable (lint_paths/jscpd_paths)
+    ci_text = (path / ".github" / "workflows" / "ci.yml").read_text()
+    assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
 
 
 def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
@@ -134,6 +140,23 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
     assert 'root_packages = ["pkg_a", "pkg_b"]' in pyproject
     assert 'source_modules = ["pkg_a"]' in pyproject
     assert 'forbidden_modules = ["pkg_b"]' in pyproject
+
+
+def test_hygiene_scope_widens_ruff_and_jscpd(scaffold, tmp_path_factory):
+    """9mu: ruff + jscpd (R1 hygiene) can scan WIDER than the arch set — a repo widens lint_paths/jscpd_paths
+    to keep a viewer + tests linted, without graph.py/ast-grep (R2/R3) leaving the package set."""
+    out = tmp_path_factory.mktemp("hygiene") / "proj"
+    generate(scaffold, out, {"project_name": "h", "packages": "core", "domain": "none", "coverage_floor": "80",
+                             "lint_paths": "core viewer tests", "jscpd_paths": "core viewer/web/src"})
+    ci = (out / ".github" / "workflows" / "ci.yml").read_text()
+    nox = (out / "noxfile.py").read_text()
+    # ruff enforced + jscpd take the WIDE scope
+    assert "check core viewer tests --select" in ci, "ruff enforced scans the widened lint_paths"
+    assert "jscpd core viewer/web/src --config" in ci, "jscpd scans the widened jscpd_paths"
+    assert 'LINT_LAYERS = ["core", "viewer", "tests"]' in nox
+    assert 'JSCPD_LAYERS = ["core", "viewer/web/src"]' in nox
+    # arch gates (graph.py / ast-grep) STAY on the package arch set — hygiene widens, structure does not
+    assert "--assert core" in ci and "sgconfig.yml core" in ci, "arch gates keep the package set, not the wide scope"
 
 
 def test_template_ships_no_package_code(scaffold, tmp_path_factory):
@@ -215,9 +238,10 @@ def test_class_shape_smells(project):
         run(["uv", "run", "python", "-m", f"devtools.{tool}", *layers(name)], path)
 
 
-def test_magic_literals_advisory_runs_clean(project):
+def test_magic_literals_enforced_runs_clean(project):
     name, path = project
-    # advisory report (no --max-* ceilings) — always exit 0, like the class-shape explorers
+    # ENFORCED via the base [tool.magic_literals] 0/0 ceiling (2cj) — the clean seed has no recurring
+    # vocab, so it stays under the ceiling and exits 0. A NEW literal would bite (see the bite test).
     run(["uv", "run", "python", "-m", "devtools.magic_literals", *layers(name)], path)
 
 
@@ -371,6 +395,18 @@ def test_magic_literals_ratchet_bites(full_project):
     result = assert_bites(full_project, MAGIC_RATCHET, lambda p: _append(p / "full_pkg" / "math_ops.py", inject))
     assert "ratchet exceeded" in (result.stdout + result.stderr)
     assert run(MAGIC_RATCHET, full_project).returncode == 0, "passes again once reverted"
+
+
+# 2cj: [tool.magic_literals] makes it a BASE ENFORCED gate — plain `magic_literals <pkg>` (no CLI flag, as
+# the runners call it) reads the 0/0 ceiling from pyproject and BITES a new recurring literal.
+MAGIC_ENFORCED = ["uv", "run", "python", "-m", "devtools.magic_literals", "full_pkg"]
+
+
+def test_magic_literals_enforced_by_pyproject_ceiling(full_project):
+    assert run(MAGIC_ENFORCED, full_project).returncode == 0, "clean seed under the base 0/0 ceiling"
+    inject = "\n" + "\n".join(f"def _e{i}():\n    return _use('gizmo')\n" for i in range(4)) + "\n"
+    result = assert_bites(full_project, MAGIC_ENFORCED, lambda p: _append(p / "full_pkg" / "math_ops.py", inject))
+    assert "ratchet exceeded" in (result.stdout + result.stderr), "the pyproject ceiling enforces with no CLI flag"
 
 
 def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):

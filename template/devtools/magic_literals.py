@@ -31,6 +31,7 @@ import argparse
 import ast
 import logging
 import re
+import tomllib
 from collections import defaultdict
 from pathlib import Path
 
@@ -125,6 +126,16 @@ def report(strings: list[tuple[str, int]], key_sets: list[tuple[int, tuple[str, 
     return "\n".join(lines)
 
 
+def ratchet_ceilings(pyproject: str = "pyproject.toml") -> tuple[int | None, int | None]:
+    """The `[tool.magic_literals] max_strings / max_key_sets` ceilings — the per-repo FACT that turns the
+    advisory report into an ENFORCED ratchet (both None if the section/file is absent -> advisory)."""
+    p = Path(pyproject)
+    if not p.exists():
+        return None, None
+    cfg = tomllib.loads(p.read_text(encoding="utf-8")).get("tool", {}).get("magic_literals", {})
+    return cfg.get("max_strings"), cfg.get("max_key_sets")
+
+
 def check_ratchet(n_strings: int, n_key_sets: int, max_strings: int | None, max_key_sets: int | None) -> list[str]:
     """Ceiling breaches — the (count > ceiling) messages, empty when advisory (no ceilings) or under."""
     over = []
@@ -155,11 +166,16 @@ def main():
     )
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    # Ceilings: CLI flag wins; else the [tool.magic_literals] FACT slot (the base gate — a fresh repo ships
+    # 0/0, ratcheting up as its legitimate literal floor grows). Neither set -> advisory report, never bites.
+    cfg_strings, cfg_key_sets = ratchet_ceilings()
+    max_strings = args.max_strings if args.max_strings is not None else cfg_strings
+    max_key_sets = args.max_key_sets if args.max_key_sets is not None else cfg_key_sets
     strings, key_sets = scan_strings(args.packages), scan_key_sets(args.packages)
     log.info("%s", report(strings, key_sets))
     # Ceilings freeze the legitimate non-enum-able floor: any NEW recurring literal pushes the count over
     # and fails the merge. Re-migrate it to an enum, or raise the ceiling in the SAME commit with a reason.
-    if over := check_ratchet(len(strings), len(key_sets), args.max_strings, args.max_key_sets):
+    if over := check_ratchet(len(strings), len(key_sets), max_strings, max_key_sets):
         log.error(
             "magic-literal ratchet exceeded (%s) — migrate the new literal or raise the ceiling with a reason",
             "; ".join(over),

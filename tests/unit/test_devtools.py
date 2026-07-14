@@ -429,6 +429,20 @@ def test_magic_literals_ratchet_bites_over_ceiling(devtools):
     assert check(999, 999, None, None) == [], "no ceilings = advisory (report-only), never bites"
 
 
+def test_magic_literals_ratchet_ceilings_from_pyproject(devtools, tmp_path):
+    magic = devtools["magic_literals"]
+    pp = tmp_path / "pyproject.toml"
+    pp.write_text("[tool.magic_literals]\nmax_strings = 12\nmax_key_sets = 3\n")
+    assert magic.ratchet_ceilings(str(pp)) == (12, 3), "the FACT slot drives the enforced ceiling (2cj)"
+    # a fresh base ships 0/0 -> enforced-at-zero
+    pp.write_text("[tool.magic_literals]\nmax_strings = 0\nmax_key_sets = 0\n")
+    assert magic.ratchet_ceilings(str(pp)) == (0, 0)
+    # absent section/file -> (None, None) = advisory fallback, never bites
+    assert magic.ratchet_ceilings(str(tmp_path / "none.toml")) == (None, None)
+    pp.write_text("[tool.ruff]\nline-length = 120\n")
+    assert magic.ratchet_ceilings(str(pp)) == (None, None), "no [tool.magic_literals] -> advisory"
+
+
 # ---- shape_contracts.py — jaxtyping boundary gate, ML domain (vip.1) --------------------------------
 
 
