@@ -46,6 +46,13 @@ never a blanket ignore). The linter is a bug-finder, not cosmetics.
 {% endif %}- **arch-fitness** — `python -m devtools.graph --assert`: god-module (fan-in/out), god-file, import-cycle,
   and test-mirror (a logic module needs its `tests/unit/<pkg>/…/test_<name>.py`); thresholds in
   `[tool.structure]`. Advisory: line-floor (off) + chokepoint.
+## Scaffolding
+
+Guardrails provisioned by **sdlc-scaffold** via copier — `.copier-answers.yml` pins the version. The gate
+config, `devtools/`, and the nox/CI/pre-commit runners are **template-owned**: don't hand-edit them to pass
+a gate — fix upstream in the scaffold and `uvx copier update`, or edit only within `# >>> LOCAL-SLOT`
+regions. `copier update` pulls scaffold improvements as reviewable steps.
+
 ## Conventions
 
 {% if enable_ml %}- **Data lives out of the repo** (under a root pointed at by `paths.yaml`, gitignored). No datasets,

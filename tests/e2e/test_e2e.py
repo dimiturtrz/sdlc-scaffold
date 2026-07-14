@@ -81,6 +81,8 @@ def test_expected_layout(project):
     # domain=ml doc layers: learning (study ramp) + research + interpretations convention + the
     # data/paths.yaml bullet are ALL ML-only. A domain-neutral project has no doc-ramp convention + no leak.
     claude = (path / "CLAUDE.md").read_text()
+    # the scaffolding provenance + "template-owned, don't hand-edit" note ships regardless of domain
+    assert "## Scaffolding" in claude, "generated CLAUDE.md must carry the template-owned scaffolding note"
     assert ("interpretations/" in claude) == ml
     assert ("paths.yaml" in claude) == ml
     assert ('"research"' in pyproject_text) == ml

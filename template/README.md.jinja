@@ -26,3 +26,8 @@ nox -s lint test cov
 - **lint** — ruff check (pinned) + ruff format --check (advisory) + vulture + arch-fitness (`graph.py --assert`) + ast-grep + jscpd.
 - **test** — pytest.
 - **cov** — pytest --cov with a `--fail-under={{ coverage_floor }}` floor.
+
+## Development
+
+Tooling + quality gates are provisioned by an in-house copier template (**sdlc-scaffold**). Refresh with
+`uvx copier update`; `.copier-answers.yml` pins the template version.
