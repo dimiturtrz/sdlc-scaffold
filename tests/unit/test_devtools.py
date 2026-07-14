@@ -183,7 +183,13 @@ def test_structure_cfg_merges_over_defaults(devtools, tmp_path):
 def test_structure_cfg_all_defaults_when_absent(devtools, tmp_path):
     graph = devtools["graph"]
     cfg = graph.load_structure_cfg(str(tmp_path / "nope.toml"))
-    assert cfg == {"bottleneck_degree": 8, "file_max": 750, "file_min": 0, "betweenness_max": 0.10}
+    assert cfg == {
+        "bottleneck_degree": 8,
+        "file_max": 750,
+        "file_min": 0,
+        "betweenness_max": 0.10,
+        "test_layout": "mirror",
+    }
 
 
 def test_god_module_detected(devtools):
@@ -248,6 +254,30 @@ def test_unmirrored_flags_missing_mirror(devtools, tmp_path, monkeypatch):
     mirror.mkdir(parents=True)
     (mirror / "test_foo.py").write_text("def test_foo(): pass\n")
     assert graph.unmirrored(["pkg"]) == [], "a module with its strict path-mirror test is satisfied"
+
+
+def test_unmirrored_flat_layout(devtools, tmp_path, monkeypatch):
+    graph = devtools["graph"]
+    monkeypatch.chdir(tmp_path)
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "foo.py").write_text("class Foo:\n    @staticmethod\n    def go(): ...\n")
+    (tmp_path / "tests").mkdir()
+    assert graph.unmirrored(["pkg"], "flat"), "flat: no test anywhere -> flagged"
+    # a test_<name>.py ANYWHERE under tests/ satisfies flat (even at a non-mirror path)
+    (tmp_path / "tests" / "test_foo.py").write_text("def test_foo(): pass\n")
+    assert graph.unmirrored(["pkg"], "flat") == [], "flat: a test_foo.py under tests/ satisfies it"
+    assert graph.unmirrored(["pkg"], "mirror"), "mirror still wants the strict path (flat test doesn't count)"
+
+
+def test_unmirrored_off(devtools, tmp_path, monkeypatch):
+    graph = devtools["graph"]
+    monkeypatch.chdir(tmp_path)
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "foo.py").write_text("class Foo:\n    @staticmethod\n    def go(): ...\n")
+    assert graph.unmirrored(["pkg"], "off") == [], "off = no test-existence gate"
 
 
 def test_unmirrored_exempts_omitted_shell(devtools, tmp_path, monkeypatch):

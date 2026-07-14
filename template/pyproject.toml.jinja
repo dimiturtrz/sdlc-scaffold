@@ -89,5 +89,7 @@ bottleneck_degree = 8    # fan-in AND fan-out both over this = god-module
 file_max = 750           # god-file line ceiling — raise as real files grow
 file_min = 0             # advisory line floor — 0 = OFF (no honest universal floor; raise per repo if wanted)
 betweenness_max = 0.10   # advisory chokepoint threshold
+test_layout = "mirror"   # every logic module needs a unit test: "mirror" = tests/unit/<pkg>/<path>/test_<name>.py
+                         # (strict, one home); "flat" = test_<name>.py anywhere under tests/; "off" = no check
 # <<< LOCAL-SLOT: arch-thresholds
 {% endif %}

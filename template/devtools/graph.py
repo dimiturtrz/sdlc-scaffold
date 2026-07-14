@@ -32,7 +32,7 @@ log = logging.getLogger("devtools.graph")
 
 # Fitness thresholds — SPEC [tool.structure] defaults, overridable in pyproject. Chosen so the blocking
 # rules start CLEAN on a fresh project and ratchet: fan-in&out both>8, file>750 lines, any import cycle.
-_DEFAULTS = {"bottleneck_degree": 8, "file_max": 750, "file_min": 0, "betweenness_max": 0.10}
+_DEFAULTS = {"bottleneck_degree": 8, "file_max": 750, "file_min": 0, "betweenness_max": 0.10, "test_layout": "mirror"}
 _STRUCTURAL = ("__init__.py", "__main__.py")  # package plumbing — exempt from the test-mirror rule + line floor
 _ADVISORY_PREVIEW = 15  # advisory lines shown before "… +N more" (avoid log spam)
 
@@ -84,22 +84,33 @@ def _oversized(files: list[tuple[str, int]], mx: int) -> list[str]:
     return [f"{f}: {n} lines > {mx} — god-file, split" for f, n in files if n > mx]
 
 
-def unmirrored(packages: list[str], test_root: str = "tests/unit") -> list[str]:
-    """LOGIC source modules with no STRICT path-mirror test — the test tree mirrors the source tree,
-    one home per module. A source `<pkg>/<path>/foo.py` is mirrored iff `tests/unit/<pkg>/<path>/test_foo.py`
-    EXISTS on disk (a same-purpose test under a different name does NOT count — rename it to the mirror path).
-    `__init__`/`__main__` are plumbing, exempt; coverage-OMITTED shells (runners / adapters / GPU / download /
-    viz glue — the same 'not logic' set the coverage gate omits, read from `[tool.coverage] omit`) are exempt
-    too, so a non-unit-testable shell isn't forced to carry a stub test."""
+def unmirrored(packages: list[str], layout: str = "mirror", test_root: str = "tests/unit") -> list[str]:
+    """LOGIC source modules with no unit test — the universal rule is "every logic module HAS a test";
+    WHERE it lives is `layout` (a `[tool.structure]` choice, so it's config, not imposed architecture):
+      - "mirror" (default): STRICT path-mirror, one home per module — `<pkg>/<path>/foo.py` is covered iff
+        `tests/unit/<pkg>/<path>/test_foo.py` exists (a same-purpose test under a different name/path doesn't
+        count). The cardiac/mindscape discipline.
+      - "flat": lenient — a `test_foo.py` exists ANYWHERE under `tests/`. Lets a flat-layout repo satisfy the
+        gate without restructuring its test tree.
+      - "off": no test-existence gate.
+    `__init__`/`__main__` are plumbing, exempt; coverage-OMITTED shells (runners/adapters/GPU/download/viz glue,
+    read from `[tool.coverage] omit`) are exempt too — a non-unit-testable shell isn't forced to carry a stub."""
+    if layout == "off":
+        return []
     omit = coverage_omit()
+    flat_names = {p.name for p in Path("tests").rglob("test_*.py")} if layout == "flat" else set()
     out = []
     for pkg in packages:
         for f in sorted(Path(pkg).rglob("*.py")):
             if f.name in _STRUCTURAL or matches_omit(f.as_posix(), omit):
                 continue
-            mirror = Path(test_root) / f.parent / f"test_{f.name}"
-            if not mirror.exists():
-                out.append(f"{f.as_posix()} — no mirrored {mirror.as_posix()}")
+            if layout == "flat":
+                if f"test_{f.name}" not in flat_names:
+                    out.append(f"{f.as_posix()} — no test_{f.name} anywhere under tests/")
+            else:
+                mirror = Path(test_root) / f.parent / f"test_{f.name}"
+                if not mirror.exists():
+                    out.append(f"{f.as_posix()} — no mirrored {mirror.as_posix()}")
     return out
 
 
@@ -166,7 +177,7 @@ def _run_assert(packages: list[str]) -> int:
     cfg = load_structure_cfg()
     g, files = build_graph(packages), file_lines(packages)
     blocking, advisory = assert_fitness(g, files, cfg)
-    blocking += [f"test mirror: {m}" for m in unmirrored(packages)]  # a logic module with no mirror test blocks
+    blocking += [f"test mirror: {m}" for m in unmirrored(packages, cfg["test_layout"])]  # module w/o a test blocks
     if advisory:
         shown = advisory[:_ADVISORY_PREVIEW]
         extra = f"\n  … +{len(advisory) - _ADVISORY_PREVIEW} more" if len(advisory) > _ADVISORY_PREVIEW else ""

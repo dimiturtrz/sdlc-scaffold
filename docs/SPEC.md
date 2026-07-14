@@ -103,6 +103,7 @@ bottleneck_degree = 8    # fan-in AND fan-out both over this = god-module
 file_max = 750           # god-file line ceiling
 file_min = 0             # advisory line floor — 0 = OFF (no honest universal floor)
 betweenness_max = 0.10   # advisory chokepoint threshold
+test_layout = "mirror"   # test-existence layout: "mirror" (strict path-mirror) | "flat" (anywhere under tests/) | "off"
 ```
 
 ## LOCAL-SLOT convention (the seam)

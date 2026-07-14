@@ -4,8 +4,10 @@ A [copier](https://copier.readthedocs.io) template for the personal-projects SDL
 ruff · vulture · coverage floor · arch-fitness (`graph.py --assert`) · optional ast-grep + jscpd +
 class-shape explorers · nox task runner · pre-commit gate binding · versioned rollout via `copier update`.
 
-It ships **guardrails, not architecture** — the gates target whatever `packages` you declare and impose
-no layering. Derived from the common skeleton of cardiac-seg / mindscape / synthscape. See `docs/SPEC.md`
+It ships **guardrails, not package architecture** — the gates target whatever `packages` you declare and
+impose no import layering. (One structural choice the arch gate *does* make, and it's configurable: the
+test-existence rule defaults to a strict source-mirror test tree — set `test_layout = "flat"` or `"off"`
+in `[tool.structure]` if your tests don't mirror the source.) Derived from the common skeleton of cardiac-seg / mindscape / synthscape. See `docs/SPEC.md`
 for the gate contract (portable-superset vs project-local slot) and `docs/LEARNINGS.md` for the build log.
 
 ## Three ways to use it
