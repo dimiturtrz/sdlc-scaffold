@@ -26,7 +26,7 @@ addopts = "--import-mode=importlib"
 [tool.ruff]
 line-length = 120
 # >>> LOCAL-SLOT: ruff-exclude — edit freely, the template will not overwrite intent here
-extend-exclude = ["docs", "learning"{% if enable_ml %}, "research", "interpretations"{% endif %}]
+extend-exclude = ["docs"{% if enable_ml %}, "learning", "research", "interpretations"{% endif %}]
 # <<< LOCAL-SLOT: ruff-exclude
 
 [tool.ruff.lint]

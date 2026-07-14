@@ -54,7 +54,8 @@ never a blanket ignore). The linter is a bug-finder, not cosmetics.
   (reproducible + reviewable), never a REPL session.
 - **Minimal comments** — prefer self-documenting names; a comment is a liability, not a default.
 - **Config objects over long arg lists**; strategy pattern over `if`/type dispatch.
-- **Doc layers** — `learning/<date>_<topic>.md` = the study ramp / general understanding; the build log is
-  git history; portfolio READMEs carry the result + link out.{% if enable_ml %} `research/` = external /
-  field synthesis (theirs); `interpretations/<task>/<date>_<topic>.md` = sense-making of *our own* results
-  (per task, `converging/` for cross-task).{% endif %}
+{% if enable_ml %}- **Doc layers** — `learning/<date>_<topic>.md` = the study ramp / general understanding;
+  `research/` = external / field synthesis (theirs); `interpretations/<task>/<date>_<topic>.md` =
+  sense-making of *our own* results (per task, `converging/` for cross-task). The build log is git history;
+  portfolio READMEs carry the result + link out.
+{% endif %}
