@@ -30,6 +30,7 @@ def devtools(tmp_path_factory):
     instance = tmp_path_factory.mktemp("dt_instance") / "proj"
     generate(scaffold, instance, COMBOS["full"])
     sys.path.insert(0, str(instance))
+    import devtools.analytics as analytics
     import devtools.data_clumps as data_clumps
     import devtools.graph as graph
     import devtools.lcom as lcom
@@ -44,4 +45,5 @@ def devtools(tmp_path_factory):
         "graph": graph,
         "omit": omit,
         "magic_literals": magic_literals,
+        "analytics": analytics,
     }

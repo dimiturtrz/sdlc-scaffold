@@ -66,7 +66,7 @@ def test_expected_layout(project):
     # the gates are always-on now — every gate's files always ship
     assert (path / "devtools" / "sgconfig.yml").exists()
     assert (path / "devtools" / "jscpd.json").exists()
-    for tool in ("lcom.py", "data_clumps.py", "state_candidates.py", "magic_literals.py"):
+    for tool in ("lcom.py", "data_clumps.py", "state_candidates.py", "magic_literals.py", "analytics.py"):
         assert (path / "devtools" / tool).exists()
     # beads is always wired -> the CLAUDE/AGENTS beads section is always present
     assert "bd (beads)" in (path / "CLAUDE.md").read_text()
