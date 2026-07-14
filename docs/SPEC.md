@@ -42,8 +42,12 @@ only in-file gating left is `use_import_linter` (import-linter self-gates on >1 
 write the first module.
 
 Domain: `domain=ml` (default) makes this an ML-project scaffold (numpy + data-outside-repo + MLflow).
-`pydantic`, `docs/PLAN.md`+`ROADMAP.md`, `learning/`+`research/` ship regardless (house conventions, a
-later trim). `domain=none` = neutral Python guardrail scaffold.
+`domain=none` = neutral Python guardrail scaffold. **Doc-layer convention** (documented in the generated
+`CLAUDE.md`/`AGENTS.md`, not shipped as folders — no speculative dirs): `learning/<date>_<topic>.md` (study
+ramp, general) ships regardless; `research/` (external field synthesis) + `interpretations/<task>/<date>_<topic>.md`
+(sense-making of *our own* results, `converging/` for cross-task) are `domain=ml` only, alongside the
+`paths.yaml`/data-outside-repo bullet. The ruff `extend-exclude` default gates `research`+`interpretations`
+to ml too. `pydantic`, `docs/PLAN.md`+`ROADMAP.md` ship regardless (house conventions, a later trim).
 
 Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`domain == 'ml'`),
 `use_import_linter` (=`packages` has >1), plus:

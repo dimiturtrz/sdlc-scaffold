@@ -75,8 +75,16 @@ def test_expected_layout(project):
     assert "[tool.importlinter]" not in (path / "pyproject.toml").read_text()
     # domain=ml: numpy dep + ML-workflow gitignore present iff the ML domain
     ml = answers["domain"] == "ml"
-    assert ('"numpy"' in (path / "pyproject.toml").read_text()) == ml
+    pyproject_text = (path / "pyproject.toml").read_text()
+    assert ('"numpy"' in pyproject_text) == ml
     assert ("/mlruns/" in (path / ".gitignore").read_text()) == ml
+    # domain=ml doc layers: research + interpretations convention + the data/paths.yaml bullet, ML-only.
+    # learning ships regardless (generic study ramp); a domain-neutral project gets neither ML leak.
+    claude = (path / "CLAUDE.md").read_text()
+    assert ("interpretations/" in claude) == ml
+    assert ("paths.yaml" in claude) == ml
+    assert ('"research"' in pyproject_text) == ml
+    assert "learning" in pyproject_text, "the learning study-ramp layer is generic — always excluded from lint"
 
 
 def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
@@ -363,7 +371,8 @@ def test_copier_update_heals_portable_preserves_local(tmp_path):
     pyproject = project / "pyproject.toml"
     text = pyproject.read_text()
     assert "LOCAL-SLOT: ruff-exclude" in text
-    pyproject.write_text(text.replace('"research"]', '"research", "MY_LOCAL_DIR"]', 1))
+    # anchor on "learning" — always in the exclude list (research/interpretations are domain=ml only)
+    pyproject.write_text(text.replace('"learning"]', '"learning", "MY_LOCAL_DIR"]', 1))
     run(["git", "commit", "-aqm", "local edit"], project)
 
     # 2. tighten a PORTABLE rule in the template, tag v0.2.0

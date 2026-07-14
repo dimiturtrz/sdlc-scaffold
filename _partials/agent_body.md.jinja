@@ -48,9 +48,13 @@ never a blanket ignore). The linter is a bug-finder, not cosmetics.
   `[tool.structure]`. Advisory: line-floor (off) + chokepoint.
 ## Conventions
 
-- **Data lives out of the repo** (under a root pointed at by `paths.yaml`, gitignored). No datasets,
+{% if enable_ml %}- **Data lives out of the repo** (under a root pointed at by `paths.yaml`, gitignored). No datasets,
   weights, or run outputs in git.
-- **No notebooks** (`.ipynb`) — a one-off run becomes a committed CLI / `python -m` entrypoint
+{% endif %}- **No notebooks** (`.ipynb`) — a one-off run becomes a committed CLI / `python -m` entrypoint
   (reproducible + reviewable), never a REPL session.
 - **Minimal comments** — prefer self-documenting names; a comment is a liability, not a default.
 - **Config objects over long arg lists**; strategy pattern over `if`/type dispatch.
+- **Doc layers** — `learning/<date>_<topic>.md` = the study ramp / general understanding; the build log is
+  git history; portfolio READMEs carry the result + link out.{% if enable_ml %} `research/` = external /
+  field synthesis (theirs); `interpretations/<task>/<date>_<topic>.md` = sense-making of *our own* results
+  (per task, `converging/` for cross-task).{% endif %}
