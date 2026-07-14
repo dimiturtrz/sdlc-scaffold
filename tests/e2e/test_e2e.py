@@ -20,6 +20,7 @@ from conftest import (
     assert_bites,
     example_pkg,
     generate,
+    seed_example,
     git_init_commit,
     has_node,
     layers,
@@ -62,20 +63,18 @@ def test_expected_layout(project):
     assert (path / "devtools" / "graph.py").exists()
     assert (path / "devtools" / "omit.py").exists()
     assert (path / "devtools" / "README.md").exists()
-    # toggles gate file presence
-    assert (path / "devtools" / "sgconfig.yml").exists() == (answers["enable_astgrep"] == "true")
-    assert (path / "devtools" / "jscpd.json").exists() == (answers["enable_jscpd"] == "true")
-    class_shape = answers["enable_class_shape_smells"] == "true"
+    # the gates are always-on now — every gate's files always ship
+    assert (path / "devtools" / "sgconfig.yml").exists()
+    assert (path / "devtools" / "jscpd.json").exists()
     for tool in ("lcom.py", "data_clumps.py", "state_candidates.py"):
-        assert (path / "devtools" / tool).exists() == class_shape
-    # beads section is present in CLAUDE.md/AGENTS.md iff enable_beads
-    beads = answers["enable_beads"] == "true"
-    assert ("bd (beads)" in (path / "CLAUDE.md").read_text()) == beads
-    assert ("bd (beads)" in (path / "AGENTS.md").read_text()) == beads
+        assert (path / "devtools" / tool).exists()
+    # beads is always wired -> the CLAUDE/AGENTS beads section is always present
+    assert "bd (beads)" in (path / "CLAUDE.md").read_text()
+    assert "bd (beads)" in (path / "AGENTS.md").read_text()
     # import-linter only ships with >1 package (these combos are single-package -> absent even when enabled)
     assert "[tool.importlinter]" not in (path / "pyproject.toml").read_text()
-    # ML extension: numpy dep + ML-workflow gitignore present iff enable_ml
-    ml = answers["enable_ml"] == "true"
+    # domain=ml: numpy dep + ML-workflow gitignore present iff the ML domain
+    ml = answers["domain"] == "ml"
     assert ('"numpy"' in (path / "pyproject.toml").read_text()) == ml
     assert ("/mlruns/" in (path / ".gitignore").read_text()) == ml
 
@@ -87,16 +86,7 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
     list-splitting, which is what a real core/neuroscan/neuroviz repo relies on.
     """
     out = tmp_path_factory.mktemp("multi") / "proj"
-    generate(scaffold, out, {
-        "project_name": "multi",
-        "packages": "pkg_a,pkg_b",
-        "ship_example": "true",
-        "enforce_arch_fitness": "true",
-        "enable_astgrep": "true",
-        "enable_jscpd": "true",
-        "enable_class_shape_smells": "true",
-        "coverage_floor": "80",
-    })
+    generate(scaffold, out, {"project_name": "multi", "packages": "pkg_a,pkg_b", "domain": "none", "coverage_floor": "80"})
     noxfile = (out / "noxfile.py").read_text()
     assert 'LAYERS = ["pkg_a", "pkg_b"]' in noxfile
     # graph.py needs the devtools extra (grimp/networkx) — nox must pull it, matching CI (not plain uv run)
@@ -112,35 +102,25 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
     assert 'root_packages = ["pkg_a", "pkg_b"]' in pyproject
     assert 'source_modules = ["pkg_a"]' in pyproject
     assert 'forbidden_modules = ["pkg_b"]' in pyproject
-    # the demo package ships under the FIRST entry
-    assert (out / "pkg_a" / "math_ops.py").exists()
 
 
-def test_ship_example_false_omits_demo(scaffold, tmp_path_factory):
-    """ship_example=false drops the demo package + its unit tests — the repo-adoption path."""
-    out = tmp_path_factory.mktemp("adopt") / "proj"
-    generate(scaffold, out, {
-        "project_name": "adopt",
-        "packages": "myapp",
-        "ship_example": "false",
-        "enforce_arch_fitness": "true",
-        "enable_astgrep": "false",
-        "enable_jscpd": "false",
-        "enable_class_shape_smells": "false",
-        "coverage_floor": "80",
-    })
-    assert not (out / "myapp").exists(), "demo package must be absent when ship_example=false"
-    assert not (out / "tests" / "unit" / "myapp").exists()
-    # guardrails still shipped
+def test_template_ships_no_package_code(scaffold, tmp_path_factory):
+    """The template ships ZERO package code (bd r2w) — only guardrails. A fresh gen has no `<pkg>/*.py`."""
+    out = tmp_path_factory.mktemp("empty") / "proj"
+    generate(scaffold, out, {"project_name": "empty", "packages": "myapp", "domain": "none", "coverage_floor": "80"})
+    assert not (out / "myapp").exists(), "no package code ships — the project brings its own"
+    assert list((out / "tests" / "unit").glob("*.py")) == [], "no shipped unit tests either"
+    # guardrails ARE shipped
     assert (out / "noxfile.py").exists()
     assert (out / "devtools" / "graph.py").exists()
+    assert (out / "pyproject.toml").exists()
 
 
 def test_gitignore_artifact_dirs_are_root_anchored(scaffold, tmp_path_factory):
     """/data/ (etc.) must ignore only the ROOT artifact dir, not a source package like core/data/ (bd hhy):
     an unanchored `data/` silently untracked a nested package's tests -> local green, CI red."""
     out = tmp_path_factory.mktemp("gi") / "proj"
-    generate(scaffold, out, {**COMBOS["base"], "project_name": "gi", "packages": "core", "enable_ml": "true"})
+    generate(scaffold, out, {**COMBOS["base"], "project_name": "gi", "packages": "core", "domain": "ml"})
     (out / "core" / "data").mkdir(parents=True)
     (out / "core" / "data" / "thing.py").write_text("X = 1\n")
     (out / "data").mkdir()
@@ -182,8 +162,6 @@ def test_graph_assert_all_layers(project):
 
 def test_astgrep(project):
     name, path = project
-    if COMBOS[name]["enable_astgrep"] != "true":
-        pytest.skip("astgrep off")
     run(
         ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml",
          *layers(name)],
@@ -193,8 +171,6 @@ def test_astgrep(project):
 
 def test_jscpd(project):
     name, path = project
-    if COMBOS[name]["enable_jscpd"] != "true":
-        pytest.skip("jscpd off")
     if not has_node():
         pytest.skip("node/npx not available")
     run(["npx", "--yes", "jscpd", *layers(name), "--config", "devtools/jscpd.json"], path)
@@ -202,8 +178,6 @@ def test_jscpd(project):
 
 def test_class_shape_smells(project):
     name, path = project
-    if COMBOS[name]["enable_class_shape_smells"] != "true":
-        pytest.skip("class-shape off")
     # advisory explorers — must run clean (exit 0); findings are fine, they never block
     for tool in ("state_candidates", "lcom", "data_clumps"):
         run(["uv", "run", "python", "-m", f"devtools.{tool}", *layers(name)], path)
@@ -212,16 +186,15 @@ def test_class_shape_smells(project):
 # ---- gates, via the runners ------------------------------------------------------------------------
 
 def test_nox_gates(project):
-    name, path = project
-    if COMBOS[name]["enable_jscpd"] == "true" and not has_node():
+    _, path = project
+    if not has_node():
         pytest.skip("nox lint runs jscpd which needs node")
     run(["uvx", NOX, "-s", "lint", "test", "cov"], path)
 
 
 def test_precommit_all_hooks(project):
-    name, path = project
-    if COMBOS[name]["enable_jscpd"] == "true" and not has_node():
-        pytest.skip("pre-commit jscpd hook needs node")
+    # no node needed: jscpd is CI+nox only, never a commit hook; every pre-commit hook is uvx/uv-run
+    _, path = project
     run(["uvx", PRECOMMIT, "run", "--all-files"], path)
 
 
@@ -234,6 +207,7 @@ GRAPH_ASSERT = ["uv", "run", "python", "-m", "devtools.graph", "--assert", "full
 def full_project(scaffold, tmp_path_factory):
     out = tmp_path_factory.mktemp("inject")
     generate(scaffold, out, COMBOS["full"])
+    seed_example(out, "full_pkg")  # template ships no code — seed the demo the inject tests mutate
     git_init_commit(out)
     run(["uv", "sync", "--extra", "dev", "--extra", "devtools"], out)
     return out
@@ -329,18 +303,9 @@ def test_graph_assert_catches_unmirrored(full_project):
 def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):
     # a real 2-package project: kern (kernel, packages[0]) + app; contract forbids kern -> app
     out = tmp_path_factory.mktemp("il") / "proj"
-    generate(scaffold, out, {
-        "project_name": "il",
-        "packages": "kern,app",
-        "ship_example": "true",
-        "enforce_arch_fitness": "true",
-        "enable_astgrep": "false",
-        "enable_jscpd": "false",
-        "enable_class_shape_smells": "false",
-        "enable_beads": "false",
-        "coverage_floor": "80",
-    })
-    # ship_example filled kern/ (the kernel); add the second package `app` (downward edge app -> kern is fine)
+    generate(scaffold, out, {"project_name": "il", "packages": "kern,app", "domain": "none", "coverage_floor": "80"})
+    seed_example(out, "kern")  # kernel (packages[0]); template ships no code
+    # add the second package `app` (downward edge app -> kern is fine)
     (out / "app").mkdir()
     (out / "app" / "__init__.py").write_text("")
     (out / "app" / "thing.py").write_text(

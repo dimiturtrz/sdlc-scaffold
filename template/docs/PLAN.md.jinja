@@ -17,7 +17,7 @@ _(placeholder)_ Decide these up front; the comparison IS the result, not a leade
 
 ## Structure
 
-- `{{ package_name }}/` — the project's code (one package; organise modules as needed).
+- {% for p in packages.split(",") %}`{{ p | trim }}/`{% if not loop.last %}, {% endif %}{% endfor %} — your package{% if packages.split(",")|length > 1 %}s{% endif %} (the guardrails' target; organise modules as needed).
 - `tests/` — unit / integration / e2e.
 
 ## Approach

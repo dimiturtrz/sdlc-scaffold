@@ -1,9 +1,0 @@
-from {{ package_name }}.pipeline import Pipeline
-
-
-def test_clamped_mean_within_interval():
-    assert Pipeline.clamped_mean([1.0, 2.0, 3.0], low=0.0, high=10.0) == 2.0
-
-
-def test_clamped_mean_clamps_to_high():
-    assert Pipeline.clamped_mean([100.0, 200.0], low=0.0, high=10.0) == 10.0

@@ -28,38 +28,64 @@ SELECT = copier_default("ruff_select")
 
 # Two representative points on the toggle lattice: the minimal mid-stage and the full cardioseg mirror.
 COMBOS = {
+    # The gates are always-on now (no toggles) — combos differ by domain (enable_ml) + naming. Both
+    # exercise the full gate set; base = domain-neutral, full = ML.
     "base": {
         "project_name": "base",
         "packages": "base_pkg",
-        "ship_example": "true",
-        "enforce_arch_fitness": "true",
-        "enable_astgrep": "false",
-        "enable_jscpd": "false",
-        "enable_class_shape_smells": "false",
-        "enable_beads": "false",
-        "enable_import_linter": "true",
-        "enable_ml": "false",
+        "domain": "none",
         "coverage_floor": "80",
     },
     "full": {
         "project_name": "full",
         "packages": "full_pkg",
-        "ship_example": "true",
-        "enforce_arch_fitness": "true",
-        "enable_astgrep": "true",
-        "enable_jscpd": "true",
-        "enable_class_shape_smells": "true",
-        "enable_beads": "true",
-        "enable_import_linter": "true",
-        "enable_ml": "true",
+        "domain": "ml",
         "coverage_floor": "80",
     },
 }
 
 
 def example_pkg(combo_name):
-    """The demo package's folder name = the first entry in `packages` (copier's computed package_name)."""
+    """First entry in `packages` — the package the e2e seeds its demo code into."""
     return COMBOS[combo_name]["packages"].split(",")[0].strip()
+
+
+# The template ships ZERO code (bd r2w) — the e2e OWNS this demo and seeds it into a generated project so
+# there is something for the gates to lint/test/graph. An astgrep-compliant leaf class + an intra-package
+# edge + strict-mirror tests (so coverage floor + test-mirror pass).
+_SEED = {
+    "{pkg}/__init__.py": "",
+    "{pkg}/math_ops.py": (
+        "class MathOps:\n"
+        "    @staticmethod\n"
+        "    def mean(values: list[float]) -> float:\n"
+        '        if not values:\n            msg = "mean() requires at least one value"\n            raise ValueError(msg)\n'
+        "        return sum(values) / len(values)\n"
+    ),
+    "{pkg}/pipeline.py": (
+        "from {pkg}.math_ops import MathOps\n\n\n"
+        "class Pipeline:\n"
+        "    @staticmethod\n"
+        "    def doubled_mean(values: list[float]) -> float:\n"
+        "        return MathOps.mean(values) * 2\n"
+    ),
+    "tests/unit/{pkg}/test_math_ops.py": (
+        "import pytest\n\nfrom {pkg}.math_ops import MathOps\n\n\n"
+        "def test_mean():\n    assert MathOps.mean([1.0, 3.0]) == 2.0\n\n\n"
+        'def test_mean_empty():\n    with pytest.raises(ValueError, match="at least one value"):\n        MathOps.mean([])\n'
+    ),
+    "tests/unit/{pkg}/test_pipeline.py": (
+        "from {pkg}.pipeline import Pipeline\n\n\ndef test_doubled_mean():\n    assert Pipeline.doubled_mean([1.0, 3.0]) == 4.0\n"
+    ),
+}
+
+
+def seed_example(path, pkg):
+    """Drop the demo package + its strict-mirror tests into a generated (code-less) project."""
+    for rel, body in _SEED.items():
+        target = path / rel.format(pkg=pkg)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(body.format(pkg=pkg), encoding="utf-8")
 
 
 def run(cmd, cwd, *, check=True, env=None):
@@ -141,10 +167,11 @@ def scaffold(tmp_path_factory):
 
 @pytest.fixture(scope="session", params=list(COMBOS))
 def project(request, scaffold, tmp_path_factory):
-    """A generated + git-inited + uv-synced project for each toggle combo. Session-scoped: built once."""
+    """A generated (code-less) project SEEDED with the e2e's own demo, git-inited + uv-synced, per combo."""
     name = request.param
     out = tmp_path_factory.mktemp(f"proj_{name}")
     generate(scaffold, out, COMBOS[name])
+    seed_example(out, example_pkg(name))  # the template ships zero code; the e2e owns the demo
     git_init_commit(out)
     run(["uv", "sync", "--extra", "dev", "--extra", "devtools"], out)
     return name, out

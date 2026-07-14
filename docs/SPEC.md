@@ -26,26 +26,24 @@ Asked at copy time:
 |---|---|---|---|
 | `project_name` | str | (ask) | repo/folder name, kebab-case (e.g. `sample-proj`) |
 | `packages` | str | `project_name` snake_cased | comma-list of packages the guardrails target (e.g. `core,neuroscan,neuroviz`) |
-| `ship_example` | bool | true | ship the demo package (`math_ops`←`pipeline`) + its unit tests; false = guardrails-only adoption |
-| `enforce_arch_fitness` | bool | true | ship `graph.py --assert` gate + `[tool.structure]` |
-| `enable_astgrep` | bool | false | ship ast-grep module-shape gate + `devtools/sg-rules` + `sgconfig.yml` |
-| `enable_jscpd` | bool | false | ship jscpd DRY gate + `devtools/jscpd.json` (advisory) |
-| `enable_class_shape_smells` | bool | false | ship the LCOM4 / data-clumps / namespace-state advisory explorers |
-| `enable_import_linter` | bool | true | ship import-linter directional contracts (guarded to >1 package via computed `use_import_linter`) |
-| `enable_beads` | bool | false | wire beads (bd) — a CLAUDE/AGENTS beads section + gitignore entries (`bd init` after gen) |
-| `enable_ml` | bool | true | ML extension: `numpy` dep + ML-workflow gitignore (data/`paths.yaml`/MLflow/`runs/`) + data-skip CI env. Off = domain-neutral |
+| `domain` | enum | `ml` | `ml` = numpy dep + ML-workflow gitignore (data/`paths.yaml`/MLflow/`runs/`) + data-skip CI env; `none` = domain-neutral |
 | `coverage_floor` | int | 80 | `coverage report --fail-under` value |
 
-Domain note: with `enable_ml` on (default) this is an **ML-project scaffold** (numpy + data-outside-repo +
-MLflow workflow). `pydantic` (config convention), the `docs/PLAN.md`+`ROADMAP.md` planning docs, and the
-`learning/`+`research/` doc dirs are shipped regardless — house conventions, not ML-gated (candidates for a
-later trim). Off, `enable_ml=false` gives a neutral Python guardrail scaffold.
+That's the whole prompt surface. **The quality gates + beads are NON-optional (no toggles): arch-fitness,
+import-linter, ast-grep, jscpd, class-shape, beads are always shipped** — the house bar (bd rji). They're
+kept as computed `when:false` = always-true so the templates' `{% if X %}` blocks render unconditionally (a
+later cleanup unwraps them). import-linter self-gates via `use_import_linter` (>1 package). The **template
+ships ZERO package code** (bd r2w) — only guardrails; a fresh gen is empty, you write the first module.
 
-Computed / never asked (`when: false`, one home in copier.yml):
+Domain: `domain=ml` (default) makes this an ML-project scaffold (numpy + data-outside-repo + MLflow).
+`pydantic`, `docs/PLAN.md`+`ROADMAP.md`, `learning/`+`research/` ship regardless (house conventions, a
+later trim). `domain=none` = neutral Python guardrail scaffold.
+
+Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`domain == 'ml'`),
+`use_import_linter` (=`packages` has >1), the always-on gate flags, plus:
 
 | var | value | used for |
 |---|---|---|
-| `package_name` | `packages.split(',')[0]` | the demo package's folder name (simple interpolation) |
 | `ruff_select` | narrow curated list (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_version` / `vulture_version` / `nox_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
 

@@ -3,22 +3,13 @@ _subdirectory: template
 _templates_suffix: .jinja
 _answers_file: .copier-answers.yml
 
-# Exclude scaffold-meta from generated output (belongs to the template repo, not the project).
-# Toggle-keyed entries render to "" (a gitignore no-op) when the feature is ON, and to the path
-# when OFF — so clean filenames live in template/ and copier drops the ones a project didn't ask for.
+# Scaffold-meta excluded from generated output. The template ships ZERO package code (bd r2w) — only
+# guardrails — so there are no demo-package excludes here.
 _exclude:
   - ".git"
   - ".venv"
   - "__pycache__"
   - "*.pyc"
-  - "{% if not enable_astgrep %}devtools/sg-rules{% endif %}"
-  - "{% if not enable_astgrep %}devtools/sgconfig.yml{% endif %}"
-  - "{% if not enable_jscpd %}devtools/jscpd.json{% endif %}"
-  - "{% if not enable_class_shape_smells %}devtools/lcom.py{% endif %}"
-  - "{% if not enable_class_shape_smells %}devtools/data_clumps.py{% endif %}"
-  - "{% if not enable_class_shape_smells %}devtools/state_candidates.py{% endif %}"
-  - "{% if not ship_example %}{{ package_name }}{% endif %}"
-  - "{% if not ship_example %}tests/unit/{{ package_name }}{% endif %}"
 
 project_name:
   type: str
@@ -30,59 +21,33 @@ packages:
   help: "Packages the guardrails target — comma-separated, snake_case (add your others, e.g. core,neuroscan,neuroviz)"
   default: "{{ project_name.replace('-', '_') }}"
 
-# The demo package's folder name = the FIRST entry in `packages`. Computed, never asked — keeps
-# folder names simple interpolation (`{{ '{{' }} package_name {{ '}}' }}/`) while `packages` stays the one input.
-package_name:
-  type: str
-  default: "{{ packages.split(',')[0] | trim }}"
-  when: false
+# The quality gates + beads are the non-optional house bar — always shipped, no prompt. Kept as computed
+# `when:false` = always-true so the templates' `{% if X %}` blocks render unconditionally (a later cleanup
+# unwraps them; bd rji). import-linter is the one that self-gates: it needs >1 package to have anything to forbid.
+enforce_arch_fitness: {type: bool, default: true, when: false}
+enable_astgrep: {type: bool, default: true, when: false}
+enable_jscpd: {type: bool, default: true, when: false}
+enable_class_shape_smells: {type: bool, default: true, when: false}
+enable_beads: {type: bool, default: true, when: false}
 
-ship_example:
-  type: bool
-  help: "Ship the demo package (math_ops + pipeline) so a fresh gen has code to lint/test/graph? Set false when adopting into a repo that already has its own code."
-  default: true
-
-enforce_arch_fitness:
-  type: bool
-  help: "Ship the arch-fitness gate (graph.py --assert + [tool.structure])?"
-  default: true
-
-enable_import_linter:
-  type: bool
-  help: "Ship the import-linter directional layer gate (forbidden-import contracts; only bites with >1 package)?"
-  default: true
-
-# import-linter only makes sense with >1 package (nothing to forbid in a single package) — computed guard
-# gating the [tool.importlinter] block + the lint-imports invocation across pyproject/nox/ci/pre-commit.
 use_import_linter:
   type: bool
-  default: "{{ enable_import_linter and (packages.split(',') | length) > 1 }}"
+  default: "{{ (packages.split(',') | length) > 1 }}"
   when: false
 
-enable_astgrep:
-  type: bool
-  help: "Ship the ast-grep module-shape gate (in-a-class + no import-time side effects)?"
-  default: false
+domain:
+  type: str
+  help: "Project domain — `ml` adds the numpy dep + ML-workflow gitignore (data-outside-repo/paths.yaml, MLflow, training runs) + the data-skip CI env; `none` = a domain-neutral Python scaffold."
+  choices:
+    - ml
+    - none
+  default: ml
 
-enable_jscpd:
-  type: bool
-  help: "Ship the jscpd duplication (DRY) gate?"
-  default: false
-
-enable_class_shape_smells:
-  type: bool
-  help: "Ship the advisory class-shape smell explorers (LCOM4 cohesion / data-clumps / namespace-state)?"
-  default: false
-
-enable_beads:
-  type: bool
-  help: "Wire in beads (bd) issue tracking — a CLAUDE/AGENTS beads section + gitignore entries (run `bd init` once after generating)?"
-  default: false
-
+# `enable_ml` kept as a computed `when:false` var so the templates' `{% if enable_ml %}` blocks are unchanged.
 enable_ml:
   type: bool
-  help: "ML extension — ship the numpy dep + the ML-workflow gitignore (data-outside-repo/paths.yaml, MLflow, training runs) + the data-skip CI env. Off = a domain-neutral Python scaffold."
-  default: true
+  default: "{{ domain == 'ml' }}"
+  when: false
 
 coverage_floor:
   type: int

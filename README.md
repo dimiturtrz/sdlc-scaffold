@@ -10,77 +10,64 @@ test-existence rule defaults to a strict source-mirror test tree — set `test_l
 in `[tool.structure]` if your tests don't mirror the source.) Derived from the common skeleton of cardiac-seg / mindscape / synthscape. See `docs/SPEC.md`
 for the gate contract (portable-superset vs project-local slot) and `docs/LEARNINGS.md` for the build log.
 
-## Three ways to use it
+The template ships **zero package code** — only guardrails. Every gate is on, always; there are no
+feature toggles to answer.
 
-### 1. New project
+## Two ways to use it (+ update)
 
+### New project
 ```bash
-uvx copier copy path/to/sdlc-scaffold ./my-project
+uvx copier copy path/to/sdlc-scaffold ./my-project   # answer: packages, domain, coverage_floor
 cd my-project
-git init && git add -A && git commit -m "scaffold v0.1.0"
+git init && git add -A && git commit -m "scaffold"
 uv sync --extra dev --extra devtools
-nox -s gates        # ruff + vulture + coverage + graph --assert, all green on the demo
+# cold start: no code ships. Write your first module + its mirror test, then:
+nox -s gates        # ruff + vulture + coverage + graph --assert + import-linter + ast-grep + jscpd
 ```
+A brand-new empty project has nothing to cover yet — write `{packages[0]}/foo.py` and
+`tests/unit/{packages[0]}/test_foo.py`, and the gates go green. (The gates are never weakened for the
+empty case — you bring the first module.)
 
-The demo package (`math_ops` ← `pipeline`) ships so the gates have real code to bite on day one.
-Replace it with your own; the gates guard every commit from there.
-
-### 2. Adopt into an existing repo
-
+### Adopt into an existing repo
 ```bash
 cd existing-repo
-uvx copier copy --data packages=core,neuroscan,neuroviz --data ship_example=false <scaffold> .
+uvx copier copy --data packages=core,neuroscan,neuroviz <scaffold> .
 ```
+copier **conflict-prompts** on files you already have (`pyproject.toml`, CI) — keep or merge per file. It
+lays down the gate config + `devtools/`; your source packages it never touches (it ships none). Then
+`git commit`, `uv sync && nox -s gates` — fix or ratchet whatever the gates flag.
 
-- `ship_example=false` → **no demo stub**, guardrails only.
-- copier **conflict-prompts** on files you already have (your `pyproject.toml`, `README.md`, CI) — keep or
-  merge per file. It lays down the gate config + `devtools/`; your source packages it leaves alone.
-- `git add -A && git commit`, then `uv sync && nox -s gates` — fix or ratchet whatever the gates flag.
-
-### 3. Update (new + adopted, identical)
-
+### Update (both, identical)
 ```bash
 uvx copier update       # reads .copier-answers.yml, fetches the newest scaffold tag
 ```
-
 3-way merge: portable rule changes flow in, your `# >>> LOCAL-SLOT` edits survive, real conflicts land as
-`.rej`. The scaffold advances by **git tags** — each tag is one reviewable rollout step. Commit the result.
-`.copier-answers.yml` (copier writes it, records `_commit:` + your answers) is the anchor — commit it.
+`.rej`. The scaffold advances by **git tags** — one reviewable rollout step each. Commit `.copier-answers.yml`.
 
-## Toggles (asked at copy time)
+## Questions (asked at copy time)
 
-| toggle | default | effect |
+| question | default | effect |
 |---|---|---|
 | `project_name` | — | repo / folder name (kebab-case) |
-| `packages` | `project_name` snake_cased | comma-list the guardrails target; add your own (`core,neuroscan,neuroviz`) |
-| `ship_example` | `true` | ship the demo package; `false` for guardrails-only adoption |
-| `enforce_arch_fitness` | `true` | `graph.py --assert` gate (god-module / cycle / god-file / test-mirror) + `[tool.structure]` |
-| `enable_import_linter` | `true` | directional forbidden-import contracts (only bites with >1 package) |
-| `enable_astgrep` | `false` | ast-grep module-shape gate (in-a-class, no import-time side effects) |
-| `enable_jscpd` | `false` | jscpd duplication (DRY) gate — advisory |
-| `enable_class_shape_smells` | `false` | LCOM4 / data-clumps / namespace-state advisory explorers |
-| `enable_beads` | `false` | beads (bd) issue tracking — CLAUDE/AGENTS section + gitignore |
-| `enable_ml` | `true` | ML extension: `numpy` dep + ML-workflow gitignore (data-outside-repo/`paths.yaml`, MLflow, `runs/`) + the data-skip CI env. `false` = a domain-neutral Python scaffold |
+| `packages` | `project_name` snake_cased | comma-list the guardrails target (`core,neuroscan,neuroviz`) |
+| `domain` | `ml` | `ml` = numpy dep + ML-workflow gitignore (data-outside-repo/`paths.yaml`, MLflow, `runs/`) + data-skip CI env; `none` = domain-neutral |
 | `coverage_floor` | `80` | `coverage report --fail-under` |
 
-`package_name` (= `packages[0]`, the demo folder), the ruff select, and the pinned tool versions are
-computed/single-sourced (`when: false`) — never asked, one home in `copier.yml`.
+That's it. **The quality gates (ruff, vulture, coverage, arch-fitness incl. test-mirror, import-linter,
+ast-grep, jscpd) + beads are always on — no toggles.** import-linter self-gates (only bites with >1
+package). The ruff select + pinned tool versions are single-sourced (`when: false`) in `copier.yml`.
 
 ## What a generated project gets
 
 - `pyproject.toml` — portable ruff/vulture/coverage superset blocks + marked LOCAL-SLOT regions.
-- `noxfile.py` — one entrypoint (`nox -s gates`) that runs exactly what CI runs.
-- `.pre-commit-config.yaml` — the same gates bound to the commit event.
-- `.github/workflows/ci.yml` — the gates as the merge gate.
-- `devtools/` — the fitness tools (`graph.py` arch-fitness; optional ast-grep rules, jscpd config,
-  class-shape explorers) + a toggle-aware `README.md`.
-- `{packages}/` + `tests/` — a minimal-but-real example that passes every gate on generation
-  (omitted when `ship_example=false`).
+- `noxfile.py` / `.pre-commit-config.yaml` / `.github/workflows/ci.yml` — the same gates as local, commit, merge.
+- `devtools/` — the fitness tools (`graph.py`, `omit.py`, ast-grep rules, jscpd config, class-shape explorers) + a `README.md`.
+- `tests/{unit,integration,e2e}/`, `docs/`, `CLAUDE.md`/`AGENTS.md` — the skeleton. **No package code** — you bring it.
 
 Directional layer contracts (e.g. the kernel imports none of the others; a viewer never imports a
-trainer) ship via **import-linter** when `enable_import_linter` and you declare >1 package —
-`[tool.importlinter]` carries a kernel-independence starter + a contracts LOCAL-SLOT. A one-way forbidden
-import is no cycle, so it's the axis `graph.py` can't see. See the generated `devtools/README.md`.
+trainer) ship via **import-linter** once you declare >1 package — `[tool.importlinter]` carries a
+kernel-independence starter + a contracts LOCAL-SLOT. A one-way forbidden import is no cycle, so it's the
+axis `graph.py` can't see. See the generated `devtools/README.md`.
 
 ## Design
 
