@@ -20,6 +20,19 @@ A **gate** = engine + parameters + invocation. Two axes decide delivery:
 **Superset rule**: a portable param that is harmless-when-unused (ignore-lists, exclude-lines) is
 shipped as the UNION of the 3 repos. Do NOT thin it to make a gate pass.
 
+**RULE vs FACT — the convergence law (bd o70, owner decision).** The end-state guardrail set is the UNION
+of every repo's rules, not a 2/3 majority. Two kinds of thing, and only one is per-repo:
+- **RULES** — ruff select codes, the gate inventory, pep8-naming (`N`). UNION base, byte-identical across
+  all repos. There are **no per-repo rule slots** (a `base_select + local_extra` split is explicitly
+  REJECTED — it lets a repo keep NOT running a code a sibling runs, i.e. a dodge). A code any repo enforces
+  is house bar for all; each repo FIXES up to it the hard way (no suppression, no threshold-drop; k8c).
+- **FACTS** — deps, scan paths (`packages` + the per-gate scope slots), pep8 ignore-**names** VOCAB, vulture
+  domain FPs, `[tool.structure]` thresholds. Additive per-repo LOCAL-SLOTs. `monai` ≠ `mne` is a fact, not
+  a loosened rule. This is where legitimate divergence lives — and only here.
+
+A new gate follows the same law: if any repo runs it, it enters the BASE (ml-specific gates ride
+`enable_ml`, e.g. shape_contracts). There are no permanent repo-local *gates* either — union forbids them.
+
 **Guardrails, not architecture**: the scaffold imposes NO layering. Gates target the `packages` the
 project declares; directional layer contracts (import-linter) are opt-in, never shipped.
 
@@ -86,8 +99,10 @@ via the computed `use_import_linter`. Every other gate is unconditional (no togg
 ### ruff (`[tool.ruff]` + `[tool.ruff.lint]`)
 ```toml
 line-length = 120
-# select = ruff_select (copier.yml, single source) — curated-narrow: specific codes, NOT broad families
-# (excludes UP/C4 opinionated churn). SIM is IN — the 2/3 majority (cardiac-seg + mindscape) graduated it (bd 7g0).
+# select = ruff_select (copier.yml, single source) — the UNION of all house repos' codes (bd o70): every
+# code ANY repo enforces is here, byte-identical across repos. Not "majority" — union (no dodging a code a
+# sibling runs). SIM is one such (cardiac-seg + mindscape). Currently curated-narrow; it grows to the union
+# as Tier-3 (vip.2) lands cardiac's N/SLF001/PERF/... — each repo then FIXES up to the base (no suppression).
 select = ["F","B","E501","I","T201","FBT","BLE001","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","SIM"]
 ignore = ["RUF001","RUF002","RUF003"]    # intentional ≈ × unicode
 [tool.ruff.lint.per-file-ignores]
