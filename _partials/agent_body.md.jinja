@@ -53,6 +53,12 @@ config, `devtools/`, and the nox/CI/pre-commit runners are **template-owned**: d
 a gate — fix upstream in the scaffold and `uvx copier update`, or edit only within `# >>> LOCAL-SLOT`
 regions. `copier update` pulls scaffold improvements as reviewable steps.
 
+**Don't test template-owned code, either.** The `devtools/` detectors are unit-tested in the scaffold
+itself; a `tests/unit/devtools/` here would re-litigate every template change locally (it duplicates
+upstream coverage of byte-identical code, and breaks on the next `copier update`). Trust the upstream
+tests — this repo's tests cover only ITS packages. Consumer-specific detector *config* (e.g. that your
+`omit` list exempts your shells) is proven through the detector's public behavior, not a copied unit test.
+
 ## Conventions
 
 {% if enable_ml %}- **Data lives out of the repo** (under a root pointed at by `paths.yaml`, gitignored). No datasets,
