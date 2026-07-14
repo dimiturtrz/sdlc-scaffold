@@ -104,16 +104,17 @@ line-length = 120
 # code ANY repo enforces is here, byte-identical across repos. Not "majority" — union (no dodging a code a
 # sibling runs). vip.2 LANDED cardiac's ratchet whole (the furthest-advanced repo = the union): N +
 # E741-3 + PLR0124/1714/PLW3301 + RUF005-046/012 + C408/420 + PERF401/PLW0108/E731 + E402/ICN001 +
-# S603/607/PTH123 + SLF001, on top of the narrow floor + SIM. Each repo FIXES up to the base (mindscape's
-# 383 N-hits are fixed, not exempted). DELIBERATELY OUT (owner, on record): UP (annotation churn), E701/702
-# (dense `a; b` compaction is house style), W (formatter owns it). OPEN for owner: S101 (no-assert-in-prod).
-select = ["F","B","E501","I","T201","FBT","BLE001","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","N","E741","E742","E743","PLR0124","PLR1714","PLW3301","RUF012","RUF005","RUF007","RUF010","RUF022","RUF046","C408","C420","SIM","PERF401","PLW0108","E731","E402","ICN001","S603","S607","PTH123","SLF001"]
+# S101/603/607/PTH123 + SLF001, on top of the narrow floor + SIM. Each repo FIXES up to the base (mindscape's
+# 383 N-hits are fixed, not exempted). S101 = no-assert-in-prod (stripped under `python -O`; all 3 honor it,
+# tests carve it out). DELIBERATELY OUT (owner, on record): UP (annotation churn), E701/702 (dense `a; b`
+# compaction is house style), W (formatter owns it).
+select = ["F","B","E501","I","T201","FBT","BLE001","S101","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","N","E741","E742","E743","PLR0124","PLR1714","PLW3301","RUF012","RUF005","RUF007","RUF010","RUF022","RUF046","C408","C420","SIM","PERF401","PLW0108","E731","E402","ICN001","S603","S607","PTH123","SLF001"]
 ignore = []                              # + "F722" iff enable_ml (jaxtyping shape strings — bd vip.1)
 [tool.ruff.lint.pep8-naming]             # N is universal; ignore-names VOCAB is a FACT (LOCAL-SLOT)
 ignore-names = []                        # ML default: ["X*","Y*","B","C","H","W","F"]; repo adds its idioms
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]                 # re-export facades
-"tests/**"    = ["PLR2004","FBT","SLF001","N801","N802","N803","N806","N812","PLR0913"]  # tests: fixtures, mock-class case, privates-under-test
+"tests/**"    = ["S101","PLR2004","FBT","SLF001","N801","N802","N803","N806","N812","PLR0913"]  # tests: asserts, fixtures, mock-class case, privates-under-test
 # + LOCAL-SLOT per-file-ignores for repo-specific file carve-outs
 ```
 `extend-exclude` is LOCAL-SLOT.

@@ -101,8 +101,10 @@ def test_expected_layout(project):
     assert ('"X*"' in pyproject_text) == ml, "the tensor-idiom naming allowlist is ML-only"
     # union ruff select (vip.2): cardiac's ratchet is now the base — N/SLF001/PTH123 are in EVERY combo
     assert 'select = [' in pyproject_text
-    for code in ('"N"', '"SLF001"', '"PTH123"', '"PERF401"', '"ICN001"'):
-        assert code in pyproject_text, f"union select must carry {code} (cardiac ratchet pulled up)"
+    for code in ('"N"', '"SLF001"', '"PTH123"', '"PERF401"', '"ICN001"', '"S101"'):
+        assert code in pyproject_text, f"union select must carry {code} (cardiac ratchet + S101)"
+    # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
+    assert "main_sequence_max" in pyproject_text, "the instability/main-sequence gate threshold ships (x3b)"
     # 2cj: magic_literals is a BASE ENFORCED gate — the [tool.magic_literals] ceiling FACT ships 0/0
     assert "[tool.magic_literals]" in pyproject_text, "magic-literals ratchet is a base gate (2cj)"
     assert "max_strings = 0" in pyproject_text and "max_key_sets = 0" in pyproject_text, "fresh repo = 0/0"

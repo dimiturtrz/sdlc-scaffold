@@ -75,12 +75,13 @@ coverage_floor:
 # repo FIXES to it (blocking-first) — mindscape's 383 N-hits are fixed, not exempted (union overrules
 # its N-rejection). Specific codes, NOT broad families. DELIBERATELY OUT (owner-rejected, on record):
 # UP (pyupgrade annotation churn), E701/E702 (the dense `a; b` / `if x: y` compaction is house style),
-# W (pycodestyle warnings the formatter already owns). OPEN for owner: S101 (no-assert-in-prod) — a real
-# axis all 3 repos already honor by convention; left out pending a conscious call (bd vip.2), not added
-# by default. `when: false` = never asked, always this value.
+# W (pycodestyle warnings the formatter already owns). S101 (no-assert-in-prod) is IN (owner call): a real
+# bug-class — `assert` is stripped under `python -O`, so a prod invariant on a bare assert silently
+# vanishes; all 3 repos honor it by convention (zero fix when clean). Tests use asserts -> S101 sits in the
+# tests per-file-ignores. `when: false` = never asked, always this value.
 ruff_select:
   type: str
-  default: "F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123,SLF001"
+  default: "F,B,E501,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123,SLF001"
   when: false
 
 # Single source of truth for the pinned tool versions — rendered into ci.yml / noxfile.py /

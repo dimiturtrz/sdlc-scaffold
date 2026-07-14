@@ -88,8 +88,10 @@ fan-in); out-arrows are *efferent* (`Ce`, fan-out). The scaffold enforces three 
 **direction** (import-linter — a kernel that imports nothing is maximally stable by construction),
 **acyclicity** (no import cycles), and **degree** (a *god-module* is high `Ca` *and* high `Ce` — a hub both
 widely depended-on and widely depending, the thing to split). `graph.py` computes `Ca`/`Ce` + betweenness on
-the grimp import graph. (Martin's *instability* `I = Ce/(Ce+Ca)` and main-sequence distance sharpen this
-further — a planned addition, since the raw counts are already in hand.)
+the grimp import graph, plus Martin's *instability* `I = Ce/(Ce+Ca)` and *main-sequence distance*
+`D = |A + I − 1|` (with abstractness `A` from the class AST) — reported for every module, and an **advisory**
+gate a repo opts into (off by default: a concrete stable leaf legitimately sits at `D ≈ 1`, so there is no
+honest universal threshold).
 
 ## How the config travels
 

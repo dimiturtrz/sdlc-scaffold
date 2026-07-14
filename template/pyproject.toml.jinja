@@ -54,7 +54,7 @@ ignore-names = [{% if enable_ml %}"X*", "Y*", "B", "C", "H", "W", "F"{% endif %}
 # (N8xx); fixtures take many params (PLR0913). The SUBSTANTIVE gates (imports-at-top, real bugs, dead
 # code) still apply to tests.
 "__init__.py" = ["F401"]
-"tests/**" = ["PLR2004", "FBT", "SLF001", "N801", "N802", "N803", "N806", "N812", "PLR0913"]
+"tests/**" = ["S101", "PLR2004", "FBT", "SLF001", "N801", "N802", "N803", "N806", "N812", "PLR0913"]
 # >>> LOCAL-SLOT: per-file-ignores — repo-specific file carve-outs (e.g. a best-effort telemetry shell
 # that must never raise). Add lines here; copier update won't overwrite this region.
 # <<< LOCAL-SLOT: per-file-ignores
@@ -119,6 +119,8 @@ bottleneck_degree = 8    # fan-in AND fan-out both over this = god-module
 file_max = 750           # god-file line ceiling — raise as real files grow
 file_min = 0             # advisory line floor — 0 = OFF (no honest universal floor; raise per repo if wanted)
 betweenness_max = 0.10   # advisory chokepoint threshold
+main_sequence_max = 0.0  # advisory Martin main-sequence distance |A+I-1| ceiling — 0 = OFF (a concrete
+                         # stable leaf legitimately sits at D≈1, so no honest universal floor; raise per repo)
 test_layout = "mirror"   # every logic module needs a unit test: "mirror" = tests/unit/<pkg>/<path>/test_<name>.py
                          # (strict, one home); "flat" = test_<name>.py anywhere under tests/; "off" = no check
 # <<< LOCAL-SLOT: arch-thresholds

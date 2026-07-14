@@ -259,6 +259,7 @@ def test_structure_cfg_all_defaults_when_absent(devtools, tmp_path):
         "file_max": 750,
         "file_min": 0,
         "betweenness_max": 0.10,
+        "main_sequence_max": 0.0,
         "test_layout": "mirror",
     }
 
@@ -298,13 +299,63 @@ def test_undersized_floor_advisory(devtools):
 
 def test_assert_fitness_clean_vs_dirty(devtools):
     graph = devtools["graph"]
-    cfg = {"bottleneck_degree": 8, "file_max": 750, "file_min": 0, "betweenness_max": 0.10}
+    cfg = {"bottleneck_degree": 8, "file_max": 750, "file_min": 0, "betweenness_max": 0.10, "main_sequence_max": 0.0}
     clean = nx.DiGraph([("a", "b"), ("b", "c")])
     blocking, _ = graph.assert_fitness(clean, [("a.py", 100)], cfg)
     assert blocking == [], "a clean graph + small files has no blocking violations"
     cyclic = nx.DiGraph([("a", "b"), ("b", "a")])
     blocking, _ = graph.assert_fitness(cyclic, [("big.py", 900)], cfg)
     assert blocking, "a cycle + an oversized file must block"
+
+
+# ---- graph.py instability / main-sequence distance (x3b) -------------------------------------------
+
+
+def test_instability_ratio(devtools):
+    graph = devtools["graph"]
+    g = nx.DiGraph()
+    for src in ("a", "b", "c"):  # X imported by a,b,c (Ca=3) and imports Y (Ce=1) -> I = 1/(1+3)
+        g.add_edge(src, "X")
+    g.add_edge("X", "Y")
+    inst = graph.instability(g)
+    assert inst["X"] == 0.25, "I = Ce/(Ce+Ca) = out/(out+in)"
+    assert inst["Y"] == 0.0, "Y only depended-on (Ce=0) -> maximally stable"
+    assert inst["a"] == 1.0, "a only depends (Ca=0) -> maximally unstable"
+
+
+def test_is_abstract_detects_abc_metaclass_abstractmethod(devtools):
+    graph = devtools["graph"]
+    assert graph._is_abstract(_cls("class I(ABC):\n    pass\n"))
+    assert graph._is_abstract(_cls("class M(metaclass=ABCMeta):\n    pass\n"))
+    assert graph._is_abstract(_cls("class A:\n    @abstractmethod\n    def go(self): ...\n"))
+    assert not graph._is_abstract(_cls("class C:\n    def go(self):\n        return 1\n"))
+
+
+def test_abstractness_ratio_from_file(devtools, tmp_path, monkeypatch):
+    graph = devtools["graph"]
+    monkeypatch.chdir(tmp_path)
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "mod.py").write_text("from abc import ABC\nclass I(ABC): ...\nclass C:\n    def go(self):\n        return 1\n")
+    assert graph.abstractness("pkg.mod") == 0.5, "1 abstract + 1 concrete -> A = 0.5"
+    (pkg / "noclass.py").write_text("X = 1\n")
+    assert graph.abstractness("pkg.noclass") is None, "no classes -> A undefined"
+    assert graph.abstractness("pkg.missing") is None, "no backing file -> None"
+
+
+def test_main_sequence_distance_and_off_by_default(devtools, tmp_path, monkeypatch):
+    graph = devtools["graph"]
+    monkeypatch.chdir(tmp_path)
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "leaf.py").write_text("class C:\n    def go(self):\n        return 1\n")  # concrete, A=0
+    g = nx.DiGraph()
+    g.add_edge("importer", "pkg.leaf")  # leaf depended-on only: Ca=1, Ce=0 -> I=0 -> D=|0+0-1|=1.0
+    assert graph.main_sequence_distance(g)["pkg.leaf"] == 1.0
+    assert graph._off_main_sequence(g, 0.0) == [], "OFF by default (a concrete stable leaf legitimately sits at D≈1)"
+    assert graph._off_main_sequence(g, 0.7), "opt in with a threshold -> the far-off module surfaces (advisory)"
 
 
 # ---- graph.py test-mirror rule + omit.py (9fa) -----------------------------------------------------
