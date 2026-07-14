@@ -109,6 +109,13 @@ def test_expected_layout(project):
     # 9mu: ruff enforced + jscpd default to the arch set but are hygiene-widenable (lint_paths/jscpd_paths)
     ci_text = (path / ".github" / "workflows" / "ci.yml").read_text()
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
+    # nzs: the doc STARTERS carry ML-research framing (metric/baseline table, evidence->stats->method
+    # derivation) only for the ML domain; a domain-neutral project gets generic success-criteria wording.
+    plan = (path / "docs" / "PLAN.md").read_text()
+    assert ("Headline metrics" in plan) == ml, "the metric/baseline table is ML-research framing (nzs)"
+    assert ("public evidence" in plan) == ml, "the evidence->stats->method derivation is ML-only"
+    assert ("Success criteria" in plan) == (not ml), "a domain-neutral plan gets generic success criteria"
+    assert ("Headline-metric harness" in (path / "docs" / "ROADMAP.md").read_text()) == ml
 
 
 def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):

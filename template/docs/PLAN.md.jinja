@@ -7,13 +7,18 @@ ordered execution status lives in `ROADMAP.md`.
 
 _(placeholder)_ The north star for {{ project_name }} — what problem it solves and for whom.
 
-## Headline metrics
+{% if enable_ml %}## Headline metrics
 
 _(placeholder)_ Decide these up front; the comparison IS the result, not a leaderboard number.
 
 | metric | baseline | target | current |
 |---|---|---|---|
 | _(tbd)_ | — | — | — |
+{% else %}## Success criteria
+
+_(placeholder)_ What "done" looks like — the observable outcomes that decide the project worked.
+Name them up front so scope creep and gold-plating are visible against a fixed bar.
+{% endif %}
 
 ## Structure
 
@@ -22,8 +27,8 @@ _(placeholder)_ Decide these up front; the comparison IS the result, not a leade
 
 ## Approach
 
-_(placeholder)_ The argument from public evidence → our-data statistics → method. Derive
-parameters; no magic numbers.
+{% if enable_ml %}_(placeholder)_ The argument from public evidence → our-data statistics → method. Derive
+parameters; no magic numbers.{% else %}_(placeholder)_ How the goal is met — the key design decisions and the rationale behind each.{% endif %}
 
 ## Open questions
 
