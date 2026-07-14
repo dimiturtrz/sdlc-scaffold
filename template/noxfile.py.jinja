@@ -17,7 +17,7 @@ LAYERS = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last 
 
 @nox.session(venv_backend="none")
 def lint(session: nox.Session) -> None:
-    """ruff check (enforced) + ruff format --check (advisory) + vulture{% if use_import_linter %} + import-linter{% endif %}{% if enforce_arch_fitness %} + arch-fitness{% endif %}."""
+    """ruff check (enforced) + ruff format --check (advisory) + vulture{% if use_import_linter %} + import-linter{% endif %} + arch-fitness + ast-grep + jscpd."""
     session.run("uvx", RUFF, "check", *LAYERS, "--select", SELECT, external=True)
     # Advisory (mirrors CI, never blocks): full curated config over the whole tree + format drift.
     session.run("uvx", RUFF, "check", ".", "--statistics", external=True, success_codes=[0, 1])
@@ -27,11 +27,11 @@ def lint(session: nox.Session) -> None:
     # when it finds dead code — success_codes swallows that (0=clean, 3=found), only a usage error blocks.
     session.run("uvx", VULTURE, *LAYERS, "--min-confidence", "60", external=True, success_codes=[0, 3])
 {% if use_import_linter %}    session.run("uvx", "--from", "import-linter", "lint-imports", external=True)
-{% endif %}{% if enforce_arch_fitness %}    # --extra devtools: graph.py needs grimp+networkx (optional extra), same as CI's synced tests job.
+{% endif %}    # --extra devtools: graph.py needs grimp+networkx (optional extra), same as CI's synced tests job.
     session.run(
         "uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph", "--assert", *LAYERS, external=True
     )
-{% endif %}{% if enable_astgrep %}    session.run(
+    session.run(
         "uvx",
         "--from",
         "ast-grep-cli",
@@ -42,7 +42,7 @@ def lint(session: nox.Session) -> None:
         *LAYERS,
         external=True,
     )
-{% endif %}{% if enable_jscpd %}    # DRY gate — ENFORCED (blocks over the jscpd.json threshold), matching the cardiac/mindscape majority.
+    # DRY gate — ENFORCED (blocks over the jscpd.json threshold), matching the cardiac/mindscape majority.
     session.run(
         "npx",
         "--yes",
@@ -52,10 +52,10 @@ def lint(session: nox.Session) -> None:
         "devtools/jscpd.json",
         external=True,
     )
-{% endif %}{% if enable_class_shape_smells %}    # Advisory class-shape explorers — print a ranked report, always exit 0 (never block).
+    # Advisory class-shape explorers — print a ranked report, always exit 0 (never block).
     for _tool in ("state_candidates", "lcom", "data_clumps"):
         session.run("uv", "run", "python", "-m", f"devtools.{_tool}", *LAYERS, external=True)
-{% endif %}
+
 
 @nox.session(venv_backend="none")
 def test(session: nox.Session) -> None:

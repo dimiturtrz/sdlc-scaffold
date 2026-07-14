@@ -1,0 +1,27 @@
+# Remote copier-update smoke (bd knl). The `tests` workflow proves the update mechanic against a LOCAL
+# throwaway repo every PR; THIS job guards the network hop — fetch from the real remote URL, resolve a
+# published tag, `copier update` to a newer tag. It hits the network, so it runs on a weekly schedule +
+# on-demand (workflow_dispatch), not on every push. GITHUB_TOKEN clones this same (private) repo.
+name: remote-smoke
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Mondays 06:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: remote-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  remote-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4        # sets origin to this repo; the test reads it via `git remote get-url`
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Remote copier copy@tag -> update@newer-tag (network path)
+        env:
+          SCAFFOLD_REMOTE_SMOKE: "1"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run --group dev pytest tests/e2e/test_remote_update.py -v

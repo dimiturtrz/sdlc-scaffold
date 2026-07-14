@@ -35,12 +35,11 @@ htmlcov/
 /paths.yaml
 /runs/
 /mlruns/
-{% endif %}{% if enable_beads %}
+{% endif %}
 # Beads / Dolt engine bits (issues.jsonl is tracked; the embedded engine is not)
 .dolt/
 .beads/*.db
 .beads-credential-key
-{% endif %}{% if enable_jscpd %}
+
 # jscpd (node) — pulled transiently by npx for the duplication gate
 node_modules/
-{% endif %}

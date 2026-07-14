@@ -21,15 +21,9 @@ packages:
   help: "Packages the guardrails target — comma-separated, snake_case (add your others, e.g. core,neuroscan,neuroviz)"
   default: "{{ project_name.replace('-', '_') }}"
 
-# The quality gates + beads are the non-optional house bar — always shipped, no prompt. Kept as computed
-# `when:false` = always-true so the templates' `{% if X %}` blocks render unconditionally (a later cleanup
-# unwraps them; bd rji). import-linter is the one that self-gates: it needs >1 package to have anything to forbid.
-enforce_arch_fitness: {type: bool, default: true, when: false}
-enable_astgrep: {type: bool, default: true, when: false}
-enable_jscpd: {type: bool, default: true, when: false}
-enable_class_shape_smells: {type: bool, default: true, when: false}
-enable_beads: {type: bool, default: true, when: false}
-
+# The quality gates + beads are the non-optional house bar — always shipped, no prompt, no toggle: their
+# blocks render unconditionally in the templates (bd 9nq unwrapped the last inert `{% if %}` guards).
+# import-linter is the one gate that self-gates: it needs >1 package to have anything to forbid.
 use_import_linter:
   type: bool
   default: "{{ (packages.split(',') | length) > 1 }}"

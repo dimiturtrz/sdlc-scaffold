@@ -18,7 +18,7 @@ shipped as the UNION of the 3 repos. Do NOT thin it to make a gate pass.
 **Guardrails, not architecture**: the scaffold imposes NO layering. Gates target the `packages` the
 project declares; directional layer contracts (import-linter) are opt-in, never shipped.
 
-## copier.yml — toggles + EXACT var names (freeze)
+## copier.yml — prompt surface + EXACT var names (freeze)
 
 Asked at copy time:
 
@@ -30,17 +30,18 @@ Asked at copy time:
 | `coverage_floor` | int | 80 | `coverage report --fail-under` value |
 
 That's the whole prompt surface. **The quality gates + beads are NON-optional (no toggles): arch-fitness,
-import-linter, ast-grep, jscpd, class-shape, beads are always shipped** — the house bar (bd rji). They're
-kept as computed `when:false` = always-true so the templates' `{% if X %}` blocks render unconditionally (a
-later cleanup unwraps them). import-linter self-gates via `use_import_linter` (>1 package). The **template
-ships ZERO package code** (bd r2w) — only guardrails; a fresh gen is empty, you write the first module.
+import-linter, ast-grep, jscpd, class-shape, beads are always shipped** — the house bar (bd rji). Their
+template blocks render unconditionally — the inert `{% if enable_X %}` guards were removed (bd 9nq); the
+only in-file gating left is `use_import_linter` (import-linter self-gates on >1 package) and `enable_ml`
+(domain). The **template ships ZERO package code** (bd r2w) — only guardrails; a fresh gen is empty, you
+write the first module.
 
 Domain: `domain=ml` (default) makes this an ML-project scaffold (numpy + data-outside-repo + MLflow).
 `pydantic`, `docs/PLAN.md`+`ROADMAP.md`, `learning/`+`research/` ship regardless (house conventions, a
 later trim). `domain=none` = neutral Python guardrail scaffold.
 
 Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`domain == 'ml'`),
-`use_import_linter` (=`packages` has >1), the always-on gate flags, plus:
+`use_import_linter` (=`packages` has >1), plus:
 
 | var | value | used for |
 |---|---|---|
@@ -57,16 +58,17 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 4 | coverage floor | vendored coverage/pytest-cov | `exclude_lines`, `show_missing` | `source`, `omit` (slot); `fail-under`=`coverage_floor` (answer) |
 | 5 | arch fitness | OURS `graph.py --assert` | (mechanism) | `[tool.structure]` thresholds (slot) |
 | 5b | test-mirror (part of #5) | OURS `graph.py` `unmirrored()` + `omit.py` | `__init__`/`__main__` exempt | `[tool.coverage] omit` shells exempt |
-| 6 | ast-grep module-shape (`enable_astgrep`) | vendored ast-grep + our `sg-rules` | rule yml | scan paths = `packages` |
-| 7 | jscpd DRY (`enable_jscpd`) | vendored jscpd | `jscpd.json` threshold | scan paths = `packages` |
-| 8 | class-shape explorers (`enable_class_shape_smells`) | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
-| 9 | import-linter (`enable_import_linter` + >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
+| 6 | ast-grep module-shape | vendored ast-grep + our `sg-rules` | rule yml | scan paths = `packages` |
+| 7 | jscpd DRY | vendored jscpd | `jscpd.json` threshold | scan paths = `packages` |
+| 8 | class-shape explorers | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
+| 9 | import-linter (self-gates on >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
 
 import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import
 contracts — a one-way `core -> trainer` import is no cycle, so it passes `graph.py` but must fail here.
-The GATE is universal; the CONTRACTS are project-local (kernel-independence starter + slot). Guarded to
->1 package (nothing to forbid in a single package) via the computed `use_import_linter`. jscpd is
-ENFORCED (blocks over threshold) in ci+nox — the cardiac/mindscape majority — not a commit hook (Node).
+The GATE is universal; the CONTRACTS are project-local (kernel-independence starter + slot). It is the ONE
+gate that self-gates: shipped only when `packages` has >1 entry (nothing to forbid in a single package),
+via the computed `use_import_linter`. Every other gate is unconditional (no toggle). jscpd is ENFORCED
+(blocks over threshold) in ci+nox — the cardiac/mindscape majority — not a commit hook (Node).
 
 ## PORTABLE SUPERSET VALUES
 
@@ -123,19 +125,22 @@ Slots: `ruff-exclude`, `vulture-scan`, `coverage-scan`, `arch-thresholds`.
 
 ## Pinned tool versions (single-sourced in copier.yml, `when: false`)
 - ruff `0.15.13` · vulture `2.16` · nox `2026.7.11` · pre-commit `4.6.0`
-- ast-grep via `uvx --from ast-grep-cli ast-grep` (toggle) · jscpd via `npx --yes jscpd` (toggle)
+- ast-grep via `uvx --from ast-grep-cli ast-grep` · jscpd via `npx --yes jscpd` (both always shipped)
 - graph.py deps: `grimp`, `networkx` (project `devtools` extra)
 
-## Example code shipped (when `ship_example=true`, so a fresh gen is green)
+## No example code shipped — the template ships ZERO package code (bd r2w)
 
-A minimal-but-real example under the FIRST package (`packages[0]`), with a genuine intra-package edge:
-- `{packages[0]}/math_ops.py` — a leaf class (`mean`, `clamp`), imports nothing else.
-- `{packages[0]}/pipeline.py` — a class importing `math_ops` (the internal edge graph.py chews).
-- `tests/unit/{packages[0]}/test_math_ops.py` + `test_pipeline.py` — at the STRICT mirror path (so the
-  test-mirror gate passes), covering the above to satisfy `coverage_floor`.
+A fresh generation has an empty `tests/unit/` and no package source — only the gate config + `devtools/`.
+A brand-new project has nothing to lint/cover yet; you write the first module + its mirror test, then the
+gates go green (never weakened for the empty case — you bring the first module).
 
-`ship_example=false` omits the demo package + its unit tests (repo-adoption path). Anti-shortcut: gate
-failures are fixed in the TEMPLATE example/config, then regenerate — never hand-patch generated output.
+The demo the gates need to be exercised is OWNED BY THE E2E, not the template: `tests/e2e/conftest.py`
+`seed_example()` injects an astgrep-compliant leaf class (`{pkg}/math_ops.py`) + an intra-package edge
+(`{pkg}/pipeline.py`, the edge graph.py chews) + strict-mirror unit tests into a generated project before
+running the gates. That keeps the template code-less while still proving every gate bites on real code.
+
+Anti-shortcut: gate failures are fixed in the TEMPLATE config (or the e2e seed), then regenerate — never
+hand-patch generated output.
 
 ## Copier mechanics
 
@@ -143,9 +148,11 @@ failures are fixed in the TEMPLATE example/config, then regenerate — never han
 - `.jinja` files are Jinja-rendered and lose the suffix. Static files are copied verbatim — the
   `devtools/*.py` tools ship verbatim (they contain literal f-string braces `{{ }}`); do NOT add a
   `.jinja` suffix or unescaped `{{ }}` to them.
-- **Conditional files/dirs: clean names + `_exclude`.** Template files have plain names; `copier.yml`
-  `_exclude` carries jinja rules keyed on the toggles (`{% if not enable_astgrep %}devtools/sg-rules{% endif %}`)
-  that render to `""` (a no-op) when the feature is on and to the path when off. NO `{% if %}` in filenames.
-- **Variable folders** use pure interpolation (`{{ package_name }}/`), never a conditional expression.
+- **No conditional files/dirs.** Every gate is always shipped, so nothing is excluded by feature: `_exclude`
+  is just the housekeeping list (`.git`/`.venv`/`__pycache__`/`*.pyc`). NO `{% if %}` in filenames. (In-file
+  gating survives only for `use_import_linter` and `enable_ml`, as `{% if %}` blocks inside a file, never
+  as a file/dir name.)
+- **No variable folders.** The template ships zero package code, so there is no `{{ package_name }}/` dir —
+  the generated `tests/unit/` is empty and the consumer creates package dirs themselves.
 - TOML + Jinja: `{{` collides. For literal braces in TOML use `{% raw %}` or `{{ "{{" }}`. Watch the
   coverage regex and any f-string-like content.

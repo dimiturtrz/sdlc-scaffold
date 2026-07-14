@@ -1,4 +1,3 @@
-{% if enable_beads %}
 ## Issue tracking — beads (bd)
 
 This project uses **bd (beads)** for issue tracking. Run `bd init` once, then `bd prime` for the full
@@ -6,7 +5,7 @@ workflow. `.beads/issues.jsonl` is git-tracked; the Dolt engine is gitignored.
 
 - `bd ready` — available work · `bd show <id>` — details · `bd update <id> --claim` · `bd close <id>`
 - Use `bd` for ALL task tracking — not TodoWrite or markdown TODO lists.
-{% endif %}
+
 ## Build & Test
 
 `uv` is the env + dependency manager; `nox` is the task runner (every session calls `uvx`/`uv run`
@@ -21,9 +20,9 @@ nox -s gates                           # same, one entrypoint
 ## Package structure
 
 Your code lives in your declared package{% if packages.split(",")|length > 1 %}s{% endif %}: {% for p in packages.split(",") %}`{{ p | trim }}/`{% if not loop.last %}, {% endif %}{% endfor %} — organise modules however the project needs.
-The scaffold ships the **guardrails**, not a layering.{% if enforce_arch_fitness %} `graph.py --assert` keeps each package's
+The scaffold ships the **guardrails**, not a layering. `graph.py --assert` keeps each package's
 internal import graph honest (no cycles, no god-modules, no oversized files, no unmirrored logic modules);
-thresholds live in `[tool.structure]`.{% endif %}
+thresholds live in `[tool.structure]`.
 
 {% if use_import_linter %}Directional layer rules (the kernel imports none of the others; a viewer never imports a trainer) are
 enforced by **import-linter** — a one-way forbidden import is no cycle, so it's the axis `graph.py` can't
@@ -44,10 +43,9 @@ never a blanket ignore). The linter is a bug-finder, not cosmetics.
 - **vulture** (pinned `{{ vulture_version }}`) — dead-code at `min_confidence = 60`.
 - **coverage** — pytest-cov with a `--fail-under={{ coverage_floor }}` floor.
 {% if use_import_linter %}- **import-linter** — directional forbidden-import contracts (`[tool.importlinter]`); the layer axis graph.py can't express.
-{% endif %}{% if enforce_arch_fitness %}- **arch-fitness** — `python -m devtools.graph --assert`: god-module (fan-in/out), god-file, import-cycle,
+{% endif %}- **arch-fitness** — `python -m devtools.graph --assert`: god-module (fan-in/out), god-file, import-cycle,
   and test-mirror (a logic module needs its `tests/unit/<pkg>/…/test_<name>.py`); thresholds in
   `[tool.structure]`. Advisory: line-floor (off) + chokepoint.
-{% endif %}
 ## Conventions
 
 - **Data lives out of the repo** (under a root pointed at by `paths.yaml`, gitignored). No datasets,

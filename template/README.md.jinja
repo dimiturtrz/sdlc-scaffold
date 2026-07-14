@@ -6,7 +6,7 @@ One-line description of {{ project_name }}. (Replace me.)
 
 - {% for p in packages.split(",") %}`{{ p | trim }}/`{% if not loop.last %}, {% endif %}{% endfor %} — your package{% if packages.split(",")|length > 1 %}s{% endif %}. The guardrails target {% if packages.split(",")|length > 1 %}all of them{% else %}it{% endif %}; organise modules however the project needs.
 - `tests/` — `unit/`, `integration/`, `e2e/`.
-- `devtools/` — the guardrail tools (`graph.py` arch-fitness{% if enable_class_shape_smells %}, plus the class-shape explorers{% endif %}).
+- `devtools/` — the guardrail tools (`graph.py` arch-fitness, plus the class-shape explorers).
 
 The set of packages the gates lint/test/graph is the `packages` answer (comma-separated) — add more
 without touching any gate file; every gate renders over the list. Directional layer contracts between
@@ -23,6 +23,6 @@ nox -s lint test cov
 
 `nox -s lint test cov` (or `nox -s gates`) runs exactly what CI runs:
 
-- **lint** — ruff check (pinned) + ruff format --check (advisory) + vulture{% if enforce_arch_fitness %} + arch-fitness (`graph.py --assert`){% endif %}.
+- **lint** — ruff check (pinned) + ruff format --check (advisory) + vulture + arch-fitness (`graph.py --assert`) + ast-grep + jscpd.
 - **test** — pytest.
 - **cov** — pytest --cov with a `--fail-under={{ coverage_floor }}` floor.

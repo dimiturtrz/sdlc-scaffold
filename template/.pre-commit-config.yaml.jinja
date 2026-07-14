@@ -34,23 +34,20 @@ repos:
         pass_filenames: false
         always_run: true
       {% endif %}
-      {% if enforce_arch_fitness %}
       - id: arch-fitness
         name: architecture fitness (graph.py --assert)
         entry: uv run --extra devtools python -m devtools.graph --assert {{ pkgs }}
         language: system
         pass_filenames: false
         always_run: true
-      {% endif %}
-      {% if enable_astgrep %}
+
       - id: astgrep-gate
         name: ast-grep — module shape
         entry: uvx --from ast-grep-cli ast-grep scan -c devtools/sgconfig.yml {{ pkgs }}
         language: system
         pass_filenames: false
         always_run: true
-      {% endif %}
-      {% if enable_class_shape_smells %}
+
       # Class-shape smells — advisory explorers (LCOM4 cohesion / Fowler data-clumps / namespace-state).
       # They only print a ranked report and always exit 0, so as commit hooks they surface findings
       # without ever blocking — advisory by construction, not by continue-on-error.
@@ -72,7 +69,6 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-      {% endif %}
       {# jscpd is ENFORCED in CI + nox (blocks over the jscpd.json threshold, the cardiac/mindscape
          majority) but kept OFF the commit hook — it needs Node and is slower than the static gates. A
          repo that wants it at commit time too adds a jscpd hook here. #}
