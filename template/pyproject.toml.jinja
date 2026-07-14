@@ -49,12 +49,12 @@ ignore-names = [{% if enable_ml %}"X*", "Y*", "B", "C", "H", "W", "F"{% endif %}
 # <<< LOCAL-SLOT: pep8-naming
 
 [tool.ruff.lint.per-file-ignores]
-# Tests get a wider carve-out: literal fixtures (PLR2004) + bool flags (FBT); privates-under-test are the
-# point of a unit test (SLF001); mock classes mirror external PascalCase APIs + local math/alias scratch
-# (N8xx); fixtures take many params (PLR0913). The SUBSTANTIVE gates (imports-at-top, real bugs, dead
-# code) still apply to tests.
+# Tests get a wider carve-out: literal fixtures (PLR2004) + bool flags (FBT); mock classes mirror external
+# PascalCase APIs + local math/alias scratch (N8xx); fixtures take many params (PLR0913). The SUBSTANTIVE
+# gates (imports-at-top, real bugs, dead code) still apply to tests. (SLF001 is no longer enforced anywhere
+# — moved to the advisory surface, bd 8ex — so it needs no tests carve-out.)
 "__init__.py" = ["F401"]
-"tests/**" = ["S101", "PLR2004", "FBT", "SLF001", "N801", "N802", "N803", "N806", "N812", "PLR0913"]
+"tests/**" = ["S101", "PLR2004", "FBT", "N801", "N802", "N803", "N806", "N812", "PLR0913"]
 # >>> LOCAL-SLOT: per-file-ignores — repo-specific file carve-outs (e.g. a best-effort telemetry shell
 # that must never raise). Add lines here; copier update won't overwrite this region.
 # <<< LOCAL-SLOT: per-file-ignores

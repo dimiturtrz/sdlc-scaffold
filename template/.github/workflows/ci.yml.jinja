@@ -30,9 +30,11 @@ jobs:
       # else a fresh ml gen with any jaxtyping annotation red-CIs on its own shipped config (bd skr GAP1).
       - name: Lint — enforced (shipped source, full select)
         run: uvx ruff@{{ ruff_version }} check {{ lint_paths }} --select {{ ruff_select }}{% if enable_ml %} --ignore F722{% endif %}
-      # ADVISORY (never blocks): full curated config over the whole tree, surfaces any pending families.
+      # ADVISORY (never blocks): full curated config over the whole tree, surfaces any pending families +
+      # the advisory-only codes (E501/SLF001 — cosmetic / house-gate-conflicting, bd 4c2/8ex): reported,
+      # never a merge gate.
       - name: Lint — advisory full (non-blocking)
-        run: uvx ruff@{{ ruff_version }} check . --statistics || true
+        run: uvx ruff@{{ ruff_version }} check . --statistics --extend-select {{ ruff_advisory_select }} || true
       # ADVISORY: format drift, shown but never blocks.
       - name: Format — advisory (non-blocking)
         run: uvx ruff@{{ ruff_version }} format --check . || true
@@ -106,19 +108,22 @@ jobs:
       # ruff PLR2004 can't see.
       - name: Magic literals — enforced (ratchet over [tool.magic_literals] ceiling)
         run: uv run python -m devtools.magic_literals {{ pkgs }}
-      # Class-shape smells — ADVISORY explorers (never block): LCOM4 cohesion, Fowler data-clumps, and
-      # namespace-classes with latent shared state{% if enable_ml %} + shape-contracts (bare array/tensor boundaries){% endif %}.
-      # Heuristics that rank refactor candidates — surfaced for the reviewer, never a merge gate.
-      - name: Class-shape smells — advisory (LCOM / data-clumps / namespace-state{% if enable_ml %} / shape-contracts{% endif %})
+{% if enable_ml %}      # Shape contracts — ENFORCED (GRADUATED advisory->blocking, bd vip.4): every public array/tensor
+      # boundary must carry a jaxtyping shape, not a bare np.ndarray/Tensor. A fresh gen has 0 boundaries
+      # (passes); from the first typed boundary on, a bare one fails the merge — the ratchet at work. Aliases
+      # in [tool.shape_contracts]. (Was advisory; graduated once cardiac proved a real ml tree stays clean.)
+      - name: Shape contracts — enforced (jaxtyping boundaries; devtools/shape_contracts.py --assert)
+        run: uv run python -m devtools.shape_contracts {{ pkgs }} --assert
+{% endif %}      # Class-shape smells — ADVISORY explorers (never block): LCOM4 cohesion, Fowler data-clumps, and
+      # namespace-classes with latent shared state. Heuristics ranking refactor candidates — reviewer signal.
+      - name: Class-shape smells — advisory (LCOM / data-clumps / namespace-state)
         continue-on-error: true
         run: |
           uv run python -m devtools.state_candidates {{ pkgs }}
           uv run python -m devtools.lcom {{ pkgs }}
           uv run python -m devtools.data_clumps {{ pkgs }}
-{% if enable_ml %}          uv run python -m devtools.shape_contracts {{ pkgs }}
-{% endif %}      # >>> LOCAL-SLOT: ci-test-steps — repo-specific test/coverage/gate steps on top of the base (a
-      # separate viewer-coverage floor calibrated to library logic, or shape_contracts --assert as a
-      # BLOCKING step for a boundary-clean ml repo that graduates ahead of the base advisory). Survives
+      # >>> LOCAL-SLOT: ci-test-steps — repo-specific test/coverage/gate steps on top of the base (e.g. a
+      # separate viewer-coverage floor calibrated to library logic, or a repo-only enforced check). Survives
       # copier update; empty by default (bd skr GAP3).
       # <<< LOCAL-SLOT: ci-test-steps
 

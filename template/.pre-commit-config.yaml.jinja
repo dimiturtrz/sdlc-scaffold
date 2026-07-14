@@ -76,8 +76,8 @@ repos:
         pass_filenames: false
         always_run: true
 {% if enable_ml %}      - id: shape-contracts
-        name: shape-contracts — array/tensor boundaries lacking a jaxtyping shape (advisory)
-        entry: uv run python -m devtools.shape_contracts {{ pkgs }}
+        name: shape-contracts — enforced (array/tensor boundaries need a jaxtyping shape; vip.4)
+        entry: uv run python -m devtools.shape_contracts {{ pkgs }} --assert
         language: system
         pass_filenames: false
         always_run: true

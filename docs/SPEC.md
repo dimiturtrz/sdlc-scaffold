@@ -69,7 +69,8 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 
 | var | value | used for |
 |---|---|---|
-| `ruff_select` | narrow curated list (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
+| `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
+| `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
 | `ruff_version` / `vulture_version` / `nox_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
 | `lint_paths` / `jscpd_paths` | `packages` (space-joined) | R1 hygiene scan scope, widenable in `.copier-answers.yml` (9mu) |
 | `data_env_var` | `{PROJECT_UPPER}_DATA` | the ml data-skip CI env var NAME — a per-repo FACT (a repo whose adapters read a different name overrides it so tests SKIP not ERROR; bd skr GAP3a) |
@@ -89,7 +90,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 8 | class-shape explorers | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
 | 9 | import-linter (self-gates on >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
 | 10 | magic-literals (ENFORCED ratchet) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; ceilings = `[tool.magic_literals] max_strings/max_key_sets` (FACT slot, fresh=0/0 — 2cj); `--max-*` CLI overrides |
-| 11 | shape-contracts (advisory; ML-only) | OURS `shape_contracts.py` | builtin `ndarray`/`Tensor` + jaxtyping vocab | ships iff `enable_ml`; `[tool.shape_contracts] array_aliases` (slot); `--assert` graduates to blocking per repo |
+| 11 | shape-contracts (ENFORCED; ML-only) | OURS `shape_contracts.py --assert` | builtin `ndarray`/`Tensor` + jaxtyping vocab | ships iff `enable_ml`; `[tool.shape_contracts] array_aliases` (slot). GRADUATED advisory->blocking (bd vip.4) — a fresh gen has 0 boundaries so `--assert` passes; a bare array/tensor boundary then fails |
 
 import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import
 contracts — a one-way `core -> trainer` import is no cycle, so it passes `graph.py` but must fail here.
@@ -117,11 +118,17 @@ line-length = 120
 # code ANY repo enforces is here, byte-identical across repos. Not "majority" — union (no dodging a code a
 # sibling runs). vip.2 LANDED cardiac's ratchet whole (the furthest-advanced repo = the union): N +
 # E741-3 + PLR0124/1714/PLW3301 + RUF005-046/012 + C408/420 + PERF401/PLW0108/E731 + E402/ICN001 +
-# S101/603/607/PTH123 + SLF001, on top of the narrow floor + SIM. Each repo FIXES up to the base (mindscape's
+# S101/603/607/PTH123, on top of the narrow floor + SIM. Each repo FIXES up to the base (mindscape's
 # 383 N-hits are fixed, not exempted). S101 = no-assert-in-prod (stripped under `python -O`; all 3 honor it,
 # tests carve it out). DELIBERATELY OUT (owner, on record): UP (annotation churn), E701/702 (dense `a; b`
 # compaction is house style), W (formatter owns it).
-select = ["F","B","E501","I","T201","FBT","BLE001","S101","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","N","E741","E742","E743","PLR0124","PLR1714","PLW3301","RUF012","RUF005","RUF007","RUF010","RUF022","RUF046","C408","C420","SIM","PERF401","PLW0108","E731","E402","ICN001","S603","S607","PTH123","SLF001"]
+# ADVISORY-SURFACED, NOT ENFORCED (bd 4c2/8ex, owner 2026-07-14 — reported by `ruff check . --statistics
+# --extend-select {ruff_advisory_select}`, never a merge gate): E501 (line-too-long = cosmetic, a gate is a
+# bug-finder not a style cop — cardiac keeps 138 lines >120 on purpose); SLF001 (private-access STRUCTURALLY
+# conflicts with the py-top-level-function ast-grep gate — that gate forces same-module `Cls._helper`
+# references SLF001 mis-reads as reach-ins; ruff can't express 'same module'; 99 FP on mind). Demoted to
+# advisory house-wide, NOT a per-repo rule slot (a select-subtract slot = o70 dodge vector, rejected).
+select = ["F","B","I","T201","FBT","BLE001","S101","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","N","E741","E742","E743","PLR0124","PLR1714","PLW3301","RUF012","RUF005","RUF007","RUF010","RUF022","RUF046","C408","C420","SIM","PERF401","PLW0108","E731","E402","ICN001","S603","S607","PTH123"]  # + advisory E501,SLF001
 ignore = []                              # + "F722" iff enable_ml (jaxtyping shape strings — bd vip.1)
 [tool.ruff.lint.pep8-naming]             # N is universal; ignore-names VOCAB is a FACT (LOCAL-SLOT)
 ignore-names = []                        # ML default: ["X*","Y*","B","C","H","W","F"]; repo adds its idioms

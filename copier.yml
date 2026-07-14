@@ -96,10 +96,26 @@ author:
 # W (pycodestyle warnings the formatter already owns). S101 (no-assert-in-prod) is IN (owner call): a real
 # bug-class — `assert` is stripped under `python -O`, so a prod invariant on a bare assert silently
 # vanishes; all 3 repos honor it by convention (zero fix when clean). Tests use asserts -> S101 sits in the
-# tests per-file-ignores. `when: false` = never asked, always this value.
+# tests per-file-ignores.
+# ADVISORY, NOT ENFORCED (moved out of the blocking union — bd 4c2 + 8ex, owner 2026-07-14): E501
+# (line-too-long) is COSMETIC — a gate is a bug-finder, not a style cop (cardiac keeps 138 lines >120 on
+# purpose). SLF001 (private-access) STRUCTURALLY conflicts with the py-top-level-function ast-grep gate:
+# that gate mandates helpers live on a class, so a same-module `Cls._helper` registry/sibling call is
+# forced, and SLF001 mis-flags it as a reach-in (ruff can't express 'same module'; 99 FP hits on mind).
+# Both are a rule that fights readability-intent (E501) or another house gate (SLF001) — so they GRADUATE
+# DOWN to the advisory `--statistics` surface (still reported, never blocks) rather than a per-repo carve-out
+# (a rule slot = o70 dodge vector, rejected). They ride `ruff_advisory_select`. `when: false`.
 ruff_select:
   type: str
-  default: "F,B,E501,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123,SLF001"
+  default: "F,B,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123"
+  when: false
+
+# Advisory-surfaced ruff codes (bd 4c2/8ex): reported by the non-blocking `ruff check . --statistics` run
+# (via --extend-select) but NEVER a merge gate — the honest home for a rule that's cosmetic (E501) or
+# structurally at odds with another house gate (SLF001). A repo that WANTS one hard opts in itself.
+ruff_advisory_select:
+  type: str
+  default: "E501,SLF001"
   when: false
 
 # Single source of truth for the pinned tool versions — rendered into ci.yml / noxfile.py /

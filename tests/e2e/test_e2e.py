@@ -101,10 +101,15 @@ def test_expected_layout(project):
     # N (pep8-naming) is a UNIVERSAL rule -> the block always ships; only its ignore-names VOCAB is ML-flavored
     assert "[tool.ruff.lint.pep8-naming]" in pyproject_text, "N is universal — the naming block always ships"
     assert ('"X*"' in pyproject_text) == ml, "the tensor-idiom naming allowlist is ML-only"
-    # union ruff select (vip.2): cardiac's ratchet is now the base — N/SLF001/PTH123 are in EVERY combo
+    # union ruff select (vip.2): cardiac's ratchet is the base — N/PTH123/S101 are enforced in EVERY combo
     assert "select = [" in pyproject_text
-    for code in ('"N"', '"SLF001"', '"PTH123"', '"PERF401"', '"ICN001"', '"S101"'):
+    for code in ('"N"', '"PTH123"', '"PERF401"', '"ICN001"', '"S101"'):
         assert code in pyproject_text, f"union select must carry {code} (cardiac ratchet + S101)"
+    # 4c2/8ex: E501 (cosmetic) + SLF001 (conflicts with the op-namespace ast-grep gate) are DEMOTED from
+    # the enforced union to the advisory surface — reported, never blocking. (ci --extend-select checked below.)
+    enforced_select = pyproject_text[pyproject_text.index("select = [") : pyproject_text.index("select = [") + 900]
+    assert '"E501"' not in enforced_select, "E501 must NOT be in the enforced select (advisory only — 4c2)"
+    assert '"SLF001"' not in enforced_select, "SLF001 must NOT be in the enforced select (advisory only — 8ex)"
     # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
     assert "main_sequence_max" in pyproject_text, "the instability/main-sequence gate threshold ships (x3b)"
     # 2cj: magic_literals is a BASE ENFORCED gate — the [tool.magic_literals] ceiling FACT ships 0/0
@@ -122,6 +127,11 @@ def test_expected_layout(project):
     # skr GAP3b: ci repo-step LOCAL-SLOTs let a consumer superset ride on slots, not a fork (both domains).
     assert "LOCAL-SLOT: ci-lint-steps" in ci_text, "the ci-lint-steps slot ships (skr GAP3)"
     assert "LOCAL-SLOT: ci-test-steps" in ci_text, "the ci-test-steps slot ships (skr GAP3)"
+    # 4c2/8ex: E501+SLF001 ride the advisory --statistics surface (reported, never a merge gate).
+    assert "--extend-select E501,SLF001" in ci_text, "E501/SLF001 surface via advisory --statistics (4c2/8ex)"
+    # vip.4: shape_contracts GRADUATED advisory->blocking — a ml gen carries an ENFORCED --assert step (a
+    # fresh gen has 0 boundaries so it passes); a domain-neutral gen has no shape gate at all.
+    assert ("shape_contracts {} --assert".format(pkg) in ci_text) == ml, "ml ci enforces shape --assert (vip.4)"
     # c64: a generated project gets an MIT LICENSE carrying the author copyright (default = project_name).
     license_text = (path / "LICENSE").read_text()
     assert "MIT License" in license_text and answers["project_name"] in license_text, (
@@ -282,12 +292,13 @@ def test_magic_literals_enforced_runs_clean(project):
     run(["uv", "run", "python", "-m", "devtools.magic_literals", *layers(name)], path)
 
 
-def test_shape_contracts_advisory_runs_clean(project):
+def test_shape_contracts_enforced_runs_clean(project):
     name, path = project
     if not (path / "devtools" / "shape_contracts.py").exists():
         pytest.skip("shape_contracts is ML-domain only (absent off a tensor codebase)")
-    # advisory (no --assert) — the seed has no array boundaries, so it reports 0 and exits 0
-    run(["uv", "run", "python", "-m", "devtools.shape_contracts", *layers(name)], path)
+    # GRADUATED to blocking (vip.4) — the base runs it with --assert; the seed has no array boundaries so it
+    # exits 0. A bare boundary would fail (see test_shape_contracts_assert_catches_bare_boundary).
+    run(["uv", "run", "python", "-m", "devtools.shape_contracts", *layers(name), "--assert"], path)
 
 
 # ---- gates, via the runners ------------------------------------------------------------------------
