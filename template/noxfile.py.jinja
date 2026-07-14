@@ -22,7 +22,9 @@ JSCPD_LAYERS = [{% for p in jscpd_paths.split(" ") %}"{{ p }}"{% if not loop.las
 @nox.session(venv_backend="none")
 def lint(session: nox.Session) -> None:
     """ruff check (enforced) + ruff format --check (advisory) + vulture{% if use_import_linter %} + import-linter{% endif %} + arch-fitness + ast-grep + jscpd."""
-    session.run("uvx", RUFF, "check", *LINT_LAYERS, "--select", SELECT, external=True)
+    # --select on the CLI bypasses pyproject [tool.ruff.lint] ignore, so the ml F722 waiver (jaxtyping dim
+    # strings) is repeated here — matching CI (bd skr GAP1). Off domain=ml it's absent (no jaxtyping dep).
+    session.run("uvx", RUFF, "check", *LINT_LAYERS, "--select", SELECT, {% if enable_ml %}"--ignore", "F722", {% endif %}external=True)
     # Advisory (mirrors CI, never blocks): full curated config over the whole tree + format drift.
     session.run("uvx", RUFF, "check", ".", "--statistics", external=True, success_codes=[0, 1])
     session.run("uvx", RUFF, "format", "--check", ".", external=True, success_codes=[0, 1])

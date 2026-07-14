@@ -47,6 +47,16 @@ jscpd_paths:
   default: "{{ packages.split(',') | map('trim') | join(' ') }}"
   when: false
 
+# Data-skip env var NAME (bd skr GAP3a). domain=ml tests read their data root from an env var so a runner
+# with no dataset points it at an empty dir and data-gated tests SKIP (not error). The var NAME is a per-repo
+# FACT — a repo whose code reads CARDIAC_DATA can't adopt a CI that sets CARDIOSEG_DATA (tests would error,
+# not skip). Default = the project-name-derived name; a repo overrides it in .copier-answers.yml to match
+# whatever name its adapters actually read. Only used when enable_ml (the data-skip env block is ml-gated).
+data_env_var:
+  type: str
+  default: "{{ project_name | upper | replace('-','_') }}_DATA"
+  when: false
+
 domain:
   type: str
   help: "Project domain — `ml` adds the numpy dep + ML-workflow gitignore (data-outside-repo/paths.yaml, MLflow, training runs) + the data-skip CI env; `none` = a domain-neutral Python scaffold."
@@ -65,6 +75,14 @@ coverage_floor:
   type: int
   help: "Coverage floor (coverage report --fail-under)"
   default: 80
+
+# Copyright holder for the generated MIT LICENSE (bd c64). A scaffold that ships guardrails but no LICENSE
+# leaves every generated repo legally all-rights-reserved (defeats reuse). Default = the project's own name;
+# set your name/org so the copyright line is real.
+author:
+  type: str
+  help: "Copyright holder for the generated LICENSE (your name or org)"
+  default: "{{ project_name }}"
 
 # Single source of truth for the ruff select codes — rendered into pyproject.toml, ci.yml, noxfile.py
 # and .pre-commit-config.yaml so the list lives in ONE place. The house bar = the UNION of all repos'

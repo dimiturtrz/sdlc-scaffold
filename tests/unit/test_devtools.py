@@ -6,6 +6,7 @@ so a test can't pass on a broken tool. The modules are imported from a generated
 """
 
 import ast
+import sys
 
 import networkx as nx
 import pytest
@@ -108,12 +109,7 @@ def _write_pkg(root, name, source):
 def test_data_clumps_finds_maximal_travelling_set(devtools, tmp_path):
     clumps = devtools["data_clumps"].clumps
     # {a,b,c} carried whole by 4 functions -> a clump at support 4 (>= _MIN_SUPPORT)
-    src = (
-        "def f1(a, b, c): pass\n"
-        "def f2(a, b, c, d): pass\n"
-        "def f3(a, b, c, e): pass\n"
-        "def f4(a, b, c, g): pass\n"
-    )
+    src = "def f1(a, b, c): pass\ndef f2(a, b, c, d): pass\ndef f3(a, b, c, e): pass\ndef f4(a, b, c, g): pass\n"
     pkg = _write_pkg(tmp_path, "clump_pos", src)
     rows = clumps([pkg])
     assert rows, "a param set carried by >=4 functions must surface as a clump"
@@ -177,8 +173,12 @@ def test_shared_state_skips_stateful_class(devtools):
 
 def test_shared_state_skips_pydantic_and_command(devtools):
     shared_state = devtools["state_candidates"].shared_state
-    pydantic = "class Cfg(BaseModel):\n    @staticmethod\n    def a(cfg, x): ...\n    @staticmethod\n    def b(cfg, y): ...\n"
-    command = "class Cmd:\n    @staticmethod\n    def add_args(cfg, p): ...\n    @staticmethod\n    def run(cfg, a): ...\n"
+    pydantic = (
+        "class Cfg(BaseModel):\n    @staticmethod\n    def a(cfg, x): ...\n    @staticmethod\n    def b(cfg, y): ...\n"
+    )
+    command = (
+        "class Cmd:\n    @staticmethod\n    def add_args(cfg, p): ...\n    @staticmethod\n    def run(cfg, a): ...\n"
+    )
     assert shared_state(_cls(pydantic)) == {}
     assert shared_state(_cls(command)) == {}
 
@@ -337,7 +337,9 @@ def test_abstractness_ratio_from_file(devtools, tmp_path, monkeypatch):
     pkg = tmp_path / "pkg"
     pkg.mkdir()
     (pkg / "__init__.py").write_text("")
-    (pkg / "mod.py").write_text("from abc import ABC\nclass I(ABC): ...\nclass C:\n    def go(self):\n        return 1\n")
+    (pkg / "mod.py").write_text(
+        "from abc import ABC\nclass I(ABC): ...\nclass C:\n    def go(self):\n        return 1\n"
+    )
     assert graph.abstractness("pkg.mod") == 0.5, "1 abstract + 1 concrete -> A = 0.5"
     (pkg / "noclass.py").write_text("X = 1\n")
     assert graph.abstractness("pkg.noclass") is None, "no classes -> A undefined"
@@ -447,11 +449,11 @@ def test_magic_literals_defers_comparison_key_and_subscript(devtools, tmp_path):
     # the SAME token 4x but all in contexts owned elsewhere (comparison=ruff, dict key + subscript=schema)
     src = (
         "def a(x, d):\n"
-        "    if x == 'kind':\n"        # comparison operand -> ruff PLR2004
-        "        return d['kind']\n"   # subscript -> field ref
-        "    return {'kind': 1}\n"     # dict key -> key-set smell, not a value token
+        "    if x == 'kind':\n"  # comparison operand -> ruff PLR2004
+        "        return d['kind']\n"  # subscript -> field ref
+        "    return {'kind': 1}\n"  # dict key -> key-set smell, not a value token
         "def b(x):\n"
-        "    return x == 'kind'\n"     # comparison operand again
+        "    return x == 'kind'\n"  # comparison operand again
     )
     pkg = _write_pkg(tmp_path, "ml_excluded", src)
     assert magic.scan_strings([pkg]) == [], "tokens only in comparison/key/subscript are deferred, not counted"
@@ -501,11 +503,7 @@ def test_shape_contracts_flags_bare_array_boundary(devtools):
     sc = devtools["shape_contracts"]
     names = {"ndarray", "Tensor"}
     # a public method with a bare np.ndarray param + Tensor return, no jaxtyping shape -> both flagged
-    src = (
-        "class Seg:\n"
-        "    def run(self, x: np.ndarray) -> Tensor:\n"
-        "        return x\n"
-    )
+    src = "class Seg:\n    def run(self, x: np.ndarray) -> Tensor:\n        return x\n"
     fn = next(m for m in _cls(src).body if isinstance(m, ast.FunctionDef))
     assert sc._bare_array_slots(fn, names) == ["x", "->return"], "both bare array slots surface"
 
@@ -515,9 +513,7 @@ def test_shape_contracts_jaxtyping_satisfies(devtools):
     names = {"ndarray", "Tensor"}
     # a jaxtyping subscript IS the contract -> silent; `Float[Tensor, "..."] | None` still counts
     src = (
-        "class Seg:\n"
-        "    def run(self, x: Float[Tensor, 'b c h w']) -> Int[np.ndarray, 'n'] | None:\n"
-        "        return x\n"
+        "class Seg:\n    def run(self, x: Float[Tensor, 'b c h w']) -> Int[np.ndarray, 'n'] | None:\n        return x\n"
     )
     fn = next(m for m in _cls(src).body if isinstance(m, ast.FunctionDef))
     assert sc._bare_array_slots(fn, names) == [], "jaxtyping-annotated boundaries satisfy the contract"
@@ -527,10 +523,12 @@ def test_shape_contracts_private_and_scalar_exempt(devtools):
     sc = devtools["shape_contracts"]
     names = {"ndarray", "Tensor"}
     # private method (underscore) is interior; a non-array param is not a boundary
-    private = next(m for m in _cls("class C:\n    def _h(self, x: np.ndarray): ...\n").body
-                   if isinstance(m, ast.FunctionDef))
-    scalar = next(m for m in _cls("class C:\n    def go(self, n: int) -> float: ...\n").body
-                  if isinstance(m, ast.FunctionDef))
+    private = next(
+        m for m in _cls("class C:\n    def _h(self, x: np.ndarray): ...\n").body if isinstance(m, ast.FunctionDef)
+    )
+    scalar = next(
+        m for m in _cls("class C:\n    def go(self, n: int) -> float: ...\n").body if isinstance(m, ast.FunctionDef)
+    )
     assert sc._public(private) is False, "underscore-prefixed methods are interior, not boundaries"
     assert sc._bare_array_slots(scalar, names) == [], "a non-array signature is not a shape boundary"
 
@@ -542,8 +540,9 @@ def test_shape_contracts_alias_config_from_pyproject(devtools, tmp_path):
     names = sc.array_names(str(pp))
     assert names == {"ndarray", "Tensor", "Volume", "Mask"}, "builtin arrays plus the repo's alias slot"
     # an alias-typed boundary is flagged once the alias is registered
-    fn = next(m for m in _cls("class C:\n    def seg(self, v: Volume) -> Mask: ...\n").body
-              if isinstance(m, ast.FunctionDef))
+    fn = next(
+        m for m in _cls("class C:\n    def seg(self, v: Volume) -> Mask: ...\n").body if isinstance(m, ast.FunctionDef)
+    )
     assert sc._bare_array_slots(fn, names) == ["v", "->return"], "alias boundaries flag like ndarray/Tensor"
     # absent config -> only the universal builtins
     assert sc.array_names(str(tmp_path / "none.toml")) == {"ndarray", "Tensor"}
@@ -558,3 +557,19 @@ def test_shape_contracts_scan_and_assert(devtools, tmp_path):
     # clean tree -> nothing to scan
     clean = _write_pkg(tmp_path, "shp_ok", "class S:\n    def go(self, x: Float[Tensor, 'n']): ...\n")
     assert sc.scan([clean], names) == []
+
+
+# ---- skr GAP2: an engine invoked with NO packages must error, not silently scan a phantom 'src' ------
+
+
+@pytest.mark.parametrize(
+    "engine",
+    ["graph", "data_clumps", "lcom", "magic_literals", "state_candidates", "shape_contracts"],
+)
+def test_engine_requires_packages(devtools, engine, monkeypatch):
+    # nargs="+" -> no positional makes argparse exit(2). The old default=["src"] silently scanned a
+    # nonexistent dir (shape_contracts --assert then vacuously PASSED); a mis-invocation now fails loud.
+    monkeypatch.setattr(sys, "argv", [f"devtools.{engine}"])
+    with pytest.raises(SystemExit) as exc:
+        devtools[engine].main()
+    assert exc.value.code == 2, "no-arg invocation must be an argparse usage error, not a vacuous pass"

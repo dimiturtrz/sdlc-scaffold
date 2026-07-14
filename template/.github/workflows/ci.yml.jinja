@@ -25,8 +25,11 @@ jobs:
           enable-cache: true
       # ENFORCED (blocks the merge): the full house select over shipped source. Clean on a fresh gen;
       # catches REGRESSION (new unused import / undefined name / unsorted imports / magic number / ...).
+      # An explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the ml F722 waiver (jaxtyping
+      # `Float[Tensor, "b c h w"]` dim strings misread as bad forward refs) must be repeated on the CLI —
+      # else a fresh ml gen with any jaxtyping annotation red-CIs on its own shipped config (bd skr GAP1).
       - name: Lint — enforced (shipped source, full select)
-        run: uvx ruff@{{ ruff_version }} check {{ lint_paths }} --select {{ ruff_select }}
+        run: uvx ruff@{{ ruff_version }} check {{ lint_paths }} --select {{ ruff_select }}{% if enable_ml %} --ignore F722{% endif %}
       # ADVISORY (never blocks): full curated config over the whole tree, surfaces any pending families.
       - name: Lint — advisory full (non-blocking)
         run: uvx ruff@{{ ruff_version }} check . --statistics || true
@@ -59,13 +62,20 @@ jobs:
           node-version: "20"
       - name: Duplication — enforced (jscpd, DRY axis; blocks over threshold)
         run: npx --yes jscpd {{ jscpd_paths }} --config devtools/jscpd.json
+      # >>> LOCAL-SLOT: ci-lint-steps — repo-specific lint/shape steps that ride ON TOP of the base gates
+      # (a viewer-tree extra lint, an un-silenced advisory family, a repo-only static gate). The base gates
+      # above are template-owned + regenerated; steps added in this region survive copier update. Empty by
+      # default — mechanism identical across repos, only the CONTENTS are a per-repo FACT (bd skr GAP3).
+      # <<< LOCAL-SLOT: ci-lint-steps
 
   tests:
     runs-on: ubuntu-latest
 {% if enable_ml %}    # No dataset on the runner -> point the data root at an empty POSIX dir so data-gated tests skip
-    # cleanly (adapters glob an absent raw/ -> no subjects -> pytest.skip) instead of erroring.
+    # cleanly (adapters glob an absent raw/ -> no subjects -> pytest.skip) instead of erroring. The env var
+    # NAME is a per-repo FACT (data_env_var, bd skr GAP3a) — a repo whose adapters read a different name
+    # overrides it in .copier-answers.yml so tests SKIP here instead of erroring on a missing env.
     env:
-      {{ project_name | upper | replace('-','_') }}_DATA: /tmp/nodata
+      {{ data_env_var }}: /tmp/nodata
 {% endif %}    steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -106,4 +116,9 @@ jobs:
           uv run python -m devtools.lcom {{ pkgs }}
           uv run python -m devtools.data_clumps {{ pkgs }}
 {% if enable_ml %}          uv run python -m devtools.shape_contracts {{ pkgs }}
-{% endif %}
+{% endif %}      # >>> LOCAL-SLOT: ci-test-steps — repo-specific test/coverage/gate steps on top of the base (a
+      # separate viewer-coverage floor calibrated to library logic, or shape_contracts --assert as a
+      # BLOCKING step for a boundary-clean ml repo that graduates ahead of the base advisory). Survives
+      # copier update; empty by default (bd skr GAP3).
+      # <<< LOCAL-SLOT: ci-test-steps
+

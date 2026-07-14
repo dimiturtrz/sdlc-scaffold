@@ -33,6 +33,7 @@ pytestmark = pytest.mark.slow
 
 # ---- rendering -------------------------------------------------------------------------------------
 
+
 def test_no_leftover_jinja(project):
     name, path = project
     leftovers = []
@@ -94,13 +95,14 @@ def test_expected_layout(project):
     assert ('"beartype"' in pyproject_text) == ml
     assert ('"F722"' in pyproject_text) == ml, "F722 ignore is ML-only (jaxtyping shape strings)"
     assert ("[tool.shape_contracts]" in pyproject_text) == ml
-    assert ("jaxtyped(typechecker=" in (path / "devtools" / "README.md").read_text()) == ml, \
+    assert ("jaxtyped(typechecker=" in (path / "devtools" / "README.md").read_text()) == ml, (
         "the @shapecheck helper snippet is ML-only"
+    )
     # N (pep8-naming) is a UNIVERSAL rule -> the block always ships; only its ignore-names VOCAB is ML-flavored
     assert "[tool.ruff.lint.pep8-naming]" in pyproject_text, "N is universal — the naming block always ships"
     assert ('"X*"' in pyproject_text) == ml, "the tensor-idiom naming allowlist is ML-only"
     # union ruff select (vip.2): cardiac's ratchet is now the base — N/SLF001/PTH123 are in EVERY combo
-    assert 'select = [' in pyproject_text
+    assert "select = [" in pyproject_text
     for code in ('"N"', '"SLF001"', '"PTH123"', '"PERF401"', '"ICN001"', '"S101"'):
         assert code in pyproject_text, f"union select must carry {code} (cardiac ratchet + S101)"
     # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
@@ -111,6 +113,20 @@ def test_expected_layout(project):
     # 9mu: ruff enforced + jscpd default to the arch set but are hygiene-widenable (lint_paths/jscpd_paths)
     ci_text = (path / ".github" / "workflows" / "ci.yml").read_text()
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
+    # skr GAP1: an explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the enforced-lint CLI
+    # repeats the ml F722 waiver (jaxtyping dim strings) — else a fresh ml gen red-CIs on its own config.
+    assert ("--ignore F722" in ci_text) == ml, "enforced-lint carries the F722 CLI waiver iff ml (skr GAP1)"
+    # skr GAP3a: the data-skip env uses the per-repo data_env_var NAME (default project-derived), ml-only.
+    proj_upper = answers["project_name"].upper().replace("-", "_")
+    assert (f"{proj_upper}_DATA: /tmp/nodata" in ci_text) == ml, "ml CI sets the derived data-skip env (skr GAP3a)"
+    # skr GAP3b: ci repo-step LOCAL-SLOTs let a consumer superset ride on slots, not a fork (both domains).
+    assert "LOCAL-SLOT: ci-lint-steps" in ci_text, "the ci-lint-steps slot ships (skr GAP3)"
+    assert "LOCAL-SLOT: ci-test-steps" in ci_text, "the ci-test-steps slot ships (skr GAP3)"
+    # c64: a generated project gets an MIT LICENSE carrying the author copyright (default = project_name).
+    license_text = (path / "LICENSE").read_text()
+    assert "MIT License" in license_text and answers["project_name"] in license_text, (
+        "generated LICENSE ships with the author copyright (c64)"
+    )
     # nzs: the doc STARTERS carry ML-research framing (metric/baseline table, evidence->stats->method
     # derivation) only for the ML domain; a domain-neutral project gets generic success-criteria wording.
     plan = (path / "docs" / "PLAN.md").read_text()
@@ -127,7 +143,9 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
     list-splitting, which is what a real core/neuroscan/neuroviz repo relies on.
     """
     out = tmp_path_factory.mktemp("multi") / "proj"
-    generate(scaffold, out, {"project_name": "multi", "packages": "pkg_a,pkg_b", "domain": "none", "coverage_floor": "80"})
+    generate(
+        scaffold, out, {"project_name": "multi", "packages": "pkg_a,pkg_b", "domain": "none", "coverage_floor": "80"}
+    )
     noxfile = (out / "noxfile.py").read_text()
     assert 'LAYERS = ["pkg_a", "pkg_b"]' in noxfile
     # graph.py needs the devtools extra (grimp/networkx) — nox must pull it, matching CI (not plain uv run)
@@ -155,8 +173,18 @@ def test_hygiene_scope_widens_ruff_and_jscpd(scaffold, tmp_path_factory):
     """9mu: ruff + jscpd (R1 hygiene) can scan WIDER than the arch set — a repo widens lint_paths/jscpd_paths
     to keep a viewer + tests linted, without graph.py/ast-grep (R2/R3) leaving the package set."""
     out = tmp_path_factory.mktemp("hygiene") / "proj"
-    generate(scaffold, out, {"project_name": "h", "packages": "core", "domain": "none", "coverage_floor": "80",
-                             "lint_paths": "core viewer tests", "jscpd_paths": "core viewer/web/src"})
+    generate(
+        scaffold,
+        out,
+        {
+            "project_name": "h",
+            "packages": "core",
+            "domain": "none",
+            "coverage_floor": "80",
+            "lint_paths": "core viewer tests",
+            "jscpd_paths": "core viewer/web/src",
+        },
+    )
     ci = (out / ".github" / "workflows" / "ci.yml").read_text()
     nox = (out / "noxfile.py").read_text()
     # ruff enforced + jscpd take the WIDE scope
@@ -198,6 +226,7 @@ def test_gitignore_artifact_dirs_are_root_anchored(scaffold, tmp_path_factory):
 
 # ---- gates, solo -----------------------------------------------------------------------------------
 
+
 def test_ruff(project):
     name, path = project
     run(["uvx", RUFF, "check", *layers(name), "--select", SELECT], path)
@@ -227,8 +256,7 @@ def test_graph_assert_all_layers(project):
 def test_astgrep(project):
     name, path = project
     run(
-        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml",
-         *layers(name)],
+        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", *layers(name)],
         path,
     )
 
@@ -263,6 +291,7 @@ def test_shape_contracts_advisory_runs_clean(project):
 
 
 # ---- gates, via the runners ------------------------------------------------------------------------
+
 
 def test_nox_gates(project):
     _, path = project
@@ -309,8 +338,10 @@ def test_shape_contracts_assert_catches_bare_boundary(full_project):
     assert_bites(
         full_project,
         SHAPE_ASSERT,
-        lambda p: _append(p / "full_pkg" / "math_ops.py",
-                          "\n\nclass Boundary:\n    def seg(self, x: np.ndarray) -> np.ndarray:\n        return x\n"),
+        lambda p: _append(
+            p / "full_pkg" / "math_ops.py",
+            "\n\nclass Boundary:\n    def seg(self, x: np.ndarray) -> np.ndarray:\n        return x\n",
+        ),
     )
 
 
@@ -446,6 +477,7 @@ def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):
 
 
 # ---- versioned rollout: drift heals, local slot survives -------------------------------------------
+
 
 def test_copier_update_heals_portable_preserves_local(tmp_path):
     scaffold = tmp_path / "scaf"

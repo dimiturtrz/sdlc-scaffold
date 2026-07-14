@@ -46,6 +46,7 @@ Asked at copy time:
 | `packages` | str | `project_name` snake_cased | comma-list of packages the guardrails target (e.g. `core,neuroscan,neuroviz`) |
 | `domain` | enum | `ml` | `ml` = numpy dep + ML-workflow gitignore (data/`paths.yaml`/MLflow/`runs/`) + data-skip CI env; `none` = domain-neutral |
 | `coverage_floor` | int | 80 | `coverage report --fail-under` value |
+| `author` | str | `project_name` | copyright holder for the generated MIT `LICENSE` (bd c64 — a scaffold with no LICENSE leaves every gen all-rights-reserved) |
 
 That's the whole prompt surface. **The quality gates + beads are NON-optional (no toggles): arch-fitness,
 import-linter, ast-grep, jscpd, class-shape, beads are always shipped** — the house bar (bd rji). Their
@@ -70,12 +71,14 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 |---|---|---|
 | `ruff_select` | narrow curated list (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_version` / `vulture_version` / `nox_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
+| `lint_paths` / `jscpd_paths` | `packages` (space-joined) | R1 hygiene scan scope, widenable in `.copier-answers.yml` (9mu) |
+| `data_env_var` | `{PROJECT_UPPER}_DATA` | the ml data-skip CI env var NAME — a per-repo FACT (a repo whose adapters read a different name overrides it so tests SKIP not ERROR; bd skr GAP3a) |
 
 ## Gate inventory
 
 | # | gate | engine | portable params | local-slot / answer |
 |---|---|---|---|---|
-| 1 | ruff lint (enforced) | vendored ruff | `line-length`, `select` (=`ruff_select`), `ignore`, `per-file-ignores` | `extend-exclude` (slot); scope=`lint_paths` (R1 hygiene, default `packages`, widenable — 9mu) |
+| 1 | ruff lint (enforced) | vendored ruff | `line-length`, `select` (=`ruff_select`), `ignore`, `per-file-ignores` | `extend-exclude` (slot); scope=`lint_paths` (R1 hygiene, default `packages`, widenable — 9mu). The enforced CLI passes `--ignore F722` iff `enable_ml` — an explicit `--select` bypasses pyproject `ignore`, so the jaxtyping waiver is repeated on the CLI (else a fresh ml gen red-CIs on its own config; bd skr GAP1) |
 | 2 | ruff format --check (advisory) | vendored ruff | (never blocks) | — |
 | 3 | vulture dead-code | vendored vulture | `min_confidence`, `ignore_decorators`, `ignore_names` core | `paths`, `exclude` (slot) |
 | 4 | coverage floor | vendored coverage/pytest-cov | `exclude_lines`, `show_missing` | `source`, `omit` (slot); `fail-under`=`coverage_floor` (answer) |
@@ -94,6 +97,16 @@ The GATE is universal; the CONTRACTS are project-local (kernel-independence star
 gate that self-gates: shipped only when `packages` has >1 entry (nothing to forbid in a single package),
 via the computed `use_import_linter`. Every other gate is unconditional (no toggle). jscpd is ENFORCED
 (blocks over threshold) in ci+nox — the cardiac/mindscape majority — not a commit hook (Node).
+
+**CI repo-step slots (bd skr GAP3).** `ci.yml` carries two `# >>> LOCAL-SLOT` regions — `ci-lint-steps`
+(lint job) and `ci-test-steps` (tests job) — empty by default, so a consumer whose CI is a SUPERSET of the
+base (a viewer-coverage floor, an un-silenced advisory family, `shape_contracts --assert` as a blocking step
+for a boundary-clean repo graduating ahead of the base) rides those steps on slots instead of forking the
+workflow. Mechanism identical across repos; only the slot CONTENTS are a per-repo FACT.
+
+**Engines require ≥1 package (bd skr GAP2).** Every `devtools/*.py` gate takes `packages` as `nargs="+"` —
+a no-arg invocation is an argparse usage error, NOT a silent scan of a phantom `src/` (which made
+`shape_contracts --assert` vacuously PASS). The rendered runners always pass `packages` explicitly.
 
 ## PORTABLE SUPERSET VALUES
 

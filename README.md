@@ -112,7 +112,7 @@ state. The full contract (exact rule values, the superset-vs-slot boundary) live
 
 ## Using it
 
-Four questions, asked once:
+Five questions, asked once:
 
 | question | default | effect |
 |---|---|---|
@@ -120,6 +120,7 @@ Four questions, asked once:
 | `packages` | `project_name` snake_cased | comma-list the guardrails target (`core,neuroscan,neuroviz`) |
 | `domain` | `ml` | `ml` adds numpy + an ML-workflow gitignore (data-outside-repo/`paths.yaml`, MLflow, `runs/`) + a data-skip CI env; `none` = domain-neutral |
 | `coverage_floor` | `80` | `coverage report --fail-under` |
+| `author` | `project_name` | copyright holder for the generated MIT `LICENSE` |
 
 Every gate is on from the first generation — there are no feature toggles. import-linter is the sole
 self-gating one (it needs >1 package to have anything to forbid).
