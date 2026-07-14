@@ -22,10 +22,12 @@ def lint(session: nox.Session) -> None:
     # Advisory (mirrors CI, never blocks): full curated config over the whole tree + format drift.
     session.run("uvx", RUFF, "check", ".", "--statistics", external=True, success_codes=[0, 1])
     session.run("uvx", RUFF, "format", "--check", ".", external=True, success_codes=[0, 1])
-    session.run("uvx", VULTURE, *LAYERS, "--min-confidence", "80", external=True)
+    # vulture takes NO package args — scope is config-driven via [tool.vulture] paths (the vulture-scan
+    # LOCAL-SLOT), same as CI + pre-commit. A repo widens the dead-code scan there, not on the CLI.
+    session.run("uvx", VULTURE, "--min-confidence", "80", external=True)
     # Advisory: conf60 dead-code (real signal, but eats no-fan-in FPs so it can't block). vulture exits 3
     # when it finds dead code — success_codes swallows that (0=clean, 3=found), only a usage error blocks.
-    session.run("uvx", VULTURE, *LAYERS, "--min-confidence", "60", external=True, success_codes=[0, 3])
+    session.run("uvx", VULTURE, "--min-confidence", "60", external=True, success_codes=[0, 3])
 {% if use_import_linter %}    session.run("uvx", "--from", "import-linter", "lint-imports", external=True)
 {% endif %}    # --extra devtools: graph.py needs grimp+networkx (optional extra), same as CI's synced tests job.
     session.run(

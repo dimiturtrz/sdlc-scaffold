@@ -132,7 +132,25 @@ boundary; portable superset blocks carry NO marker (template owns them, regenera
 ... project-specific values ...
 # <<< LOCAL-SLOT: <name>
 ```
-Slots: `ruff-exclude`, `vulture-scan`, `coverage-scan`, `arch-thresholds`.
+Slots: `ruff-exclude`, `vulture-scan`, `coverage-scan`, `arch-thresholds`, `import-contracts`.
+
+### Per-gate scope (bd vip.3 — minimal forking, maximal-abstract identical set)
+
+Real repos scan DIFFERENT package sets per gate (cardiac-seg: vulture + import-linter include `cardioview`;
+coverage + ruff don't. mindscape: hygiene widens to a quarantined `baselines/`). Rather than a per-gate
+`packages` map (prompt-surface + fork bloat), scope divergence rides **existing slots**, and the abstract
+gate set stays identical:
+- **arch (graph.py / ast-grep / jscpd) + ruff** scan `packages` — the owned/architected set, via CLI. Not
+  slotted: widening these beyond `packages` is intentionally NOT templated (a repo conforms, it doesn't fork
+  — cardiac-seg lints its arch set, not its quarantined baselines).
+- **vulture** is config-driven — `[tool.vulture] paths` (the `vulture-scan` slot); NO CLI package args in
+  nox/CI/pre-commit. A repo widens the dead-code scan there.
+- **coverage** — `[tool.coverage.run] source` (the `coverage-scan` slot).
+- **import-linter** — `root_packages` lives inside the `import-contracts` slot (layering scope is repo-owned;
+  a viewer with layer rules but outside the arch set is added there).
+
+Result: a repo overrides at most ONE slot per divergent gate; a conforming repo (synthscape) renders
+identically (every scope = `packages`). No new questions, no new slots.
 
 ## Pinned tool versions (single-sourced in copier.yml, `when: false`)
 - ruff `0.15.13` · vulture `2.16` · nox `2026.7.11` · pre-commit `4.6.0`

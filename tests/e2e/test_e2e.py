@@ -107,6 +107,12 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
     pyproject = (out / "pyproject.toml").read_text()
     assert 'source = ["pkg_a", "pkg_b"]' in pyproject
     assert 'include = ["pkg_a*", "pkg_b*"]' in pyproject
+    # per-gate scope (vip.3): arch (graph/ast-grep/jscpd) + ruff scan `packages`; vulture + coverage +
+    # import-linter roots scope via their LOCAL-SLOTs so a repo can widen ONE gate without forking the set.
+    assert 'VULTURE, "--min-confidence"' in noxfile, "nox vulture is config-driven (no CLI packages)"
+    assert "check pkg_a pkg_b --select" in ci, "ruff keeps the CLI package scope (the arch/owned set)"
+    slot = pyproject.index("LOCAL-SLOT: import-contracts")
+    assert pyproject.index("root_packages", 0) > slot, "import-linter root_packages must sit inside the slot"
     # import-linter ships with >1 package: root_packages = the list + kernel-independence starter contract
     assert "[tool.importlinter]" in pyproject
     assert 'root_packages = ["pkg_a", "pkg_b"]' in pyproject

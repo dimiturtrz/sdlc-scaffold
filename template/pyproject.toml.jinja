@@ -66,13 +66,15 @@ exclude_lines = [
 {% if use_import_linter %}
 # Directional layer gate (import-linter): forbidden-import CONTRACTS graph.py can't express — a one-way
 # `core -> trainer` import is no cycle, so it passes the graph gate but must fail here. The gate is
-# universal (all house repos run it); the contracts are project-local, hence the slot.
+# universal (all house repos run it); the SCOPE + contracts are project-local, hence the slot.
+# >>> LOCAL-SLOT: import-contracts — layering scope + your directional rules. `root_packages` is the set
+# import-linter analyses (defaults to `packages`; widen it if a scope-only package such as a viewer carries
+# layer rules but isn't in the arch set). Ships the kernel-independence starter (the FIRST package imports
+# none of the others), the pattern all 3 house repos share. Add viewer/trainer or domain contracts below;
+# edit freely — copier update won't overwrite this region.
 [tool.importlinter]
 root_packages = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 
-# >>> LOCAL-SLOT: import-contracts — your directional layer rules. Ships the kernel-independence starter
-# (the FIRST package imports none of the others), the pattern all 3 house repos share. Add viewer/trainer
-# or domain contracts here; edit freely — copier update won't overwrite this region.
 [[tool.importlinter.contracts]]
 name = "{{ packages.split(',')[0] | trim }} is an independent kernel (imports none of the other packages)"
 type = "forbidden"
