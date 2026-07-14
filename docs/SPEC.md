@@ -33,7 +33,13 @@ Asked at copy time:
 | `enable_class_shape_smells` | bool | false | ship the LCOM4 / data-clumps / namespace-state advisory explorers |
 | `enable_import_linter` | bool | true | ship import-linter directional contracts (guarded to >1 package via computed `use_import_linter`) |
 | `enable_beads` | bool | false | wire beads (bd) — a CLAUDE/AGENTS beads section + gitignore entries (`bd init` after gen) |
+| `enable_ml` | bool | true | ML extension: `numpy` dep + ML-workflow gitignore (data/`paths.yaml`/MLflow/`runs/`) + data-skip CI env. Off = domain-neutral |
 | `coverage_floor` | int | 80 | `coverage report --fail-under` value |
+
+Domain note: with `enable_ml` on (default) this is an **ML-project scaffold** (numpy + data-outside-repo +
+MLflow workflow). `pydantic` (config convention), the `docs/PLAN.md`+`ROADMAP.md` planning docs, and the
+`learning/`+`research/` doc dirs are shipped regardless — house conventions, not ML-gated (candidates for a
+later trim). Off, `enable_ml=false` gives a neutral Python guardrail scaffold.
 
 Computed / never asked (`when: false`, one home in copier.yml):
 

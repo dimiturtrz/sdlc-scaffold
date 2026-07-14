@@ -66,11 +66,11 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
-    # No dataset on the runner -> point the data root at an empty POSIX dir so data-gated tests skip
+{% if enable_ml %}    # No dataset on the runner -> point the data root at an empty POSIX dir so data-gated tests skip
     # cleanly (adapters glob an absent raw/ -> no subjects -> pytest.skip) instead of erroring.
     env:
       {{ project_name | upper | replace('-','_') }}_DATA: /tmp/nodata
-    steps:
+{% endif %}    steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:

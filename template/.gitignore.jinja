@@ -1,10 +1,3 @@
-# Data lives OUTSIDE the repo (paths.yaml points at it); never commit datasets/weights.
-data/
-paths.yaml
-
-# External git-repo deps: checked out under external/, never vendored.
-external/
-
 # Python bytecode / build
 __pycache__/
 *.pyc
@@ -19,14 +12,13 @@ __pycache__/
 # Virtualenv
 .venv/
 
-# Run outputs / logs / local DBs
-runs/
-logs/
+# Logs / local DBs — anchored to root (`/logs/`, not `logs/`, so a source dir named logs/ isn't ignored)
+/logs/
 *.db
 
-# MLflow local tracking store
-mlruns/
-mlflow.db
+# External git-repo deps: checked out under external/, never vendored. Anchored — a package may
+# legitimately have an `external/` submodule.
+/external/
 
 # Coverage artifacts
 .coverage*
@@ -35,8 +27,15 @@ htmlcov/
 
 # Private/local-only docs (generic pattern — reveals no intent in the ignore list itself)
 *.local.md
-
-{% if enable_beads %}
+{% if enable_ml %}
+# ML workflow: data lives OUTSIDE the repo (paths.yaml points at it), MLflow tracking, training runs.
+# Anchored to root (`/data/`, not `data/`) so a source package like core/data/ isn't silently
+# untracked, hiding its tests (bd hhy).
+/data/
+/paths.yaml
+/runs/
+/mlruns/
+{% endif %}{% if enable_beads %}
 # Beads / Dolt engine bits (issues.jsonl is tracked; the embedded engine is not)
 .dolt/
 .beads/*.db

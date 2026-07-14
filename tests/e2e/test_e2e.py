@@ -74,6 +74,10 @@ def test_expected_layout(project):
     assert ("bd (beads)" in (path / "AGENTS.md").read_text()) == beads
     # import-linter only ships with >1 package (these combos are single-package -> absent even when enabled)
     assert "[tool.importlinter]" not in (path / "pyproject.toml").read_text()
+    # ML extension: numpy dep + ML-workflow gitignore present iff enable_ml
+    ml = answers["enable_ml"] == "true"
+    assert ('"numpy"' in (path / "pyproject.toml").read_text()) == ml
+    assert ("/mlruns/" in (path / ".gitignore").read_text()) == ml
 
 
 def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
@@ -130,6 +134,22 @@ def test_ship_example_false_omits_demo(scaffold, tmp_path_factory):
     # guardrails still shipped
     assert (out / "noxfile.py").exists()
     assert (out / "devtools" / "graph.py").exists()
+
+
+def test_gitignore_artifact_dirs_are_root_anchored(scaffold, tmp_path_factory):
+    """/data/ (etc.) must ignore only the ROOT artifact dir, not a source package like core/data/ (bd hhy):
+    an unanchored `data/` silently untracked a nested package's tests -> local green, CI red."""
+    out = tmp_path_factory.mktemp("gi") / "proj"
+    generate(scaffold, out, {**COMBOS["base"], "project_name": "gi", "packages": "core", "enable_ml": "true"})
+    (out / "core" / "data").mkdir(parents=True)
+    (out / "core" / "data" / "thing.py").write_text("X = 1\n")
+    (out / "data").mkdir()
+    (out / "data" / "big.bin").write_text("blob\n")
+    git_init_commit(out)
+    nested = run(["git", "check-ignore", "core/data/thing.py"], out, check=False)
+    assert nested.returncode != 0, "a source package core/data/ must NOT be gitignored"
+    root = run(["git", "check-ignore", "data/big.bin"], out, check=False)
+    assert root.returncode == 0, "the ROOT data/ artifact dir must still be ignored"
 
 
 # ---- gates, solo -----------------------------------------------------------------------------------
@@ -226,11 +246,26 @@ def _append(path, text):
     return lambda: path.write_text(original)
 
 
+ASTGREP_SCAN = ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", "full_pkg"]
+
+
 def test_astgrep_catches_top_level_function(full_project):
     assert_bites(
         full_project,
-        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", "full_pkg"],
+        ASTGREP_SCAN,
         lambda p: _append(p / "full_pkg" / "math_ops.py", "\n\ndef sneaky_top_level():\n    return 1\n"),
+    )
+
+
+def test_astgrep_catches_decorated_top_level_function(full_project):
+    # a DECORATED free function is a decorated_definition wrapping the def — the 2nd rule branch must catch it
+    assert_bites(
+        full_project,
+        ASTGREP_SCAN,
+        lambda p: _append(
+            p / "full_pkg" / "math_ops.py",
+            "\n\nfrom functools import cache\n\n\n@cache\ndef sneaky_decorated():\n    return 1\n",
+        ),
     )
 
 

@@ -60,6 +60,7 @@ uvx copier update       # reads .copier-answers.yml, fetches the newest scaffold
 | `enable_jscpd` | `false` | jscpd duplication (DRY) gate — advisory |
 | `enable_class_shape_smells` | `false` | LCOM4 / data-clumps / namespace-state advisory explorers |
 | `enable_beads` | `false` | beads (bd) issue tracking — CLAUDE/AGENTS section + gitignore |
+| `enable_ml` | `true` | ML extension: `numpy` dep + ML-workflow gitignore (data-outside-repo/`paths.yaml`, MLflow, `runs/`) + the data-skip CI env. `false` = a domain-neutral Python scaffold |
 | `coverage_floor` | `80` | `coverage report --fail-under` |
 
 `package_name` (= `packages[0]`, the demo folder), the ruff select, and the pinned tool versions are

@@ -38,6 +38,7 @@ COMBOS = {
         "enable_class_shape_smells": "false",
         "enable_beads": "false",
         "enable_import_linter": "true",
+        "enable_ml": "false",
         "coverage_floor": "80",
     },
     "full": {
@@ -50,6 +51,7 @@ COMBOS = {
         "enable_class_shape_smells": "true",
         "enable_beads": "true",
         "enable_import_linter": "true",
+        "enable_ml": "true",
         "coverage_floor": "80",
     },
 }

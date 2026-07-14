@@ -79,6 +79,11 @@ enable_beads:
   help: "Wire in beads (bd) issue tracking — a CLAUDE/AGENTS beads section + gitignore entries (run `bd init` once after generating)?"
   default: false
 
+enable_ml:
+  type: bool
+  help: "ML extension — ship the numpy dep + the ML-workflow gitignore (data-outside-repo/paths.yaml, MLflow, training runs) + the data-skip CI env. Off = a domain-neutral Python scaffold."
+  default: true
+
 coverage_floor:
   type: int
   help: "Coverage floor (coverage report --fail-under)"

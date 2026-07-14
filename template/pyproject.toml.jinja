@@ -3,8 +3,8 @@ name = "{{ project_name }}"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "numpy",
-    "pydantic>=2",
+{% if enable_ml %}    "numpy",
+{% endif %}    "pydantic>=2",
 ]
 
 [project.optional-dependencies]
