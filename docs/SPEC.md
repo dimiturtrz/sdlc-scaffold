@@ -5,6 +5,11 @@ Derived from the 3 real repos (cardiac-seg / mindscape / synthscape), read-only 
 
 ## Design model
 
+**What a gate defends.** Every gate protects one or more of **seven properties** — Correctness · Consistency
+· Minimality · Simplicity · Cohesion · Structure · Completeness — each at a **radius** (R1 line / R2 module /
+R3 graph, plus Completeness as the orthogonal behavioural axis). The property↔tool map is many-to-many. The
+README owns that taxonomy (the *why*); this file owns the *what-exactly* (names, values, mechanics).
+
 A **gate** = engine + parameters + invocation. Two axes decide delivery:
 - **engine owner**: vendored (ruff/vulture/coverage/ast-grep/jscpd) → pinned version; ours
   (`graph.py`, the class-shape tools) → shipped code, unit-tested in `tests/unit/`.

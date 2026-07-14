@@ -27,57 +27,66 @@ The design rests on three commitments:
 
 The test pyramid organizes tests by **scope** — unit → integration → e2e, many-cheap → few-expensive.
 Structural guardrails stratify the same way, by **radius of analysis**: how much code a check must read to
-fire. Each tier owns properties the tiers below it structurally cannot see, and the gradient tracks
-cost-to-fix and blast-radius — a magic number is a local nit; an import cycle is architectural debt.
+fire. Each tier sees things the tiers below it structurally cannot, and the gradient tracks cost-to-fix and
+blast-radius — a magic number is a local nit; an import cycle is architectural debt.
 
 ```
-        ┌──────────────────────────────────────────────┐
-  R3    │  ACROSS THE MODULE GRAPH   (whole corpus)     │  coupling
-        │  cycles · fan-in/out · god-module ·           │  single-source
-        │  layering direction · duplication · vocab drift│  (cross-file)
-        ├──────────────────────────────────────────────┤
-  R2    │  WITHIN A MODULE / CLASS   (one file)         │  cohesion
-        │  LCOM · latent state · data clumps ·          │  shape
-        │  module-shape · god-file · dead code          │  size
-        ├──────────────────────────────────────────────┤
-  R1    │  WITHIN A LINE / FUNCTION  (one construct)    │  hygiene
-        │  real-bug lints · magic values ·              │  simplicity
-        │  complexity · imports-at-top                  │
-        └──────────────────────────────────────────────┘
-   ⟂  TESTEDNESS  (orthogonal, temporal): coverage floor + test-mirror — is the behaviour pinned at all?
+        ┌────────────────────────────────────────────────────┐
+  R3    │  ACROSS THE MODULE GRAPH    (whole corpus)          │
+ graph  │  Structure  — cycles · fan-in/out · layering ·      │
+        │               test tree mirrors source              │
+        │  Minimality — cross-file duplication · vocab drift   │
+        ├────────────────────────────────────────────────────┤
+  R2    │  WITHIN A MODULE / CLASS    (one file)              │
+ module │  Cohesion   — LCOM · latent state · data clumps     │
+        │  Simplicity — god-file       Minimality — dead code │
+        ├────────────────────────────────────────────────────┤
+  R1    │  WITHIN A LINE / FUNCTION   (one construct)         │
+  line  │  Correctness — real-bug lints   Simplicity — cyclo. │
+        │  Minimality  — magic values     Consistency — style │
+        └────────────────────────────────────────────────────┘
+   ⟂  Completeness  (behavioural, not spatial): coverage floor — is the behaviour exercised at all?
 ```
 
-Running many small checks instead of one is the whole point: a linter reading a single line can't see an
-import cycle; a cycle-checker can't see a one-way forbidden dependency; neither sees a class whose methods
-split into two unrelated halves. Coverage of the code's health is the *union* of the tiers.
+Running many small checks instead of one is the point: a linter reading a single line can't see an import
+cycle; a cycle-checker can't see a one-way forbidden dependency; neither sees a class whose methods split
+into two unrelated halves. Coverage of the code's *health* is the union of the tiers — and the same property
+often recurs at several radii (a duplicated fact is a Minimality failure whether it's two lines or two files).
 
 ## The properties — and the tools that enforce them
 
-The tiers decompose into six **properties** (what is protected). Each maps to one or more tools; some tools
-serve two properties, which is honest — a data clump is both a cohesion smell and a duplication smell.
-Tools are either **vendored** (pinned third-party binaries) or **ours** — small AST/graph analyzers shipped
-as source under `devtools/` and unit-tested in `tests/unit/`, so a broken check can't pass silently.
+The checks decompose into **seven properties** — the *what is protected*. The honest test that each is
+distinct: each has its own **remediation verb** (if two properties are fixed the same way, they're one). The
+map to tools is many-to-many by design — a property abstracts over the tools that enforce it; some tools
+serve two properties (a data clump is both a missing object and a duplication). Tools are **vendored**
+(pinned third-party binaries) or **ours** — small AST/graph analyzers shipped as source under `devtools/`
+and unit-tested in `tests/unit/`, so a broken check can't pass silently.
 
-| Property | Radius | Question | Tools |
-|---|---|---|---|
-| **Hygiene** | R1 | is this line a likely bug, or unreachable? | ruff `F/B/BLE/S` · vulture *(vendored)* |
-| **Simplicity** | R1–R2 | small enough to hold in your head? | ruff `C901/PLR09xx` · god-file `graph.py` |
-| **Cohesion** | R2 | does the module's inside belong together? is an abstraction missing? | `lcom` · `state_candidates` · `data_clumps` · ast-grep shape *(ours + vendored)* |
-| **Single-source** | R2–R3 | is each fact in exactly one home? | jscpd *(vendored)* · `magic_literals` · `data_clumps` |
-| **Coupling** | R3 | are the arrows between modules sane? | `graph.py --assert` cycles/degree · import-linter *(vendored)* |
-| **Testedness** | ⟂ | is the behaviour pinned? | coverage floor *(vendored)* · test-mirror `graph.py` |
+| Property | Predicate — what it asserts | Fix | Tools | R |
+|---|---|---|---|---|
+| **Correctness** | no line does the wrong thing, swallows an error, or is unreachable-as-a-bug | *repair* | ruff `F/B/BLE/S` · vulture | R1 |
+| **Consistency** | one convention, no drift — formatting, import order, naming | *conform* | ruff `format`/`I`/`N`/`RUF` | R1 |
+| **Minimality** | nothing dead, nothing duplicated — each fact in exactly one home | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` | R1–R3 |
+| **Simplicity** | each unit small + low-branching enough to hold in the head | *split / flatten* | ruff `C901/PLR09xx` · god-file (`graph.py`) | R1–R2 |
+| **Cohesion** | a unit is one idea — no hidden missing abstraction | *extract an object* | `lcom` · `state_candidates` · `data_clumps` · ast-grep shape | R2 |
+| **Structure** | the module graph is well-formed: acyclic, directional, bounded coupling, tests mirror source | *redirect / break edges* | `graph.py --assert` · import-linter | R3 |
+| **Completeness** | behaviour is exercised to a stated floor | *add tests* | coverage | ⟂ |
 
-**Coupling, in the standard vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`, fan-in);
-out-arrows are *efferent* (`Ce`, fan-out). The scaffold enforces three coupling properties: **direction**
-(import-linter — a kernel that imports nothing is maximally stable by construction), **acyclicity** (no
-import cycles), and **degree** (a *god-module* is high `Ca` *and* high `Ce` — a hub that is both widely
-depended-on and widely depending, the thing to split). `graph.py` computes `Ca`/`Ce` and betweenness on the
-grimp import graph. (Martin's *instability* ratio `I = Ce/(Ce+Ca)` and main-sequence distance sharpen this
+Seven predicates, seven distinct fixes — *repair, conform, delete, split, extract, redirect, test*. The
+vocabulary is a deliberate **bridge** between formal-methods terms (Correctness — Hoare; Completeness &
+Consistency — logic; Minimality — Occam / DRY; Simplicity — McCabe / Kolmogorov) and the empirical
+design lineage (Cohesion — Constantine, LCOM; Structure — Parnas, Martin). It doesn't claim a linter proves
+theorems; it claims these are the *named properties* the checks defend. Each is **blocking** where the
+threshold is objective (cycles, god-files, undefined names) and **advisory** where it's a judgment call
+(cohesion ranking, duplication, literal frequency, format); advisory checks ratchet to blocking per project.
+
+**Structure, in the standard coupling vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`,
+fan-in); out-arrows are *efferent* (`Ce`, fan-out). The scaffold enforces three structural sub-properties:
+**direction** (import-linter — a kernel that imports nothing is maximally stable by construction),
+**acyclicity** (no import cycles), and **degree** (a *god-module* is high `Ca` *and* high `Ce` — a hub both
+widely depended-on and widely depending, the thing to split). `graph.py` computes `Ca`/`Ce` + betweenness on
+the grimp import graph. (Martin's *instability* `I = Ce/(Ce+Ca)` and main-sequence distance sharpen this
 further — a planned addition, since the raw counts are already in hand.)
-
-Checks are **blocking** where the threshold is objective (cycles, god-files) and **advisory** where it is a
-judgment call (cohesion ranking, duplication, literal frequency); advisory checks ratchet to blocking per
-project as the code earns it.
 
 ## How the config travels
 
