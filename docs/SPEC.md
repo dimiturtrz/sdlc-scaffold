@@ -86,6 +86,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 8 | class-shape explorers | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
 | 9 | import-linter (self-gates on >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
 | 10 | magic-literals (advisory; opt-in ratchet) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; `--max-strings`/`--max-key-sets` ceilings a repo sets in its own CI |
+| 11 | shape-contracts (advisory; ML-only) | OURS `shape_contracts.py` | builtin `ndarray`/`Tensor` + jaxtyping vocab | ships iff `enable_ml`; `[tool.shape_contracts] array_aliases` (slot); `--assert` graduates to blocking per repo |
 
 import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import
 contracts — a one-way `core -> trainer` import is no cycle, so it passes `graph.py` but must fail here.
@@ -101,13 +102,19 @@ via the computed `use_import_linter`. Every other gate is unconditional (no togg
 line-length = 120
 # select = ruff_select (copier.yml, single source) — the UNION of all house repos' codes (bd o70): every
 # code ANY repo enforces is here, byte-identical across repos. Not "majority" — union (no dodging a code a
-# sibling runs). SIM is one such (cardiac-seg + mindscape). Currently curated-narrow; it grows to the union
-# as Tier-3 (vip.2) lands cardiac's N/SLF001/PERF/... — each repo then FIXES up to the base (no suppression).
-select = ["F","B","E501","I","T201","FBT","BLE001","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","SIM"]
-ignore = ["RUF001","RUF002","RUF003"]    # intentional ≈ × unicode
+# sibling runs). vip.2 LANDED cardiac's ratchet whole (the furthest-advanced repo = the union): N +
+# E741-3 + PLR0124/1714/PLW3301 + RUF005-046/012 + C408/420 + PERF401/PLW0108/E731 + E402/ICN001 +
+# S603/607/PTH123 + SLF001, on top of the narrow floor + SIM. Each repo FIXES up to the base (mindscape's
+# 383 N-hits are fixed, not exempted). DELIBERATELY OUT (owner, on record): UP (annotation churn), E701/702
+# (dense `a; b` compaction is house style), W (formatter owns it). OPEN for owner: S101 (no-assert-in-prod).
+select = ["F","B","E501","I","T201","FBT","BLE001","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","N","E741","E742","E743","PLR0124","PLR1714","PLW3301","RUF012","RUF005","RUF007","RUF010","RUF022","RUF046","C408","C420","SIM","PERF401","PLW0108","E731","E402","ICN001","S603","S607","PTH123","SLF001"]
+ignore = []                              # + "F722" iff enable_ml (jaxtyping shape strings — bd vip.1)
+[tool.ruff.lint.pep8-naming]             # N is universal; ignore-names VOCAB is a FACT (LOCAL-SLOT)
+ignore-names = []                        # ML default: ["X*","Y*","B","C","H","W","F"]; repo adds its idioms
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]                 # re-export facades
-"tests/**"    = ["PLR2004","FBT"]        # literal fixtures + bool flags fine in tests
+"tests/**"    = ["PLR2004","FBT","SLF001","N801","N802","N803","N806","N812","PLR0913"]  # tests: fixtures, mock-class case, privates-under-test
+# + LOCAL-SLOT per-file-ignores for repo-specific file carve-outs
 ```
 `extend-exclude` is LOCAL-SLOT.
 

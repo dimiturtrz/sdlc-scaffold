@@ -87,6 +87,22 @@ def test_expected_layout(project):
     assert ("paths.yaml" in claude) == ml
     assert ('"research"' in pyproject_text) == ml
     assert ('"learning"' in pyproject_text) == ml, "learning is a study-ramp convention — ML domain only"
+    # ML-typing bundle (vip.1): jaxtyping+beartype deps, the F722 ignore, the shape gate engine + config,
+    # and the @shapecheck helper note all ship IFF the ML domain (meaningless off a tensor codebase).
+    assert ((path / "devtools" / "shape_contracts.py").exists()) == ml, "shape gate ships ML-only"
+    assert ('"jaxtyping"' in pyproject_text) == ml
+    assert ('"beartype"' in pyproject_text) == ml
+    assert ('"F722"' in pyproject_text) == ml, "F722 ignore is ML-only (jaxtyping shape strings)"
+    assert ("[tool.shape_contracts]" in pyproject_text) == ml
+    assert ("jaxtyped(typechecker=" in (path / "devtools" / "README.md").read_text()) == ml, \
+        "the @shapecheck helper snippet is ML-only"
+    # N (pep8-naming) is a UNIVERSAL rule -> the block always ships; only its ignore-names VOCAB is ML-flavored
+    assert "[tool.ruff.lint.pep8-naming]" in pyproject_text, "N is universal — the naming block always ships"
+    assert ('"X*"' in pyproject_text) == ml, "the tensor-idiom naming allowlist is ML-only"
+    # union ruff select (vip.2): cardiac's ratchet is now the base — N/SLF001/PTH123 are in EVERY combo
+    assert 'select = [' in pyproject_text
+    for code in ('"N"', '"SLF001"', '"PTH123"', '"PERF401"', '"ICN001"'):
+        assert code in pyproject_text, f"union select must carry {code} (cardiac ratchet pulled up)"
 
 
 def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
@@ -205,6 +221,14 @@ def test_magic_literals_advisory_runs_clean(project):
     run(["uv", "run", "python", "-m", "devtools.magic_literals", *layers(name)], path)
 
 
+def test_shape_contracts_advisory_runs_clean(project):
+    name, path = project
+    if not (path / "devtools" / "shape_contracts.py").exists():
+        pytest.skip("shape_contracts is ML-domain only (absent off a tensor codebase)")
+    # advisory (no --assert) — the seed has no array boundaries, so it reports 0 and exits 0
+    run(["uv", "run", "python", "-m", "devtools.shape_contracts", *layers(name)], path)
+
+
 # ---- gates, via the runners ------------------------------------------------------------------------
 
 def test_nox_gates(project):
@@ -243,6 +267,18 @@ def _append(path, text):
 
 
 ASTGREP_SCAN = ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", "full_pkg"]
+SHAPE_ASSERT = ["uv", "run", "python", "-m", "devtools.shape_contracts", "--assert", "full_pkg"]
+
+
+def test_shape_contracts_assert_catches_bare_boundary(full_project):
+    # advisory by default; --assert opts into the blocking ratchet. A public method with a bare
+    # np.ndarray boundary (no jaxtyping shape) must fail it — the ML shape gate bites (vip.1).
+    assert_bites(
+        full_project,
+        SHAPE_ASSERT,
+        lambda p: _append(p / "full_pkg" / "math_ops.py",
+                          "\n\nclass Boundary:\n    def seg(self, x: np.ndarray) -> np.ndarray:\n        return x\n"),
+    )
 
 
 def test_astgrep_catches_top_level_function(full_project):

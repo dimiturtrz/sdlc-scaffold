@@ -36,6 +36,7 @@ def devtools(tmp_path_factory):
     import devtools.lcom as lcom
     import devtools.magic_literals as magic_literals
     import devtools.omit as omit
+    import devtools.shape_contracts as shape_contracts
     import devtools.state_candidates as state_candidates
 
     return {
@@ -46,4 +47,5 @@ def devtools(tmp_path_factory):
         "omit": omit,
         "magic_literals": magic_literals,
         "analytics": analytics,
+        "shape_contracts": shape_contracts,
     }

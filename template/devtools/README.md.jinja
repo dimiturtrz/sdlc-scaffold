@@ -14,6 +14,31 @@ list (space-separated below as `<packages>`). Every tool ships — the gates are
   The three class-shape tools are ADVISORY explorers — they print a ranked report and always exit 0, never blocking.
 - **magic_literals.py** — the non-comparison, cross-file axis ruff PLR2004 can't see: recurring identifier-shaped string literals (>= 4x → `StrEnum`/named-constant candidate) + repeated dict key-sets (a drift-prone implicit record → dataclass/TypedDict). `python -m devtools.magic_literals <packages>` (advisory report). Opt into a regression **count-ratchet** by passing `--max-strings N --max-key-sets N` in CI — the current floor freezes as a ceiling, a NEW recurring literal fails the merge (migrate it, or raise the ceiling with a reason).
 - **analytics.py** — a one-shot **explorer** (not a gate, not CI-wired): per-area code lines, def count, McCabe branch-proxy, branches-per-def (logic leaking into fat leaves), src:test ratio, and the top-N largest files. `python -m devtools.analytics --areas <packages> devtools` (add `--flag-over 250` for a code-line budget list). Run it by hand when you want the size/complexity radar.
+{% if enable_ml %}- **shape_contracts.py** — the ML-domain shape gate: a public method whose param/return is an array/tensor (`np.ndarray`/`Tensor`, or a repo alias listed in `[tool.shape_contracts] array_aliases`) must carry a **jaxtyping** shape (`Float[Tensor, "b c h w"]`), so the shape is a checked contract not a silent assumption. `python -m devtools.shape_contracts <packages>` (**advisory** report). Add `--assert` to block once your tree is clean — a new bare-array boundary then fails the merge.
+{% endif %}
+## Making jaxtyping shapes LIVE — `@shapecheck`{% if not enable_ml %} (ML domain only — not shipped here){% endif %}
+{% if enable_ml %}
+A bare `Float[Tensor, "b c h w"]` annotation is **inert** at runtime — it documents the shape but checks
+nothing. The scaffold ships the deps (`jaxtyping` + `beartype`) but **no package code** (the template is
+guardrails-only). Add a one-line decorator in your own types module to make the annotations enforce:
+
+```python
+# core/types.py (or wherever your shared type vocabulary lives)
+from beartype import BeartypeConf, beartype as _beartype
+from jaxtyping import jaxtyped
+
+# is_pep484_tower: an int also satisfies a float annotation (numpy scalars included).
+shapecheck = jaxtyped(typechecker=_beartype(conf=BeartypeConf(is_pep484_tower=True)))
+```
+
+Then `@shapecheck` on a boundary makes a wrong-shape/dtype array raise at the call. It's O(1) per call
+(reads `.shape`/`.dtype`), independent of tensor size — negligible at coarse seams. A genuinely hot call
+that wants the annotation as docs only just leaves `@shapecheck` off. `shape_contracts.py` (above) is the
+static ratchet that surfaces boundaries still missing a jaxtyping shape.
+{% else %}
+`@shapecheck` (jaxtyping + beartype) is an ML-domain convention — the deps and the shape gate ship only
+for `domain: ml`. Nothing to wire here.
+{% endif %}
 
 ## Directional layer contracts — import-linter{% if not use_import_linter %} (not shipped here){% endif %}
 

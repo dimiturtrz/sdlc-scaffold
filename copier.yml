@@ -10,6 +10,9 @@ _exclude:
   - ".venv"
   - "__pycache__"
   - "*.pyc"
+  # shape_contracts is the ML-domain shape gate (jaxtyping/beartype) — meaningless off a tensor codebase,
+  # so a `domain: none` scaffold ships neither the engine nor its wiring/deps.
+  - "{% if not enable_ml %}devtools/shape_contracts.py{% endif %}"
 
 project_name:
   type: str
@@ -49,15 +52,20 @@ coverage_floor:
   default: 80
 
 # Single source of truth for the ruff select codes — rendered into pyproject.toml, ci.yml, noxfile.py
-# and .pre-commit-config.yaml so the list lives in ONE place. Curated-narrow: specific codes, NOT broad
-# families; excludes UP/C4 (opinionated churn — but under the UNION policy below, a sibling adopting them
-# would pull them into this base too). The house bar = the UNION of all repos' rules (bd o70): every code
-# ANY house repo enforces belongs here, byte-identical across repos — no per-repo rule slots, no dodging.
-# SIM is one such (cardiac-seg + mindscape run it). Per-repo variation is FACTS only (paths/vocab/deps).
-# `when: false` = never asked, always this value.
+# and .pre-commit-config.yaml so the list lives in ONE place. The house bar = the UNION of all repos'
+# rules (bd o70): every code ANY house repo enforces belongs here, byte-identical across repos — no
+# per-repo rule slots, no dodging. Per-repo variation is FACTS only (paths / naming VOCAB / deps).
+# This list = cardiac-seg's ratchet (the furthest-advanced repo, ORIGIN of the extra codes), pulled up
+# whole so cardiac can adopt without losing rules and mind/synth converge UP onto it (bd vip.2). Each
+# repo FIXES to it (blocking-first) — mindscape's 383 N-hits are fixed, not exempted (union overrules
+# its N-rejection). Specific codes, NOT broad families. DELIBERATELY OUT (owner-rejected, on record):
+# UP (pyupgrade annotation churn), E701/E702 (the dense `a; b` / `if x: y` compaction is house style),
+# W (pycodestyle warnings the formatter already owns). OPEN for owner: S101 (no-assert-in-prod) — a real
+# axis all 3 repos already honor by convention; left out pending a conscious call (bd vip.2), not added
+# by default. `when: false` = never asked, always this value.
 ruff_select:
   type: str
-  default: "F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,SIM"
+  default: "F,B,E501,I,T201,FBT,BLE001,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123,SLF001"
   when: false
 
 # Single source of truth for the pinned tool versions — rendered into ci.yml / noxfile.py /

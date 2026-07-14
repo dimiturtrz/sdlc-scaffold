@@ -64,7 +64,7 @@ and unit-tested in `tests/unit/`, so a broken check can't pass silently.
 
 | Property | Predicate — what it asserts | Fix | Tools | R |
 |---|---|---|---|---|
-| **Correctness** | no line does the wrong thing, swallows an error, or is unreachable-as-a-bug | *repair* | ruff `F/B/BLE/S` · vulture | R1 |
+| **Correctness** | no line does the wrong thing, swallows an error, or is unreachable-as-a-bug | *repair* | ruff `F/B/BLE/S` · vulture · `shape_contracts` (ML) | R1 |
 | **Consistency** | one convention, no drift — formatting, import order, naming | *conform* | ruff `format`/`I`/`N`/`RUF` | R1 |
 | **Minimality** | nothing dead, nothing duplicated — each fact in exactly one home | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` | R1–R3 |
 | **Simplicity** | each unit small + low-branching enough to hold in the head | *split / flatten* | ruff `C901/PLR09xx` · god-file (`graph.py`) | R1–R2 |
@@ -79,6 +79,9 @@ design lineage (Cohesion — Constantine, LCOM; Structure — Parnas, Martin). I
 theorems; it claims these are the *named properties* the checks defend. Each is **blocking** where the
 threshold is objective (cycles, god-files, undefined names) and **advisory** where it's a judgment call
 (cohesion ranking, duplication, literal frequency, format); advisory checks ratchet to blocking per project.
+One property axis is **domain-gated**: an `ml` project also ships `shape_contracts` (a public array/tensor
+boundary must carry a **jaxtyping** shape — a checked contract, not a silent assumption; make it live at a
+call with a `@shapecheck` decorator) — meaningless off a tensor codebase, so a domain-neutral scaffold omits it.
 
 **Structure, in the standard coupling vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`,
 fan-in); out-arrows are *efferent* (`Ce`, fan-out). The scaffold enforces three structural sub-properties:

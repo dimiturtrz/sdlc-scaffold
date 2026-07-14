@@ -427,3 +427,69 @@ def test_magic_literals_ratchet_bites_over_ceiling(devtools):
     assert check(2, 12, 9, 11) == ["key-sets 12 > 11"], "over the key-set ceiling must report"
     assert check(5, 12, 9, 20) == [], "under both ceilings is silent"
     assert check(999, 999, None, None) == [], "no ceilings = advisory (report-only), never bites"
+
+
+# ---- shape_contracts.py — jaxtyping boundary gate, ML domain (vip.1) --------------------------------
+
+
+def test_shape_contracts_flags_bare_array_boundary(devtools):
+    sc = devtools["shape_contracts"]
+    names = {"ndarray", "Tensor"}
+    # a public method with a bare np.ndarray param + Tensor return, no jaxtyping shape -> both flagged
+    src = (
+        "class Seg:\n"
+        "    def run(self, x: np.ndarray) -> Tensor:\n"
+        "        return x\n"
+    )
+    fn = next(m for m in _cls(src).body if isinstance(m, ast.FunctionDef))
+    assert sc._bare_array_slots(fn, names) == ["x", "->return"], "both bare array slots surface"
+
+
+def test_shape_contracts_jaxtyping_satisfies(devtools):
+    sc = devtools["shape_contracts"]
+    names = {"ndarray", "Tensor"}
+    # a jaxtyping subscript IS the contract -> silent; `Float[Tensor, "..."] | None` still counts
+    src = (
+        "class Seg:\n"
+        "    def run(self, x: Float[Tensor, 'b c h w']) -> Int[np.ndarray, 'n'] | None:\n"
+        "        return x\n"
+    )
+    fn = next(m for m in _cls(src).body if isinstance(m, ast.FunctionDef))
+    assert sc._bare_array_slots(fn, names) == [], "jaxtyping-annotated boundaries satisfy the contract"
+
+
+def test_shape_contracts_private_and_scalar_exempt(devtools):
+    sc = devtools["shape_contracts"]
+    names = {"ndarray", "Tensor"}
+    # private method (underscore) is interior; a non-array param is not a boundary
+    private = next(m for m in _cls("class C:\n    def _h(self, x: np.ndarray): ...\n").body
+                   if isinstance(m, ast.FunctionDef))
+    scalar = next(m for m in _cls("class C:\n    def go(self, n: int) -> float: ...\n").body
+                  if isinstance(m, ast.FunctionDef))
+    assert sc._public(private) is False, "underscore-prefixed methods are interior, not boundaries"
+    assert sc._bare_array_slots(scalar, names) == [], "a non-array signature is not a shape boundary"
+
+
+def test_shape_contracts_alias_config_from_pyproject(devtools, tmp_path):
+    sc = devtools["shape_contracts"]
+    pp = tmp_path / "pyproject.toml"
+    pp.write_text('[tool.shape_contracts]\narray_aliases = ["Volume", "Mask"]\n')
+    names = sc.array_names(str(pp))
+    assert names == {"ndarray", "Tensor", "Volume", "Mask"}, "builtin arrays plus the repo's alias slot"
+    # an alias-typed boundary is flagged once the alias is registered
+    fn = next(m for m in _cls("class C:\n    def seg(self, v: Volume) -> Mask: ...\n").body
+              if isinstance(m, ast.FunctionDef))
+    assert sc._bare_array_slots(fn, names) == ["v", "->return"], "alias boundaries flag like ndarray/Tensor"
+    # absent config -> only the universal builtins
+    assert sc.array_names(str(tmp_path / "none.toml")) == {"ndarray", "Tensor"}
+
+
+def test_shape_contracts_scan_and_assert(devtools, tmp_path):
+    sc = devtools["shape_contracts"]
+    names = {"ndarray", "Tensor"}
+    pkg = _write_pkg(tmp_path, "shp", "class S:\n    def go(self, x: np.ndarray): ...\n")
+    rows = sc.scan([pkg], names)
+    assert len(rows) == 1 and rows[0][2] == "S.go", "the bare boundary surfaces in a package scan"
+    # clean tree -> nothing to scan
+    clean = _write_pkg(tmp_path, "shp_ok", "class S:\n    def go(self, x: Float[Tensor, 'n']): ...\n")
+    assert sc.scan([clean], names) == []

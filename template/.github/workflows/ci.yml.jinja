@@ -100,3 +100,5 @@ jobs:
           uv run python -m devtools.lcom {{ pkgs }}
           uv run python -m devtools.data_clumps {{ pkgs }}
           uv run python -m devtools.magic_literals {{ pkgs }}
+{% if enable_ml %}          uv run python -m devtools.shape_contracts {{ pkgs }}
+{% endif %}

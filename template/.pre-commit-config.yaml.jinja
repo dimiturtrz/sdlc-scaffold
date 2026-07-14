@@ -75,6 +75,12 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-      {# jscpd is ENFORCED in CI + nox (blocks over the jscpd.json threshold, the cardiac/mindscape
+{% if enable_ml %}      - id: shape-contracts
+        name: shape-contracts — array/tensor boundaries lacking a jaxtyping shape (advisory)
+        entry: uv run python -m devtools.shape_contracts {{ pkgs }}
+        language: system
+        pass_filenames: false
+        always_run: true
+{% endif %}      {# jscpd is ENFORCED in CI + nox (blocks over the jscpd.json threshold, the cardiac/mindscape
          majority) but kept OFF the commit hook — it needs Node and is slower than the static gates. A
          repo that wants it at commit time too adds a jscpd hook here. #}

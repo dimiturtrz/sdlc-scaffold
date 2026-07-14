@@ -4,6 +4,8 @@ version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
 {% if enable_ml %}    "numpy",
+    "jaxtyping",   # Float[Tensor,"B C H W"] shape/dtype annotations — inert at runtime without a checker (no prod cost)
+    "beartype",    # the runtime checker jaxtyping delegates to; wrap as @shapecheck in your types module (see devtools/README)
 {% endif %}    "pydantic>=2",
 ]
 
@@ -31,16 +33,42 @@ extend-exclude = ["docs"{% if enable_ml %}, "learning", "research", "interpretat
 
 [tool.ruff.lint]
 select = [{% for c in ruff_select.split(",") %}"{{ c }}"{% if not loop.last %}, {% endif %}{% endfor %}]
-ignore = ["RUF001", "RUF002", "RUF003"]
+{% if enable_ml %}ignore = [
+    # jaxtyping shape strings — `Float[Tensor, "b c h w"]` is a deliberate runtime-checked annotation;
+    # F722 misreads the dim string as a malformed forward ref. jaxtyping's own FAQ prescribes disabling it.
+    "F722",
+]{% else %}ignore = []{% endif %}
+
+# pep8-naming (N): case convention is a UNIVERSAL rule; the allowlisted idioms are per-repo FACTS. Every
+# name that carries a meaning renames — only symbols with no honest descriptive form belong here (a dodge
+# makes the gate useless).
+[tool.ruff.lint.pep8-naming]
+# >>> LOCAL-SLOT: pep8-naming — ignore-names VOCAB (this repo's ML/physics idioms); the block is shared,
+# only its contents differ. Add domain symbols (MRI T1/T2/TR/PD, canonical lib aliases…) here.
+ignore-names = [{% if enable_ml %}"X*", "Y*", "B", "C", "H", "W", "F"{% endif %}]
+# <<< LOCAL-SLOT: pep8-naming
 
 [tool.ruff.lint.per-file-ignores]
+# Tests get a wider carve-out: literal fixtures (PLR2004) + bool flags (FBT); privates-under-test are the
+# point of a unit test (SLF001); mock classes mirror external PascalCase APIs + local math/alias scratch
+# (N8xx); fixtures take many params (PLR0913). The SUBSTANTIVE gates (imports-at-top, real bugs, dead
+# code) still apply to tests.
 "__init__.py" = ["F401"]
-"tests/**" = ["PLR2004", "FBT"]
+"tests/**" = ["PLR2004", "FBT", "SLF001", "N801", "N802", "N803", "N806", "N812", "PLR0913"]
+# >>> LOCAL-SLOT: per-file-ignores — repo-specific file carve-outs (e.g. a best-effort telemetry shell
+# that must never raise). Add lines here; copier update won't overwrite this region.
+# <<< LOCAL-SLOT: per-file-ignores
 
 [tool.vulture]
 min_confidence = 60
-ignore_names = ["model_config"]
 ignore_decorators = ["@model_validator", "@field_validator", "@field_serializer", "@model_serializer", "@computed_field"]
+# ignore_names = symbols vulture must treat as USED — each IS referenced, but through a path its static
+# name-match can't follow (framework dispatch, iteration, string keys, external-lib attribute). NOT a
+# "don't care" list — a FACT VOCAB, per-repo, parallel to the pep8-naming slot (bd fy5). `model_config`
+# is the universal pydantic base (metaclass-read); add this repo's documented FPs below.
+# >>> LOCAL-SLOT: vulture-ignore-names — this repo's documented dead-code false positives
+ignore_names = ["model_config"]
+# <<< LOCAL-SLOT: vulture-ignore-names
 # >>> LOCAL-SLOT: vulture-scan — edit freely, the template will not overwrite intent here
 paths = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 exclude = []
@@ -94,3 +122,12 @@ betweenness_max = 0.10   # advisory chokepoint threshold
 test_layout = "mirror"   # every logic module needs a unit test: "mirror" = tests/unit/<pkg>/<path>/test_<name>.py
                          # (strict, one home); "flat" = test_<name>.py anywhere under tests/; "off" = no check
 # <<< LOCAL-SLOT: arch-thresholds
+{% if enable_ml %}
+# Shape-contract gate (devtools/shape_contracts.py) — a public array/tensor boundary must carry a
+# jaxtyping shape, not a bare `np.ndarray`/`Tensor`. The universal `ndarray`/`Tensor` are builtin; a
+# repo's own array ALIASES (its core.types names that also mean "an array") are the FACT that varies.
+[tool.shape_contracts]
+# >>> LOCAL-SLOT: shape-aliases — this repo's array-alias type names (e.g. Volume, Mask, Image, Batch)
+array_aliases = []
+# <<< LOCAL-SLOT: shape-aliases
+{% endif %}
