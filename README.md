@@ -13,42 +13,71 @@ structural property of the system — no import cycles, no god-modules, every lo
 than a runtime behaviour. (The term is from *Building Evolutionary Architectures*, Ford / Parsons / Kua.)
 The design rests on three commitments:
 
-- **Mechanical, not advisory.** A rule a human has to remember is a rule that erodes under deadline. Every
-  property below is checked by a tool, and a violation is a red build — the reviewer is freed to think about
-  design, not police conventions.
+- **Mechanical, not advisory.** A rule a human has to remember erodes under deadline. Every property below is
+  checked by a tool; a violation is a red build — the reviewer is freed to think about design, not police
+  conventions.
 - **Ratcheted.** A check starts advisory, and the moment the code is clean on that axis it graduates to
   blocking; from then on any regression fails. You *fix* the finding, never suppress it — suppressions stay
   minimal and meaningful (a bare `# noqa: RULE`, never a blanket ignore). The bar only moves one way.
 - **Guardrails, not architecture.** The scaffold imposes no particular layering or package shape. It targets
-  whatever packages you declare and checks *universal* structural health (cycles, cohesion, dead code,
-  duplication). The one directional rule it can express — who may import whom — is opt-in and project-owned.
+  whatever packages you declare and checks *universal* structural health. The one directional rule it can
+  express — who may import whom — is opt-in and project-owned.
 
-Each check owns an **axis the others structurally cannot see**. That is the point of running many small
-tools instead of one: a linter reading a single file can't see an import cycle; a cycle-checker can't see a
-one-way forbidden dependency; none of them can see a class whose methods split into two unrelated halves, or
-a string literal that has quietly become domain vocabulary. Coverage is the union.
+## The guardrail pyramid
 
-## The axes
+The test pyramid organizes tests by **scope** — unit → integration → e2e, many-cheap → few-expensive.
+Structural guardrails stratify the same way, by **radius of analysis**: how much code a check must read to
+fire. Each tier owns properties the tiers below it structurally cannot see, and the gradient tracks
+cost-to-fix and blast-radius — a magic number is a local nit; an import cycle is architectural debt.
 
-Two kinds of engine. **Vendored** tools are pinned third-party binaries. **Ours** are small AST/graph
-analyzers shipped as source under `devtools/` and unit-tested in `tests/unit/` — the guardrails have their
-own guardrails, so a broken check can't pass silently.
+```
+        ┌──────────────────────────────────────────────┐
+  R3    │  ACROSS THE MODULE GRAPH   (whole corpus)     │  coupling
+        │  cycles · fan-in/out · god-module ·           │  single-source
+        │  layering direction · duplication · vocab drift│  (cross-file)
+        ├──────────────────────────────────────────────┤
+  R2    │  WITHIN A MODULE / CLASS   (one file)         │  cohesion
+        │  LCOM · latent state · data clumps ·          │  shape
+        │  module-shape · god-file · dead code          │  size
+        ├──────────────────────────────────────────────┤
+  R1    │  WITHIN A LINE / FUNCTION  (one construct)    │  hygiene
+        │  real-bug lints · magic values ·              │  simplicity
+        │  complexity · imports-at-top                  │
+        └──────────────────────────────────────────────┘
+   ⟂  TESTEDNESS  (orthogonal, temporal): coverage floor + test-mirror — is the behaviour pinned at all?
+```
 
-| Axis | Engine | Catches what nothing else can |
-|---|---|---|
-| Style + likely bugs | ruff *(vendored)* | unused/undefined names, magic numbers, blind excepts, high complexity, imports-not-at-top, keyword-only bools |
-| Dead code | vulture *(vendored)* | unreachable functions/attrs a reader would never notice — the axis coverage masks when a test is the only caller |
-| Test presence + coverage | pytest-cov *(vendored)* | logic that ships with no test exercising it, below a declared floor |
-| Structural architecture | `graph.py --assert` *(ours)* | import **cycles**, **god-modules** (high fan-in *and* fan-out), **god-files**, and **missing test mirrors** — metric properties of the whole import graph |
-| Directional layering | import-linter *(vendored)* | a one-way *forbidden* import (`kernel → trainer`) — legal as a graph (no cycle), illegal as architecture |
-| Module shape | ast-grep *(vendored + our rules)* | syntactic house rules a linter has no plugin for: behaviour lives in a class, no import-time side effects |
-| Duplication | jscpd *(vendored)* | copy-paste beyond a DRY threshold — the axis coupling tools don't measure |
-| Class cohesion / coupling | lcom · data_clumps · state_candidates *(ours)* | a class that is really two classes fused (disjoint-state method groups), parameter sets that always travel together, namespaces with latent shared state |
-| Vocabulary drift | magic_literals *(ours)* | an identifier-shaped string repeated across files (a `StrEnum` in hiding) or a dict key-set built in many places (an implicit record) — the non-comparison, cross-file context a magic-value linter can't reach |
+Running many small checks instead of one is the whole point: a linter reading a single line can't see an
+import cycle; a cycle-checker can't see a one-way forbidden dependency; neither sees a class whose methods
+split into two unrelated halves. Coverage of the code's health is the *union* of the tiers.
 
-Structural and cohesion/vocabulary checks are **advisory explorers** where the honest threshold is a
-judgment call (cohesion, duplication ranking, literal frequency) and **blocking** where it is not (cycles,
-god-files). Advisory checks ratchet to blocking per project as the code earns it.
+## The properties — and the tools that enforce them
+
+The tiers decompose into six **properties** (what is protected). Each maps to one or more tools; some tools
+serve two properties, which is honest — a data clump is both a cohesion smell and a duplication smell.
+Tools are either **vendored** (pinned third-party binaries) or **ours** — small AST/graph analyzers shipped
+as source under `devtools/` and unit-tested in `tests/unit/`, so a broken check can't pass silently.
+
+| Property | Radius | Question | Tools |
+|---|---|---|---|
+| **Hygiene** | R1 | is this line a likely bug, or unreachable? | ruff `F/B/BLE/S` · vulture *(vendored)* |
+| **Simplicity** | R1–R2 | small enough to hold in your head? | ruff `C901/PLR09xx` · god-file `graph.py` |
+| **Cohesion** | R2 | does the module's inside belong together? is an abstraction missing? | `lcom` · `state_candidates` · `data_clumps` · ast-grep shape *(ours + vendored)* |
+| **Single-source** | R2–R3 | is each fact in exactly one home? | jscpd *(vendored)* · `magic_literals` · `data_clumps` |
+| **Coupling** | R3 | are the arrows between modules sane? | `graph.py --assert` cycles/degree · import-linter *(vendored)* |
+| **Testedness** | ⟂ | is the behaviour pinned? | coverage floor *(vendored)* · test-mirror `graph.py` |
+
+**Coupling, in the standard vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`, fan-in);
+out-arrows are *efferent* (`Ce`, fan-out). The scaffold enforces three coupling properties: **direction**
+(import-linter — a kernel that imports nothing is maximally stable by construction), **acyclicity** (no
+import cycles), and **degree** (a *god-module* is high `Ca` *and* high `Ce` — a hub that is both widely
+depended-on and widely depending, the thing to split). `graph.py` computes `Ca`/`Ce` and betweenness on the
+grimp import graph. (Martin's *instability* ratio `I = Ce/(Ce+Ca)` and main-sequence distance sharpen this
+further — a planned addition, since the raw counts are already in hand.)
+
+Checks are **blocking** where the threshold is objective (cycles, god-files) and **advisory** where it is a
+judgment call (cohesion ranking, duplication, literal frequency); advisory checks ratchet to blocking per
+project as the code earns it.
 
 ## How the config travels
 
