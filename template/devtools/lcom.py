@@ -166,9 +166,11 @@ def scan(packages: list[str]) -> list[tuple[int, str, str, list[list[str]]]]:
     for pkg in packages:
         for path in sorted(Path(pkg).rglob("*.py")):
             tree = ast.parse(path.read_text(encoding="utf-8"))
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ClassDef) and (hit := _is_split_candidate(node)):
-                    rows.append((hit[0], node.name, str(path), hit[1]))
+            rows.extend(
+                (hit[0], node.name, str(path), hit[1])
+                for node in ast.walk(tree)
+                if isinstance(node, ast.ClassDef) and (hit := _is_split_candidate(node))
+            )
     return sorted(rows, reverse=True)
 
 
@@ -177,8 +179,7 @@ def report(rows: list[tuple[int, str, str, list[list[str]]]]) -> str:
     lines = [f"{'lcom4':>5}  {'class':24} file"]
     for score, name, path, comps in rows:
         lines.append(f"{score:>5}  {name:24} {path}")
-        for comp in comps:
-            lines.append(f"{'':>7}  · {{{', '.join(sorted(comp))}}}")
+        lines.extend(f"{'':>7}  · {{{', '.join(sorted(comp))}}}" for comp in comps)
     return "\n".join(lines)
 
 

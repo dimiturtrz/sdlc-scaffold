@@ -83,7 +83,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 2 | ruff format --check (advisory) | vendored ruff | (never blocks) | — |
 | 3 | vulture dead-code | vendored vulture | `min_confidence`, `ignore_decorators`, `ignore_names` core | `paths`, `exclude` (slot) |
 | 4 | coverage floor | vendored coverage/pytest-cov | `exclude_lines`, `show_missing` | `source`, `omit` (slot); `fail-under`=`coverage_floor` (answer) |
-| 5 | arch fitness | OURS `graph.py --assert` | (mechanism) | `[tool.structure]` thresholds (slot) |
+| 5 | arch fitness | OURS `graph.py --assert` | (mechanism; `--no-test-mirror` skips the mirror check for a test-less tree) | `[tool.structure]` thresholds (slot) |
 | 5b | test-mirror (part of #5) | OURS `graph.py` `unmirrored()` + `omit.py` | `__init__`/`__main__` exempt | `[tool.coverage] omit` shells exempt |
 | 6 | ast-grep module-shape | vendored ast-grep + our `sg-rules` | rule yml | scan paths = `packages` |
 | 7 | jscpd DRY | vendored jscpd | `jscpd.json` threshold | scope=`jscpd_paths` (R1 hygiene, default `packages`, widenable to a web-TS dir — 9mu) |
@@ -108,6 +108,14 @@ workflow. Mechanism identical across repos; only the slot CONTENTS are a per-rep
 **Engines require ≥1 package (bd skr GAP2).** Every `devtools/*.py` gate takes `packages` as `nargs="+"` —
 a no-arg invocation is an argparse usage error, NOT a silent scan of a phantom `src/` (which made
 `shape_contracts --assert` vacuously PASS). The rendered runners always pass `packages` explicitly.
+
+**Dogfooding — the engines eat their own bar (bd dud).** The scaffold's own CI (`tests/e2e/test_dogfood.py`,
+run by `pytest tests`) holds `template/devtools/` to the applicable subset of its own gates: ruff union +
+`graph --assert --no-test-mirror` (god-module/cycle/god-file) + `magic_literals` (ceiling 3/0 for the
+standalone-engine literals `utf-8`/`packages`/`tool`). DELIBERATELY EXCLUDED: ast-grep class-shape (the
+engines are module-level `main()`+functions by design — the 8ex conflict) and test-mirror (bundle-tested,
+0lh). This is SCAFFOLD-side only — never gate `devtools/` in a generated project (template-owned = a
+finding there is unfixable without hand-editing regenerated code).
 
 ## PORTABLE SUPERSET VALUES
 

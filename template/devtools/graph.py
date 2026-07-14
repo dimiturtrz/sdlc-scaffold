@@ -268,12 +268,17 @@ def report(g: nx.DiGraph, top: int) -> str:
     return "\n".join(out)
 
 
-def _run_assert(packages: list[str]) -> int:
-    """The gate: log advisory warnings, log blocking errors, return exit code (1 if any blocking)."""
+def _run_assert(packages: list[str], *, test_mirror: bool = True) -> int:
+    """The gate: log advisory warnings, log blocking errors, return exit code (1 if any blocking).
+
+    ``test_mirror=False`` skips the every-module-needs-a-test check — for a legitimately test-less tree
+    (e.g. gating a bag of single-file CLI tools for structure without demanding a per-tool mirror test).
+    """
     cfg = load_structure_cfg()
     g, files = build_graph(packages), file_lines(packages)
     blocking, advisory = assert_fitness(g, files, cfg)
-    blocking += [f"test mirror: {m}" for m in unmirrored(packages, cfg["test_layout"])]  # module w/o a test blocks
+    if test_mirror:
+        blocking += [f"test mirror: {m}" for m in unmirrored(packages, cfg["test_layout"])]  # module w/o a test blocks
     if advisory:
         shown = advisory[:_ADVISORY_PREVIEW]
         extra = f"\n  … +{len(advisory) - _ADVISORY_PREVIEW} more" if len(advisory) > _ADVISORY_PREVIEW else ""
@@ -311,11 +316,16 @@ def main():
         dest="assert_",
         help="fitness GATE: exit 1 on a god-module / import cycle / god-file / test-mirror gap (advisory: chokepoint)",
     )
+    ap.add_argument(
+        "--no-test-mirror",
+        action="store_true",
+        help="skip the test-mirror check under --assert (for a legitimately test-less tree, e.g. a bag of CLI tools)",
+    )
     args = ap.parse_args()
     packages = args.packages
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if args.assert_:
-        raise SystemExit(_run_assert(packages))
+        raise SystemExit(_run_assert(packages, test_mirror=not args.no_test_mirror))
     log.info("\n%s", report(build_graph(packages), args.top))
 
 
