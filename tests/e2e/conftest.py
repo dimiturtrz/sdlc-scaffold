@@ -156,9 +156,12 @@ def use_local_devtools(out: Path):
     the pure git pin; this override is test-only."""
     pkg = (REPO / "sdlc-devtools").as_posix()
     pyproject = out / "pyproject.toml"
+    # editable=true: install from the live source tree (no built-wheel cache), so a working-tree edit to the
+    # engines / config / sg-rules is always what the gates see — a non-editable path source can serve a
+    # STALE cached wheel keyed on the unchanged version.
     pyproject.write_text(
         pyproject.read_text(encoding="utf-8")
-        + f'\n[tool.uv.sources]\nsdlc-devtools = {{ path = "{pkg}" }}\n',
+        + f'\n[tool.uv.sources]\nsdlc-devtools = {{ path = "{pkg}", editable = true }}\n',
         encoding="utf-8",
     )
 
