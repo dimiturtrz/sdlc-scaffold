@@ -121,12 +121,17 @@ the install via `python -m devtools.config sgconfig|jscpd` (external CLIs need a
 `devtools/README.md` usage doc (no `__init__.py`, so it's a namespace portion that never shadows the
 installed package).
 
-**Dogfooding — the engines eat their FULL bar (bd dud + vip 16y/p99).** The package's own gate set runs
-from the scaffold CI (`tests/e2e/test_dogfood.py`, cwd=`sdlc-devtools/`), no carve-outs: the package pytest
-(per-engine mirror tests + the config-locator test) + ruff union + `graph --assert`
+**Dogfooding — the engines eat their FULL bar (bd dud + vip 16y/p99 + uo0.2).** The package owns its gate
+set in its OWN standalone `sdlc-devtools/noxfile.py` — `cd sdlc-devtools && uvx nox` runs the full bar with
+ZERO scaffold dependency (extraction-ready: lift the dir, keep the noxfile). The scaffold CI drives that
+same noxfile (`tests/e2e/test_dogfood.py`, cwd=`sdlc-devtools/`, one `uvx nox` call), so the gate LOGIC has
+one home and CI validates the standalone target too. No carve-outs: the package pytest (per-engine mirror
+tests + the config-locator test) + ruff union + `graph --assert`
 (god-module/cycle/god-file **and test-mirror**) + ast-grep class-shape + `magic_literals` (ceiling 2/0 for
 the shared literals `utf-8`/`packages`; the pyproject-read `tool` fell below threshold once it moved into
-`_common.py`). The engines are CLASSES with a thin `main()` (the only top-level function ast-grep exempts)
+`_common.py`). The noxfile's tool pins + ruff select are duplicated from copier.yml on purpose — a
+standalone package cannot read the scaffold answer file; that duplication is the split seam (scaffold =
+policy source, package = its own pinned copy). The engines are CLASSES with a thin `main()` (the only top-level function ast-grep exempts)
 and each carries a per-engine mirror test under `sdlc-devtools/tests/unit/devtools/`, so the analyzers pass
 the same in-a-class + test-mirror rules they impose. Still excluded: jscpd (its config/threshold are shaped
 for a project root; the shared file-walk/config-read live in `_common.py`) and the advisory-everywhere
