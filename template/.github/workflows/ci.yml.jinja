@@ -104,36 +104,28 @@ jobs:
       # categorical contracts can't express. Thresholds in [tool.structure]. Runs here for the synced env.
       - name: Architecture fitness — enforced (devtools/graph.py --assert)
         run: uv run --extra devtools python -m devtools.graph --assert {{ pkgs }}
-      # Magic literals — ENFORCED ratchet: the recurring-string / repeated-key-set count is frozen as a
-      # ceiling in [tool.magic_literals]; a NEW magic literal pushes it over and blocks. Mechanism is the
-      # base gate; the ceiling NUMBERS are a per-repo FACT (fresh repo = 0/0). The non-comparison axis
-      # ruff PLR2004 can't see.
-      - name: Magic literals — enforced (ratchet over [tool.magic_literals] ceiling)
-        run: uv run --extra devtools python -m devtools.magic_literals {{ pkgs }}
       # Dependency hygiene — deptry: imported-but-undeclared (DEP001) + declared-but-unused (DEP002) +
       # transitive (DEP003). Runs in the synced env (`--with` adds deptry) so it reads installed dist
       # metadata. Config (excludes + per-rule ignores) in [tool.deptry]. Blocks the merge.
       - name: Dependency hygiene — enforced (deptry)
         run: uv run --with deptry=={{ deptry_version }} deptry .
-      # Cyclomatic complexity — radon CC ranked report + max-CC ratchet. ADVISORY by default (exits 0, just
-      # prints the ranking); set [tool.complexity] max_complexity to your current max to RATCHET below ruff's
-      # fixed C901>10 floor (then a more-complex function blocks). ruff owns the fixed floor, this the ratchet.
-      - name: Cyclomatic complexity — ratchet (radon CC; opt-in via [tool.complexity])
-        run: uv run --extra devtools python -m devtools.complexity {{ pkgs }}
 {% if enable_ml %}      # Shape contracts — ENFORCED (GRADUATED advisory->blocking, bd vip.4): every public array/tensor
       # boundary must carry a jaxtyping shape, not a bare np.ndarray/Tensor. A fresh gen has 0 boundaries
       # (passes); from the first typed boundary on, a bare one fails the merge — the ratchet at work. Aliases
       # in [tool.shape_contracts]. (Was advisory; graduated once cardiac proved a real ml tree stays clean.)
       - name: Shape contracts — enforced (jaxtyping boundaries; devtools/shape_contracts.py --assert)
         run: uv run --extra devtools python -m devtools.shape_contracts {{ pkgs }} --assert
-{% endif %}      # Class-shape smells — ADVISORY explorers (never block): LCOM4 cohesion, Fowler data-clumps, and
-      # namespace-classes with latent shared state. Heuristics ranking refactor candidates — reviewer signal.
-      - name: Class-shape smells — advisory (LCOM / data-clumps / namespace-state)
+{% endif %}      # ADVISORY explorers (never block): LCOM4 cohesion, Fowler data-clumps, namespace-state, recurring
+      # magic literals (StrEnum/dataclass candidates — the non-comparison axis ruff PLR2004 can't see), and
+      # radon cyclomatic complexity (ruff C901 is the FIXED gate; this just ranks). Reviewer signal only.
+      - name: Class-shape + literal + complexity smells — advisory
         continue-on-error: true
         run: |
           uv run --extra devtools python -m devtools.state_candidates {{ pkgs }}
           uv run --extra devtools python -m devtools.lcom {{ pkgs }}
           uv run --extra devtools python -m devtools.data_clumps {{ pkgs }}
+          uv run --extra devtools python -m devtools.magic_literals {{ pkgs }}
+          uv run --extra devtools python -m devtools.complexity {{ pkgs }}
       # >>> LOCAL-SLOT: ci-test-steps — repo-specific test/coverage/gate steps on top of the base (e.g. a
       # separate viewer-coverage floor calibrated to library logic, or a repo-only enforced check). Survives
       # copier update; empty by default (bd skr GAP3).

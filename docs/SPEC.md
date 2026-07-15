@@ -31,7 +31,7 @@ of every repo's rules, not a 2/3 majority. Two kinds of thing, and only one is p
   a loosened rule. This is where legitimate divergence lives — and only here.
 
 For the full breakdown of every rule by **General vs Specific** and **Authored / Generated / Evolved** (and
-the decide-vs-derive threshold rule), see [`RULE_INVENTORY.md`](RULE_INVENTORY.md).
+the decide-or-advisory threshold rule), see [`RULE_INVENTORY.md`](RULE_INVENTORY.md).
 
 A new gate follows the same law: if any repo runs it, it enters the BASE (ml-specific gates ride
 `enable_ml`, e.g. shape_contracts). There are no permanent repo-local *gates* either — union forbids them.
@@ -77,7 +77,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
 | `ruff_version` / `vulture_version` / `nox_version` / `deptry_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
-| `devtools_ref` | scaffold release tag (e.g. `v1.3.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
+| `devtools_ref` | scaffold release tag (e.g. `v1.4.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
 
 ## Gate inventory
 
@@ -93,11 +93,11 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 7 | jscpd DRY | vendored jscpd | `jscpd.json` threshold | scope=`jscpd_paths` (R1 hygiene, default `packages`, widenable to a web-TS dir — 9mu) |
 | 8 | class-shape explorers | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
 | 9 | import-linter (self-gates on >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
-| 10 | magic-literals (ENFORCED ratchet) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; ceilings = `[tool.magic_literals] max_strings/max_key_sets` (FACT slot, fresh=0/0 — 2cj); `--max-*` CLI overrides |
+| 10 | magic-literals (ADVISORY) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; ranked StrEnum/dataclass-candidate report, always exit 0. No config knob — there is no honest universal ceiling (0 too strict, N arbitrary), so it stays advisory; a repo that needs a budget adds a legislated knob then (0sx) |
 | 11 | shape-contracts (ENFORCED; ML-only) | OURS `shape_contracts.py --assert` | builtin `ndarray`/`Tensor` + jaxtyping vocab | ships iff `enable_ml`; `[tool.shape_contracts] array_aliases` (slot). GRADUATED advisory->blocking (bd vip.4) — a fresh gen has 0 boundaries so `--assert` passes; a bare array/tensor boundary then fails |
 | 12 | deptry dependency-hygiene (ENFORCED) | vendored deptry (`deptry_version`) | DEP001 undeclared / DEP002 unused / DEP003 transitive | `[tool.deptry] extend_exclude=noxfile`; `per_rule_ignores.DEP002` = shipped starters (pytest/pytest-cov/sdlc-devtools always; numpy/jaxtyping/beartype iff ml + pydantic) in the `deptry-unused` slot — deptry skips `tests/`, so tooling/starter deps read as unused until wired (85l.2). Runs env-aware (`uv run --with deptry`) to read installed dist metadata |
 | 13 | pip-audit known-CVE (NIGHTLY) | vendored pip-audit (`pip_audit_version`) | PyPA advisory DB; `--skip-editable` drops the git-pinned devtools | its OWN `audit.yml` workflow (cron + `workflow_dispatch`) + opt-in `nox -s audit`, NOT the per-PR ci.yml — advisories change under you, so a scheduled scan that fails on a known vuln is the honest cadence (85l.3). Security/supply-chain is an axis ORTHOGONAL to the 7 structural properties |
-| 14 | complexity ratchet (ADVISORY→opt-in) | OURS `complexity.py` on `radon` CC (a package lib dep) | radon McCabe CC | ranked report + max-CC `Ratchet`; ships advisory (exits 0) until `[tool.complexity] max_complexity` (the `complexity-ceiling` slot) freezes the repo's current max. ruff `C901`/`PLR09xx` own the FIXED CC>10 floor; this owns the RATCHET below it (85l.4). Supersedes `analytics.py`'s McCabe proxy |
+| 14 | complexity (ADVISORY) | OURS `complexity.py` on `radon` CC (a package lib dep) | radon McCabe CC | ranked CC report + current max, always exit 0. The FIXED complexity gate is ruff `C901`/`PLR09xx` (CC>10, legislated in `ruff_select`); this just surfaces the ranking as reviewer signal (0sx). Supersedes `analytics.py`'s McCabe proxy |
 
 import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import
 contracts — a one-way `core -> trainer` import is no cycle, so it passes `graph.py` but must fail here.
@@ -139,9 +139,8 @@ ZERO scaffold dependency (extraction-ready: lift the dir, keep the noxfile). The
 same noxfile (`tests/e2e/test_dogfood.py`, cwd=`sdlc-devtools/`, one `uvx nox` call), so the gate LOGIC has
 one home and CI validates the standalone target too. No carve-outs: the package pytest (per-engine mirror
 tests + the config-locator test) + ruff union + `graph --assert`
-(god-module/cycle/god-file **and test-mirror**) + ast-grep class-shape + `magic_literals` (ceiling 2/0 for
-the shared literals `utf-8`/`packages`; the pyproject-read `tool` fell below threshold once it moved into
-`_common.py`). The noxfile's tool pins + ruff select are duplicated from copier.yml on purpose — a
+(god-module/cycle/god-file **and test-mirror**) + ast-grep class-shape + deptry + advisory explorers
+(`magic_literals` / `complexity` / class-shape — reports, exit 0). The noxfile's tool pins + ruff select are duplicated from copier.yml on purpose — a
 standalone package cannot read the scaffold answer file; that duplication is the split seam (scaffold =
 policy source, package = its own pinned copy). The engines are CLASSES with a thin `main()` (the only top-level function ast-grep exempts)
 and each carries a per-engine mirror test under `sdlc-devtools/tests/unit/devtools/`, so the analyzers pass

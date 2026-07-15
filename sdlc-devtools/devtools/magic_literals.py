@@ -15,14 +15,12 @@ and defers comparison operands to ruff. Two smells:
 
 Frequency is a heuristic (some repeats are legitimately strings/dicts — column names, framework API vocab,
 path segments; prose/messages have spaces so they're never tokens, and f-strings are JoinedStr not
-Constant so they're never counted). Because a legitimate non-enum-able floor is real, the gate blocks as a
-COUNT RATCHET (`--max-strings` / `--max-key-sets`), not at zero and without a per-token whitelist: the
-current floor is frozen as a ceiling, and a NEW recurring literal pushes the count over and fails. Migrate
-it to an enum, or raise the ceiling in the same commit with a reason. Omit the ceilings for the plain
-advisory report (the scaffold ships it advisory; a repo opts into the ratchet by passing --max-* in CI).
+Constant so they're never counted). Because a legitimate non-enum-able floor is real, there is no honest
+universal ceiling — 0 is too strict and any N is arbitrary — so this is an ADVISORY explorer: it prints the
+ranked StrEnum/dataclass candidates and always exits 0. The reviewer decides. A repo that wants to enforce
+a literal budget adds a legislated `[tool.magic_literals]` config knob at that point, not speculatively.
 
-    python -m devtools.magic_literals mypackage                        # advisory report
-    python -m devtools.magic_literals mypackage --max-strings 12 --max-key-sets 3   # ratchet (CI)
+    python -m devtools.magic_literals mypackage    # advisory report, always exit 0
 """
 
 from __future__ import annotations
@@ -33,7 +31,7 @@ import logging
 import re
 from collections import defaultdict
 
-from devtools._common import Ratchet, Trees
+from devtools._common import Trees
 
 log = logging.getLogger("devtools.magic_literals")
 
@@ -134,33 +132,16 @@ class MagicLiterals:
 def main():
     ap = argparse.ArgumentParser(
         prog="python -m devtools.magic_literals",
-        description="recurring string literals + repeated dict key-sets",
+        description="recurring string literals + repeated dict key-sets (advisory report)",
     )
     ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    ap.add_argument(
-        "--max-strings",
-        type=int,
-        default=None,
-        help="regression ratchet: exit 1 if the recurring-string count exceeds this ceiling",
-    )
-    ap.add_argument(
-        "--max-key-sets",
-        type=int,
-        default=None,
-        help="regression ratchet: exit 1 if the repeated-key-set count exceeds this ceiling",
-    )
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     engine = MagicLiterals(args.packages)
-    strings, key_sets = engine.scan_strings(), engine.scan_key_sets()
-    log.info("%s", MagicLiterals.report(strings, key_sets))
-    # Freeze-the-floor ratchet (shared Ratchet primitive, bd 85l.1): CLI flag wins over the
-    # [tool.magic_literals] max_strings/max_key_sets FACT (the base gate — a fresh repo ships 0/0 and
-    # ratchets up as its legitimate literal floor grows). No ceiling anywhere -> advisory, never bites.
-    # Axis names live once (counts); overrides read `--max-<axis>` off argparse — no twin key-set literal.
-    counts = {"strings": len(strings), "key_sets": len(key_sets)}
-    overrides = {axis: getattr(args, f"max_{axis}") for axis in counts}
-    Ratchet("magic_literals").enforce(counts, overrides, log)
+    # ADVISORY: a ranked report of StrEnum/dataclass candidates, always exit 0. There is no honest universal
+    # ceiling (0 is too strict — some recurrence is legit vocab; N is arbitrary), so this reports and the
+    # reviewer decides. A repo that wants to enforce a budget adds a legislated config knob then, not now.
+    log.info("%s", MagicLiterals.report(engine.scan_strings(), engine.scan_key_sets()))
 
 
 if __name__ == "__main__":

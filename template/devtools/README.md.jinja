@@ -7,7 +7,7 @@ is invoked identically to before:
 
 ```bash
 uv run --extra devtools python -m devtools.graph --assert <packages>   # arch-fitness (+ test-mirror)
-uv run --extra devtools python -m devtools.magic_literals <packages>   # magic-literal ratchet (enforced)
+uv run --extra devtools python -m devtools.magic_literals <packages>   # recurring-literal report (advisory)
 uv run --extra devtools python -m devtools.lcom <packages>             # + data_clumps / state_candidates (advisory)
 ```
 
@@ -41,7 +41,7 @@ shapecheck = jaxtyped(typechecker=_beartype(conf=BeartypeConf(is_pep484_tower=Tr
 Then `@shapecheck` on a boundary makes a wrong-shape/dtype array raise at the call. It's O(1) per call
 (reads `.shape`/`.dtype`), independent of tensor size — negligible at coarse seams. A genuinely hot call
 that wants the annotation as docs only just leaves `@shapecheck` off. `shape_contracts` (in the package) is
-the static ratchet that surfaces boundaries still missing a jaxtyping shape.
+the static gate that fails on a public boundary still missing a jaxtyping shape.
 {% else %}
 `@shapecheck` (jaxtyping + beartype) is an ML-domain convention — the deps and the shape gate ship only
 for `domain: ml`. Nothing to wire here.

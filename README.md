@@ -21,9 +21,10 @@ The design rests on three commitments:
 - **Mechanical, not advisory.** A rule a human has to remember erodes under deadline. Every property below is
   checked by a tool; a violation is a red build — the reviewer is freed to think about design, not police
   conventions.
-- **Ratcheted.** A check starts advisory, and the moment the code is clean on that axis it graduates to
-  blocking; from then on any regression fails. You *fix* the finding, never suppress it — suppressions stay
-  minimal and meaningful (a bare `# noqa: RULE`, never a blanket ignore). The bar only moves one way.
+- **Graduated, never suppressed.** A check starts advisory, and the moment the code is clean on that axis it
+  graduates to blocking; from then on any regression fails. You *fix* the finding, never suppress it —
+  suppressions stay minimal and meaningful (a bare `# noqa: RULE`, never a blanket ignore). Thresholds are
+  *legislated* (a decided value — file_max 750, CC 10), never seeded from a repo's current mess.
 - **Guardrails, not architecture.** The scaffold imposes no particular layering or package shape. It targets
   whatever packages you declare and checks *universal* structural health. The one directional rule it can
   express — who may import whom — is opt-in and project-owned.
@@ -83,7 +84,7 @@ Consistency — logic; Minimality — Occam / DRY; Simplicity — McCabe / Kolmo
 design lineage (Cohesion — Constantine, LCOM; Structure — Parnas, Martin). It doesn't claim a linter proves
 theorems; it claims these are the *named properties* the checks defend. Each is **blocking** where the
 threshold is objective (cycles, god-files, undefined names) and **advisory** where it's a judgment call
-(cohesion ranking, duplication, literal frequency, format); advisory checks ratchet to blocking per project.
+(cohesion ranking, duplication, literal frequency, format); advisory checks graduate to blocking once clean.
 One property axis is **domain-gated**: an `ml` project also ships `shape_contracts` (a public array/tensor
 boundary must carry a **jaxtyping** shape — a checked contract, not a silent assumption; make it live at a
 call with a `@shapecheck` decorator) — meaningless off a tensor codebase, so a domain-neutral scaffold omits it.
@@ -94,10 +95,9 @@ Martin instability/main-sequence (Robert Martin; ArchUnitPython), import cycles 
 ([grimp](https://pypi.org/project/grimp/), [import-linter](https://pypi.org/project/import-linter/),
 [tach](https://github.com/gauge-sh/tach)), complexity ([radon](https://pypi.org/project/radon/), ruff),
 duplication/dead-code/CVE/dep-hygiene (jscpd, vulture, pip-audit, deptry — all vendored). What the survey
-found *nowhere*: the **cross-file magic-literal ratchet**, **data-clumps** and **namespace-state** detection,
-**jaxtyping shape contracts**, the **test-mirror** gate, and the **freeze-the-floor `Ratchet`** with
-advisory→blocking graduation — no surveyed tool ratchets. The integration play is wrapping best-of-breed
-counts in that ratchet. Full citation in [`sdlc-devtools/README`](sdlc-devtools/README.md#prior-art--and-whats-actually-novel).
+found *nowhere*: **cross-file magic-literal** detection, **data-clumps** and **namespace-state** detection,
+**jaxtyping shape contracts**, and the **test-mirror** gate. Full citation in
+[`sdlc-devtools/README`](sdlc-devtools/README.md#prior-art--and-whats-actually-novel).
 
 **Structure, in the standard coupling vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`,
 fan-in); out-arrows are *efferent* (`Ce`, fan-out). The scaffold enforces three structural sub-properties:
@@ -160,7 +160,7 @@ config + `devtools/` and never touches your source (it ships none).
 ```bash
 cd existing-repo
 uvx copier copy --data packages=core,neuroscan,neuroviz path/to/sdlc-scaffold .
-uv sync --extra dev --extra devtools && nox -s gates   # fix or ratchet whatever fires
+uv sync --extra dev --extra devtools && nox -s gates   # fix whatever fires
 ```
 
 **Update (both paths, identical).**

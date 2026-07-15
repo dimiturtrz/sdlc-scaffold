@@ -1,8 +1,4 @@
-"""Unit tests for devtools/complexity.py — radon-backed cyclomatic-complexity ranking + max-CC ratchet."""
-
-import sys
-
-import pytest
+"""Unit tests for devtools/complexity.py — radon-backed cyclomatic-complexity ranking (advisory)."""
 
 from devtools.complexity import Complexity
 
@@ -38,13 +34,3 @@ def test_complexity_report_shows_max(write_pkg, tmp_path):
     assert "max cyclomatic complexity 2" in report, report
     # an empty scan reports max 0 (advisory-safe, no crash on a code-less tree)
     assert "max cyclomatic complexity 0" in Complexity.report([])
-
-
-def test_complexity_main_ratchet_bites_over_ceiling(write_pkg, tmp_path, monkeypatch):
-    pkg = write_pkg(tmp_path, "cx_gate", "def f(x):\n    if x:\n        return 1\n    return 0\n")  # CC 2
-    monkeypatch.setattr(sys, "argv", ["devtools.complexity", pkg, "--max-complexity", "1"])
-    from devtools import complexity
-
-    with pytest.raises(SystemExit) as exc:
-        complexity.main()
-    assert exc.value.code == 1, "CC 2 over a ceiling of 1 must fail the ratchet"

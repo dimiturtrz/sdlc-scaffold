@@ -27,10 +27,6 @@ SELECT = (
     "PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,"
     "E402,ICN001,S603,S607,PTH123"
 )
-# After the _common.py extraction the engines legitimately repeat exactly two value-position tokens —
-# 'utf-8' (read_text encoding) and 'packages' (the shared CLI positional). Freeze that floor; a 3rd bites.
-MAGIC_MAX_STRINGS = "2"
-MAGIC_MAX_KEY_SETS = "0"
 
 
 @nox.session(venv_backend="none")
@@ -44,17 +40,12 @@ def lint(session: nox.Session) -> None:
     session.run(
         "uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", LAYER, external=True
     )
-    # ENFORCED magic-literal ratchet against the package's own frozen ceiling.
-    session.run(
-        "uv", "run", "--group", "dev", "python", "-m", "devtools.magic_literals", LAYER,
-        "--max-strings", MAGIC_MAX_STRINGS, "--max-key-sets", MAGIC_MAX_KEY_SETS, external=True,
-    )
-
-
     # Dependency hygiene — deptry (config in [tool.deptry]); env-aware via `--with` so it reads installed
     # dist metadata (transitive detection). Blocks on undeclared/unused/transitive imports.
     session.run("uv", "run", "--with", "deptry", "--group", "dev", "deptry", ".", external=True)
-    # Cyclomatic complexity — radon CC ratchet against the [tool.complexity] max_complexity ceiling.
+    # ADVISORY explorers — recurring magic literals + radon cyclomatic complexity. Ranked reports, always
+    # exit 0 (the fixed complexity gate is ruff C901; there is no honest universal magic-literal ceiling).
+    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.magic_literals", LAYER, external=True)
     session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.complexity", LAYER, external=True)
 
 

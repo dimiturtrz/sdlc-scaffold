@@ -149,26 +149,10 @@ test_layout = "mirror"   # every logic module needs a unit test: "mirror" = test
                          # (strict, one home); "flat" = test_<name>.py anywhere under tests/; "off" = no check
 # <<< LOCAL-SLOT: arch-thresholds
 
-# magic-literals ENFORCED ratchet (devtools/magic_literals.py) — the recurring-string / repeated-key-set
-# floor is frozen as a ceiling; a NEW magic literal pushes the count over and fails the merge (migrate it
-# to a StrEnum/constant, or raise the ceiling in the same commit with a reason). The MECHANISM is a base
-# gate (all repos run it enforced); the NUMBERS are a per-repo FACT (each repo's legitimate non-enum-able
-# floor differs — column names, framework vocab, path segments). A fresh repo ships 0/0 and ratchets up.
-[tool.magic_literals]
-# >>> LOCAL-SLOT: magic-ceilings — this repo's frozen literal floor (raise only with a documented reason)
-max_strings = 0
-max_key_sets = 0
-# <<< LOCAL-SLOT: magic-ceilings
-
-# Cyclomatic-complexity gate (devtools/complexity.py, radon CC). ADVISORY by default — the report prints the
-# ranking + your current max, but nothing blocks. ruff C901/PLR09xx already own the FIXED CC>10 floor; this
-# owns the RATCHET below it. Set max_complexity to your current radon max (from the report) to freeze it —
-# then a more-complex function fails the merge, catching a regression long before ruff's 10.
-[tool.complexity]
-# >>> LOCAL-SLOT: complexity-ceiling — uncomment + set to your current max radon CC to ratchet (e.g. 8);
-# absent = advisory (report only).
-# max_complexity = 8
-# <<< LOCAL-SLOT: complexity-ceiling
+# magic-literals + complexity are ADVISORY explorers (devtools/magic_literals.py, devtools/complexity.py) —
+# ranked reports, no gate, no config. The FIXED complexity gate is ruff C901 (CC>10). There is no honest
+# universal magic-literal ceiling (0 too strict, N arbitrary), so it stays a report. If a repo later needs
+# to enforce a budget, add a legislated config knob at that point — a knob is added on real need, not now.
 {% if enable_ml %}
 # Shape-contract gate (devtools/shape_contracts.py) — a public array/tensor boundary must carry a
 # jaxtyping shape, not a bare `np.ndarray`/`Tensor`. The universal `ndarray`/`Tensor` are builtin; a

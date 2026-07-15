@@ -2,7 +2,7 @@
 
 The engines live in the `sdlc-devtools/` package (imported as `devtools`) and own their gate set in their
 OWN standalone noxfile (sdlc-devtools/noxfile.py) — ruff + import-graph arch-fitness (god-module / cycle /
-god-file / test-mirror) + ast-grep class-shape + magic-literal ratchet + the per-engine mirror tests, zero
+god-file / test-mirror) + ast-grep class-shape + deptry + advisory explorers + the per-engine mirror tests, zero
 carve-outs. This e2e drives that noxfile from the scaffold CI, so a single command validates BOTH that the
 analyzers pass their own bar AND that the standalone gate target works with no scaffold dependency (uo0.2).
 The gate LOGIC has one home (the package noxfile); this file only asserts it runs green.

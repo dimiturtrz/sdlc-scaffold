@@ -1,14 +1,11 @@
-"""Cyclomatic-complexity gate + explorer, built on radon's CC (McCabe 1976).
+"""Cyclomatic-complexity explorer, built on radon's CC (McCabe 1976).
 
-radon does the measurement (the mature, correct CC engine); this adds the two things radon and xenon lack:
-a ranked report AND the freeze-the-floor RATCHET. ruff `C901`/`PLR09xx` already own the FIXED floor (CC>10
-blocks), so a fixed-threshold gate here would be pure duplication. The value is the ratchet BELOW that
-floor: a repo whose worst function is CC 7 freezes 7 as the ceiling, and a new CC-9 function fails the merge
-long before ruff's 10 would fire. Advisory (ranked report, never bites) until `[tool.complexity]
-max_complexity` is set to the repo's current max (shown in the report); then it ratchets (bd 85l.4).
+radon does the measurement (the mature, correct CC engine); this ranks it and prints the current max as
+reviewer signal. ADVISORY only — the FIXED complexity gate is ruff `C901`/`PLR09xx` (CC>10 blocks), a
+legislated house number. This surfaces the ranking so a reviewer sees drift below that floor; it never
+blocks. A repo that wants a tighter legislated ceiling adds a config knob at that point, not speculatively.
 
-    python -m devtools.complexity mypackage                        # advisory report (current max CC)
-    python -m devtools.complexity mypackage --max-complexity 7     # ratchet: fail if any function exceeds 7
+    python -m devtools.complexity mypackage    # advisory ranked report, always exit 0
 """
 
 from __future__ import annotations
@@ -18,7 +15,7 @@ import logging
 
 from radon.complexity import cc_visit
 
-from devtools._common import Ratchet, Trees
+from devtools._common import Trees
 
 log = logging.getLogger("devtools.complexity")
 
@@ -57,23 +54,15 @@ class Complexity:
 def main():
     ap = argparse.ArgumentParser(
         prog="python -m devtools.complexity",
-        description="cyclomatic complexity (radon CC) ranked report + max-CC ratchet",
+        description="cyclomatic complexity (radon CC) ranked report (advisory)",
     )
     ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    ap.add_argument(
-        "--max-complexity",
-        type=int,
-        default=None,
-        help="regression ratchet: exit 1 if any function's cyclomatic complexity exceeds this ceiling",
-    )
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rows = Complexity(args.packages).scan()
-    log.info("%s", Complexity.report(rows))
-    # Ratchet the single worst CC (shared freeze-the-floor primitive): CLI flag wins over the
-    # [tool.complexity] max_complexity FACT; absent everywhere -> advisory report, never bites.
-    max_cc = rows[0][0] if rows else 0
-    Ratchet("complexity").enforce({"complexity": max_cc}, {"complexity": args.max_complexity}, log)
+    # ADVISORY: a ranked CC report, always exit 0. The FIXED complexity gate is ruff C901 (CC>10, legislated
+    # in ruff_select) — this just surfaces the ranking + current max as reviewer signal. A repo that wants a
+    # tighter legislated ceiling adds a config knob at that point, not speculatively.
+    log.info("%s", Complexity.report(Complexity(args.packages).scan()))
 
 
 if __name__ == "__main__":

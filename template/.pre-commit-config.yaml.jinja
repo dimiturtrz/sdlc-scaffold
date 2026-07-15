@@ -72,8 +72,14 @@ repos:
         pass_filenames: false
         always_run: true
       - id: magic-literals
-        name: magic-literals — enforced ratchet ([tool.magic_literals] ceiling)
+        name: magic-literals — advisory (recurring literal / repeated key-set report)
         entry: uv run --extra devtools python -m devtools.magic_literals {{ pkgs }}
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: complexity
+        name: complexity — advisory (radon CC ranking; ruff C901 is the fixed gate)
+        entry: uv run --extra devtools python -m devtools.complexity {{ pkgs }}
         language: system
         pass_filenames: false
         always_run: true

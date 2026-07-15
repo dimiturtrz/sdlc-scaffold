@@ -8,47 +8,52 @@ Every gate is made of parts that live at different points on two axes:
   - **Authored** (*before* the scaffold): baked into the template, byte-identical for every repo (the o70
     UNION law — RULES never vary per repo).
   - **Generated** (*at* `copier copy`): a per-project answer, frozen into the generated files.
-  - **Evolved** (*after* generation): the consumer edits a LOCAL-SLOT, or a ratchet grows as the repo does.
+  - **Evolved** (*after* generation): the consumer edits a LOCAL-SLOT.
 
 The load-bearing finding: **RULES are always General + Authored. Only thresholds and vocabulary move.** And
-thresholds split by kind — see [the decide/derive rule](#the-decidederive-rule) below.
+a threshold is either **legislated** (a decided value) or the metric stays **advisory** — never seeded from
+a repo's current state. See [the decide-or-advisory rule](#the-decide-or-advisory-rule) below.
 
 ## The 2×2
 
 | | **Authored** (before) | **Generated / Evolved** (after) |
 |---|---|---|
 | **General** (universal) | the RULES + decided absolutes (cycles, god-file, dead-code, CC≤10, select codes, line-length) | — *(a universal rule never becomes per-project)* |
-| **Specific** (project fact) | *seeds* only (kernel-independence starter, ml naming vocab, deptry starter-ignore) | **answers** (packages, coverage %, scan scopes) · **vocab slots** (layers, aliases, FP allowlists) · **ratchet growth** (magic 0/0 →, complexity max) |
+| **Specific** (project fact) | *seeds* only (kernel-independence starter, ml naming vocab, deptry starter-ignore) | **answers** (packages, coverage %, scan scopes) · **vocab slots** (layers, aliases, FP allowlists) |
 
 The top-right is empty on purpose: a universal predicate is never redefined per project. Everything that
-varies is either a **fact asked at generation** or a **fact filled/derived after** — never a rule.
+varies is either a **fact asked at generation** or a **fact filled after** — never a rule, never a number
+measured from the code.
 
 ## Full inventory
 
 ### Universal predicates — General · Authored · no project number to pick
-The house bar. Byte-identical across repos (o70 union); shipped enforced, clean on a fresh gen.
+The house bar. Byte-identical across repos (o70 union); shipped enforced (or advisory where noted), clean on
+a fresh gen.
 
-| rule | gate | knob? |
-|---|---|---|
-| formatting / import order / naming case | ruff `format` / `I` / `N` | none |
-| lint code SET (`F,B,S,C901,PLR…`) | ruff `--select` (`ruff_select`, authored union) | none — the set never varies (a per-repo rule slot = o70 dodge, rejected) |
-| no import cycle | `graph.py --assert` | none (0 is universal) |
-| no god-module (high `Ca` **and** `Ce`) | `graph.py` | degree is decided ↓ |
-| no god-file | `graph.py` | line ceiling is decided ↓ |
-| every logic module has a test | `graph.py` test-mirror | `test_layout` mode (authored) |
-| helpers in a class, no import-time side effects | ast-grep `sg-rules` | none |
-| no dead code | vulture | confidence is decided ↓ |
-| cohesion / data-clumps / namespace-state (advisory) | `lcom` / `data_clumps` / `state_candidates` | none |
-| no undeclared / unused / transitive dep | deptry | starter-ignore ↓ |
-| no known CVE | pip-audit | none (external advisory DB) |
-| no new cross-file magic vocabulary | `magic_literals` | ceiling is ratcheted ↓ |
-| public array/tensor boundary is shape-typed (ml) | `shape_contracts` | aliases ↓ |
-| directional layer contracts | import-linter | contracts ↓ |
-| tested to a floor | coverage | % is an answer ↓ |
+| rule | gate | enforced? | knob? |
+|---|---|---|---|
+| formatting / import order / naming case | ruff `format` / `I` / `N` | yes | none |
+| lint code SET (`F,B,S,C901,PLR…`) | ruff `--select` (`ruff_select`, authored union) | yes | none — the set never varies (a per-repo rule slot = o70 dodge, rejected) |
+| no import cycle | `graph.py --assert` | yes | none (0 is universal) |
+| no god-module (high `Ca` **and** `Ce`) | `graph.py` | yes | degree is decided ↓ |
+| no god-file | `graph.py` | yes | line ceiling is decided ↓ |
+| every logic module has a test | `graph.py` test-mirror | yes | `test_layout` mode (authored) |
+| helpers in a class, no import-time side effects | ast-grep `sg-rules` | yes | none |
+| no dead code | vulture | yes | confidence is decided ↓ |
+| complexity under the ceiling | ruff `C901`/`PLR09xx` | yes | CC 10 is decided ↓ |
+| no undeclared / unused / transitive dep | deptry | yes | starter-ignore ↓ |
+| public array/tensor boundary is shape-typed (ml) | `shape_contracts --assert` | yes (binary rule) | aliases ↓ |
+| directional layer contracts | import-linter | yes | contracts ↓ |
+| tested to a floor | coverage | yes | % is an answer ↓ |
+| no known CVE | pip-audit (nightly) | yes (off the PR path) | none (external advisory DB) |
+| recurring magic literals | `magic_literals` | **advisory** | none — no honest universal ceiling |
+| cyclomatic-complexity ranking | `complexity` (radon) | **advisory** | none — ruff C901 is the gate |
+| cohesion / data-clumps / namespace-state | `lcom` / `data_clumps` / `state_candidates` | **advisory** | none |
 
 ### Decided absolutes — General-normative · Authored default · Evolved-tunable
 Numbers that encode a **human ceiling** (what's humane to read / hold), not a measurement. Legislated, not
-derived — deriving them from a bad repo would ratify the mess.
+measured — deriving them from a bad repo would ratify the mess.
 
 | threshold | default | where |
 |---|---|---|
@@ -59,17 +64,18 @@ derived — deriving them from a bad repo would ratify the mess.
 | chokepoint betweenness | 0.10 (advisory) | `[tool.structure]` slot |
 | cyclomatic complexity | 10 (ruff C901) | `ruff_select` |
 | duplication | jscpd threshold | package `jscpd.json` |
-| magic recurrence trigger | 4× | authored in `magic_literals.py` |
+| magic recurrence trigger | 4× (report-only) | authored in `magic_literals.py` |
 | coverage target | 95 (advisory) | ci/nox |
 
-### Derived ratchets — Specific-derived · Authored `0` · Evolved per-repo
-Numbers whose target is **0 / monotone-toward-clean**, so freezing the current value is honest (it starts
-clean and only grows with a reason). The only axes where *deriving* the threshold is correct.
+### Advisory-only metrics — General · Authored · no number to legislate yet
+Signals with **no honest universal threshold**, so they report and the reviewer decides. Never a gate,
+never a config knob — a legislated knob is added on real need, not speculatively.
 
-| ratchet | fresh | grows how |
-|---|---|---|
-| magic strings / key-sets | `0 / 0` | migrate the literal to an enum, or raise the ceiling with a documented reason |
-| complexity max CC | absent = advisory | opt-in: freeze current max to ratchet *below* the decided CC≤10 floor |
+| metric | why advisory |
+|---|---|
+| recurring magic literals | some recurrence is legit vocab (0 too strict), any budget N is arbitrary |
+| radon cyclomatic complexity | ruff `C901=10` is already the fixed gate; radon just ranks below it |
+| LCOM / data-clumps / namespace-state | heuristic refactor candidates, not defects |
 
 ### Project answers — Specific · Generated at `copier` · frozen
 Facts asked once and baked into the generated files (survive `copier update` via `.copier-answers.yml`).
@@ -96,24 +102,24 @@ The irreducible facts about *this* codebase. Can't be derived — they're inputs
 | `shape-aliases` | type names that mean "an array" (`Volume`, `Mask`) |
 | `deptry-unused` | shipped starters ignored until wired (prune as used) |
 | `arch-thresholds` | per-repo overrides of the decided absolutes |
-| `complexity-ceiling` | opt-in CC ratchet value |
 | `vulture-scan` / `coverage-scan` / `ruff-exclude` | per-gate scope |
 | `ci-lint-steps` / `ci-test-steps` | repo-only extra CI steps |
 
-## The decide/derive rule
+## The decide-or-advisory rule
 
-The split between *decided absolutes* and *derived ratchets* is the one judgment the inventory encodes:
+A metric that isn't a universal `0` (cycles, dead code) needs a threshold to become a gate. That threshold
+is **legislated or the metric stays advisory** — it is *never* seeded from the repo's current value.
 
-- **Derive (ratchet)** only when the target is **0 or monotone-toward-0** and the current value is a
-  *legit floor, not a debt* — magic-literals (fresh 0), cycles, dead code, coverage-up. Freezing current is
-  honest because current ≈ clean.
-- **Decide (legislate an absolute)** when the number is a **cognitive ceiling** independent of your mess —
-  file size, complexity, coupling degree. "A reviewer can hold ~750 lines / CC 10" is a *value*, not a
-  measurement. A repo above it is broken and must show red — exactly what a *derived* ceiling would hide
-  (deriving `file_max` from a 5326-line monster ratifies the monster).
+- **Legislate an absolute** when the number is a **cognitive ceiling** independent of the codebase — file
+  size, complexity, coupling degree. "A reviewer can hold ~750 lines / CC 10" is a *value*, not a
+  measurement. A repo above it is broken and must show red.
+- **Stay advisory** when there is no honest universal number — recurring magic literals (some recurrence is
+  legit, any budget is arbitrary), heuristic smells. Report; let the reviewer decide. If a specific repo
+  later needs enforcement, it adds a legislated knob *then* — a knob on real need, not speculatively.
 
-**Descriptive metrics can ratchet; normative ceilings must be legislated.** You legislate what's humane to
-read; you can't measure your way to it from a codebase that already violated it.
+**Never measure the threshold from current state.** Freezing a repo's current worst as the ceiling ratifies
+the mess (deriving `file_max` from a 5326-line monster enshrines the monster) — it only forbids getting
+*worse* and never forces getting *better*. Legislate the bar, or leave the metric advisory.
 
 ## Where this leaves the design
 
@@ -121,5 +127,5 @@ read; you can't measure your way to it from a codebase that already violated it.
   where the scaffold beats an ArchUnit-style tool (which pushes *every* rule onto the user).
 - **Specific facts are pushed to the edge** — answers (frozen at gen) + slots (evolved after). Small,
   explicit, and the *only* thing a consumer owns.
-- **Thresholds are the subtle middle** — decided where normative, ratcheted where zero-target. Never a
-  magic number without one of those two justifications.
+- **Thresholds are legislated or absent** — a decided human ceiling, or an advisory report. No number is
+  ever measured from the code it judges.

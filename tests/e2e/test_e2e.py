@@ -132,18 +132,17 @@ def test_select_and_ci_wiring(project):
     assert '"SLF001"' not in enforced_select, "SLF001 must NOT be in the enforced select (advisory only — 8ex)"
     # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
     assert "main_sequence_max" in pyproject_text, "the instability/main-sequence gate threshold ships (x3b)"
-    # 2cj: magic_literals is a BASE ENFORCED gate — the [tool.magic_literals] ceiling FACT ships 0/0
-    assert "[tool.magic_literals]" in pyproject_text, "magic-literals ratchet is a base gate (2cj)"
-    assert "max_strings = 0" in pyproject_text and "max_key_sets = 0" in pyproject_text, "fresh repo = 0/0"
+    # 0sx: magic_literals + complexity ship NO config — they are advisory explorers, not ratcheted gates.
+    # No legislated knob is added until a repo needs one (the ratchet was removed as the wrong mechanism).
+    assert "[tool.magic_literals]" not in pyproject_text, "magic-literals is advisory — no config knob (0sx)"
+    assert "[tool.complexity]" not in pyproject_text, "complexity is advisory — no config knob (0sx)"
     # 85l.2: deptry dependency-hygiene gate — [tool.deptry] config ships, the DEP002 starter-ignore carries
     # the shipped deps (pytest/sdlc-devtools always; numpy/jaxtyping/beartype iff ml) so a fresh gen is green.
     assert "[tool.deptry]" in pyproject_text, "deptry dependency-hygiene gate config ships (85l.2)"
-    # 85l.4: complexity gate config ships (advisory until max_complexity is set — the ceiling is commented)
-    assert "[tool.complexity]" in pyproject_text, "radon complexity gate config ships (85l.4)"
     # 9mu: ruff enforced + jscpd default to the arch set but are hygiene-widenable (lint_paths/jscpd_paths)
     ci_text = (path / ".github" / "workflows" / "ci.yml").read_text()
     assert "deptry ." in ci_text, "the deptry gate is wired into CI (85l.2)"
-    assert "devtools.complexity" in ci_text, "the complexity gate is wired into CI (85l.4)"
+    assert "devtools.complexity" in ci_text, "complexity runs in CI (advisory block; 0sx)"
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
     # skr GAP1: an explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the enforced-lint CLI
     # repeats the ml F722 waiver (jaxtyping dim strings) — else a fresh ml gen red-CIs on its own config.
@@ -315,10 +314,9 @@ def test_class_shape_smells(project):
         run(["uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{tool}", *layers(name)], path)
 
 
-def test_magic_literals_enforced_runs_clean(project):
+def test_magic_literals_advisory_runs_clean(project):
     name, path = project
-    # ENFORCED via the base [tool.magic_literals] 0/0 ceiling (2cj) — the clean seed has no recurring
-    # vocab, so it stays under the ceiling and exits 0. A NEW literal would bite (see the bite test).
+    # ADVISORY explorer (0sx) — ranked report, always exit 0, no config, no gate.
     run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", *layers(name)], path)
 
 
@@ -340,8 +338,7 @@ def test_pip_audit_runs_clean(project):
 
 def test_complexity_advisory_runs_clean(project):
     name, path = project
-    # 85l.4: ships ADVISORY (no [tool.complexity] max_complexity ceiling) — the radon CC report prints but
-    # exits 0, so a fresh gen is green. A repo opts into the ratchet by setting the ceiling (bite test below).
+    # ADVISORY explorer (0sx) — radon CC ranked report, always exit 0. ruff C901 is the FIXED complexity gate.
     run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.complexity", *layers(name)], path)
 
 
@@ -432,17 +429,6 @@ def test_deptry_catches_undeclared_import(full_project):
     )
 
 
-def test_complexity_ratchet_bites_over_ceiling(full_project):
-    # the radon-CC ratchet: the seed's mean() is CC 2, so a ceiling of 1 (via the CLI, mirroring a low
-    # [tool.complexity] max_complexity) must fail — proving the opt-in ratchet blocks a too-complex function.
-    result = run(
-        ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.complexity", "full_pkg", "--max-complexity", "1"],
-        full_project,
-        check=False,
-    )
-    assert result.returncode != 0, "a function above the complexity ceiling must fail the ratchet"
-
-
 def test_astgrep_catches_top_level_function(full_project):
     assert_bites(
         full_project,
@@ -518,33 +504,6 @@ def test_graph_assert_catches_unmirrored(full_project):
     result = assert_bites(full_project, GRAPH_ASSERT, mutate)
     assert "test mirror" in (result.stdout + result.stderr)
     assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
-
-
-# magic_literals is advisory by default; passing --max-strings opts into the count-ratchet, which BITES.
-MAGIC_RATCHET = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", "full_pkg", "--max-strings", "0"]
-
-
-def test_magic_literals_ratchet_bites(full_project):
-    # the clean seed has no recurring identifier-vocab -> passes even at a zero ceiling
-    assert run(MAGIC_RATCHET, full_project).returncode == 0, "clean seed is under the zero string ceiling"
-    # inject a token repeated >=4x in value position -> a recurring literal over the ceiling (AST-only, so
-    # the undefined `_use` never runs). Restores before asserting (assert_bites), keeping the fixture clean.
-    inject = "\n" + "\n".join(f"def _m{i}():\n    return _use('widget')\n" for i in range(4)) + "\n"
-    result = assert_bites(full_project, MAGIC_RATCHET, lambda p: _append(p / "full_pkg" / "math_ops.py", inject))
-    assert "ratchet exceeded" in (result.stdout + result.stderr)
-    assert run(MAGIC_RATCHET, full_project).returncode == 0, "passes again once reverted"
-
-
-# 2cj: [tool.magic_literals] makes it a BASE ENFORCED gate — plain `magic_literals <pkg>` (no CLI flag, as
-# the runners call it) reads the 0/0 ceiling from pyproject and BITES a new recurring literal.
-MAGIC_ENFORCED = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", "full_pkg"]
-
-
-def test_magic_literals_enforced_by_pyproject_ceiling(full_project):
-    assert run(MAGIC_ENFORCED, full_project).returncode == 0, "clean seed under the base 0/0 ceiling"
-    inject = "\n" + "\n".join(f"def _e{i}():\n    return _use('gizmo')\n" for i in range(4)) + "\n"
-    result = assert_bites(full_project, MAGIC_ENFORCED, lambda p: _append(p / "full_pkg" / "math_ops.py", inject))
-    assert "ratchet exceeded" in (result.stdout + result.stderr), "the pyproject ceiling enforces with no CLI flag"
 
 
 def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):
