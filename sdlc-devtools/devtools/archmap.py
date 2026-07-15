@@ -125,6 +125,20 @@ class Archmap:
             written.append(path)
         return sorted(written)
 
+    def check(self) -> list[str]:
+        """Drift between the committed mirror tree and a fresh derivation (empty == in sync). Catches a
+        missing doc, a stale doc (structure moved but the diagram wasn't regenerated), and an orphan doc
+        (a box was deleted but its file lingers) — the `--check` gate keeps committed diagrams honest."""
+        expected = self.documents()
+        drift = []
+        for path, text in sorted(expected.items()):
+            if not path.exists():
+                drift.append(f"missing:  {path.as_posix()}")
+            elif path.read_text(encoding="utf-8") != text:
+                drift.append(f"stale:    {path.as_posix()}")
+        drift += [f"orphan:   {p.as_posix()}" for p in sorted(_ROOT.rglob(_DOC)) if p not in expected]
+        return drift
+
 
 def main():
     ap = argparse.ArgumentParser(
@@ -132,9 +146,23 @@ def main():
         description="tiered edge-counted mermaid architecture docs from the marked package tree (doc-gen)",
     )
     ap.add_argument("packages", nargs="+", help="package dirs to map (>=1 required)")
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help="fail (exit 1) if the committed docs/architecture/ tree is out of sync — do not write",
+    )
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    written = Archmap(args.packages).write()
+    engine = Archmap(args.packages)
+    if args.check:
+        drift = engine.check()
+        if drift:
+            log.error("archmap: %d document(s) out of sync (run `python -m devtools.archmap %s`):\n%s",
+                      len(drift), " ".join(args.packages), "\n".join(drift))
+            raise SystemExit(1)
+        log.info("archmap: docs/architecture/ in sync")
+        return
+    written = engine.write()
     log.info("archmap: wrote %d document(s) under %s", len(written), _ROOT)
 
 

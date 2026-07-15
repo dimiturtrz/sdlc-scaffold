@@ -94,6 +94,41 @@ def test_write_creates_mirror_tree(tmp_path, monkeypatch):
     assert Path("docs/architecture/ARCHITECTURE.md") in written
 
 
+def test_check_in_sync_after_write(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    a = Archmap(["viewer", "core"])
+    monkeypatch.setattr(a, "graph", _tree)
+    a.write()
+    assert a.check() == [], "a freshly written tree is in sync"
+
+
+def test_check_flags_missing_stale_orphan(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    a = Archmap(["viewer", "core"])
+    monkeypatch.setattr(a, "graph", _tree)
+    a.write()
+    # stale: mutate a committed doc; missing: delete one; orphan: add an unexpected doc
+    Path("docs/architecture/ARCHITECTURE.md").write_text("tampered\n", encoding="utf-8")
+    Path("docs/architecture/core/data/ARCHITECTURE.md").unlink()
+    Path("docs/architecture/ghost").mkdir()
+    Path("docs/architecture/ghost/ARCHITECTURE.md").write_text("orphan\n", encoding="utf-8")
+    drift = a.check()
+    assert any(d.startswith("stale:") and "architecture/ARCHITECTURE.md" in d for d in drift), drift
+    assert any(d.startswith("missing:") and "core/data" in d for d in drift), drift
+    assert any(d.startswith("orphan:") and "ghost" in d for d in drift), drift
+
+
+def test_main_check_exits_nonzero_on_drift(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.syspath_prepend(str(tmp_path))
+    (tmp_path / "solo").mkdir()
+    (tmp_path / "solo" / "__init__.py").write_text("X = 1\n", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["devtools.archmap", "solo", "--check"])
+    with pytest.raises(SystemExit) as exc:  # nothing written yet -> missing -> exit 1
+        main()
+    assert exc.value.code == 1, "an out-of-sync tree fails the --check gate"
+
+
 def test_real_grimp_build(tmp_path, monkeypatch):
     # end-to-end on a written two-package tree: `app` imports `lib`
     monkeypatch.chdir(tmp_path)
