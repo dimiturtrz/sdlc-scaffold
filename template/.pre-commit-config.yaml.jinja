@@ -83,6 +83,16 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      # Architecture diagrams — REGEN on commit (the formatter pattern, like ruff-format/isort hooks):
+      # rewrites docs/architecture/ from the current import graph. If the structure moved, the diagrams
+      # change -> pre-commit reports the modified files and fails the commit; `git add` them and re-commit.
+      # Doc-gen, not enforcement (import-linter is the directional gate). Manual regen: `nox -s archmap`.
+      - id: archmap
+        name: architecture diagrams — regenerate docs/architecture/ (commit the diff)
+        entry: uv run --extra devtools python -m devtools.archmap {{ pkgs }}
+        language: system
+        pass_filenames: false
+        always_run: true
 {% if enable_ml %}      - id: shape-contracts
         name: shape-contracts — enforced (array/tensor boundaries need a jaxtyping shape; vip.4)
         entry: uv run --extra devtools python -m devtools.shape_contracts {{ pkgs }} --assert
