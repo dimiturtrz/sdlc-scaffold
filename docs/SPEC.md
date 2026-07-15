@@ -115,7 +115,8 @@ live in the `sdlc-devtools/` package (imported as `devtools`), consumed by a git
 scaffold tag in the generated `pyproject.toml`'s `devtools` extra
 (`sdlc-devtools @ git+…@{{ devtools_ref }}#subdirectory=sdlc-devtools`). An engine improvement is a
 one-line `devtools_ref` bump on `copier update` — no analyzer source diff in the consumer's PRs (the churn
-this fixed). The ast-grep rules + the ast-grep/jscpd config ship INSIDE the package and are located from
+this fixed). The package is extraction-ready — [`SPLIT.md`](SPLIT.md) enumerates every scaffold↔package
+seam and the checklist to lift it into its own repo. The ast-grep rules + the ast-grep/jscpd config ship INSIDE the package and are located from
 the install via `python -m devtools.config sgconfig|jscpd` (external CLIs need a filesystem path). All
 `python -m devtools.*` gate invocations run with `--extra devtools`. A generated project keeps only a
 `devtools/README.md` usage doc (no `__init__.py`, so it's a namespace portion that never shadows the

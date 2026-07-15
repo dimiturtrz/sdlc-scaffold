@@ -187,4 +187,5 @@ cd sdlc-devtools && uvx nox                         # the analyzer PACKAGE's own
 ```
 
 The quick layer is scaffold meta-tests only; the slow layer generates projects with copier (~40s) and is
-what CI / pre-push runs. The package gate is fully independent of the scaffold (extraction-ready, bd uo0).
+what CI / pre-push runs. The package gate is fully independent of the scaffold (extraction-ready, bd uo0) —
+[`docs/SPLIT.md`](docs/SPLIT.md) is the checklist for lifting `sdlc-devtools/` into its own repo.
