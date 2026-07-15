@@ -74,6 +74,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
 | `ruff_version` / `vulture_version` / `nox_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
+| `devtools_ref` | scaffold release tag (e.g. `v1.2.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
 
 ## Gate inventory
 
@@ -109,17 +110,27 @@ workflow. Mechanism identical across repos; only the slot CONTENTS are a per-rep
 a no-arg invocation is an argparse usage error, NOT a silent scan of a phantom `src/` (which made
 `shape_contracts --assert` vacuously PASS). The rendered runners always pass `packages` explicitly.
 
-**Dogfooding — the engines eat their FULL bar (bd dud + vip 16y).** The scaffold's own CI
-(`tests/e2e/test_dogfood.py`, run by `pytest tests`) holds `template/devtools/` to the COMPLETE applicable
-gate set, no carve-outs: ruff union + `graph --assert` (god-module/cycle/god-file **and test-mirror**) +
-ast-grep class-shape + `magic_literals` (ceiling 2/0 for the shared literals `utf-8`/`packages`; the
-pyproject-read `tool` fell below threshold once it moved into `_common.py`). The two former exemptions are
-gone: as of v1.1.0 the engines are CLASSES with a thin `main()` (the only top-level function ast-grep
-exempts) and each carries a per-engine mirror test under `template/tests/unit/devtools/`, so the analyzers
-now pass the same in-a-class + test-mirror rules they impose. The engines + their mirror tests SHIP to
-consumers (the analyzers travel with their tests). Still excluded: jscpd (its config/threshold are shaped
-for a generated project root; the shared file-walk/config-read already live in `_common.py`) and the
-advisory-everywhere class-shape smell explorers. SCAFFOLD-side only — never gate `devtools/` in a generated
+**The analyzers are a package (bd p99).** As of v1.2.0 the engines are NOT vendored into a consumer — they
+live in the `sdlc-devtools/` package (imported as `devtools`), consumed by a git dependency pinned by
+scaffold tag in the generated `pyproject.toml`'s `devtools` extra
+(`sdlc-devtools @ git+…@{{ devtools_ref }}#subdirectory=sdlc-devtools`). An engine improvement is a
+one-line `devtools_ref` bump on `copier update` — no analyzer source diff in the consumer's PRs (the churn
+this fixed). The ast-grep rules + the ast-grep/jscpd config ship INSIDE the package and are located from
+the install via `python -m devtools.config sgconfig|jscpd` (external CLIs need a filesystem path). All
+`python -m devtools.*` gate invocations run with `--extra devtools`. A generated project keeps only a
+`devtools/README.md` usage doc (no `__init__.py`, so it's a namespace portion that never shadows the
+installed package).
+
+**Dogfooding — the engines eat their FULL bar (bd dud + vip 16y/p99).** The package's own gate set runs
+from the scaffold CI (`tests/e2e/test_dogfood.py`, cwd=`sdlc-devtools/`), no carve-outs: the package pytest
+(per-engine mirror tests + the config-locator test) + ruff union + `graph --assert`
+(god-module/cycle/god-file **and test-mirror**) + ast-grep class-shape + `magic_literals` (ceiling 2/0 for
+the shared literals `utf-8`/`packages`; the pyproject-read `tool` fell below threshold once it moved into
+`_common.py`). The engines are CLASSES with a thin `main()` (the only top-level function ast-grep exempts)
+and each carries a per-engine mirror test under `sdlc-devtools/tests/unit/devtools/`, so the analyzers pass
+the same in-a-class + test-mirror rules they impose. Still excluded: jscpd (its config/threshold are shaped
+for a project root; the shared file-walk/config-read live in `_common.py`) and the advisory-everywhere
+class-shape smell explorers. SCAFFOLD-side only — never gate `devtools/` in a generated
 project's own run (template-owned = a finding there is unfixable without hand-editing regenerated code).
 
 ## PORTABLE SUPERSET VALUES
@@ -210,12 +221,15 @@ identically (every scope = `packages`). No new questions, no new slots.
 
 ## Pinned tool versions (single-sourced in copier.yml, `when: false`)
 - ruff `0.15.13` · vulture `2.16` · nox `2026.7.11` · pre-commit `4.6.0`
-- ast-grep via `uvx --from ast-grep-cli ast-grep` · jscpd via `npx --yes jscpd` (both always shipped)
-- graph.py deps: `grimp`, `networkx` (project `devtools` extra)
+- ast-grep via `uvx --from ast-grep-cli ast-grep` · jscpd via `npx --yes jscpd` (config located via
+  `python -m devtools.config`)
+- the analyzers themselves: `sdlc-devtools` package pinned by `devtools_ref` (the `devtools` extra pulls it
+  + its transitive `grimp`/`networkx`)
 
 ## No example code shipped — the template ships ZERO package code (bd r2w)
 
-A fresh generation has an empty `tests/unit/` and no package source — only the gate config + `devtools/`.
+A fresh generation has an empty `tests/unit/` and no package source — only the gate config + the pinned
+`sdlc-devtools` dep + a `devtools/README.md` usage doc.
 A brand-new project has nothing to lint/cover yet; you write the first module + its mirror test, then the
 gates go green (never weakened for the empty case — you bring the first module).
 
@@ -230,9 +244,9 @@ hand-patch generated output.
 ## Copier mechanics
 
 - `_subdirectory: template` → only `template/` is rendered; scaffold-meta at repo root is never seen.
-- `.jinja` files are Jinja-rendered and lose the suffix. Static files are copied verbatim — the
-  `devtools/*.py` tools ship verbatim (they contain literal f-string braces `{{ }}`); do NOT add a
-  `.jinja` suffix or unescaped `{{ }}` to them.
+- `.jinja` files are Jinja-rendered and lose the suffix. Static files are copied verbatim. The analyzer
+  engines are no longer in the template (they ship as the `sdlc-devtools` package, bd p99) — the only
+  `template/devtools/` file is `README.md.jinja` (a usage doc).
 - **No conditional files/dirs.** Every gate is always shipped, so nothing is excluded by feature: `_exclude`
   is just the housekeeping list (`.git`/`.venv`/`__pycache__`/`*.pyc`). NO `{% if %}` in filenames. (In-file
   gating survives only for `use_import_linter` and `enable_ml`, as `{% if %}` blocks inside a file, never
