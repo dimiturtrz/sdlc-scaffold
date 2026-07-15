@@ -33,7 +33,7 @@ import logging
 import re
 from collections import defaultdict
 
-from devtools._common import Pyproject, Trees
+from devtools._common import Ratchet, Trees
 
 log = logging.getLogger("devtools.magic_literals")
 
@@ -130,23 +130,6 @@ class MagicLiterals:
             lines.extend(f"           {loc}" for loc in locs)
         return "\n".join(lines)
 
-    @staticmethod
-    def ratchet_ceilings(pyproject: str = "pyproject.toml") -> tuple[int | None, int | None]:
-        """The `[tool.magic_literals] max_strings / max_key_sets` ceilings — the per-repo FACT that turns the
-        advisory report into an ENFORCED ratchet (both None if the section/file is absent -> advisory)."""
-        cfg = Pyproject.tool_section("magic_literals", pyproject)
-        return cfg.get("max_strings"), cfg.get("max_key_sets")
-
-    @staticmethod
-    def check_ratchet(n_strings: int, n_key_sets: int, max_strings: int | None, max_key_sets: int | None) -> list[str]:
-        """Ceiling breaches — the (count > ceiling) messages, empty when advisory (no ceilings) or under."""
-        over = []
-        if max_strings is not None and n_strings > max_strings:
-            over.append(f"strings {n_strings} > {max_strings}")
-        if max_key_sets is not None and n_key_sets > max_key_sets:
-            over.append(f"key-sets {n_key_sets} > {max_key_sets}")
-        return over
-
 
 def main():
     ap = argparse.ArgumentParser(
@@ -169,21 +152,15 @@ def main():
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     engine = MagicLiterals(args.packages)
-    # Ceilings: CLI flag wins; else the [tool.magic_literals] FACT slot (the base gate — a fresh repo ships
-    # 0/0, ratcheting up as its legitimate literal floor grows). Neither set -> advisory report, never bites.
-    cfg_strings, cfg_key_sets = MagicLiterals.ratchet_ceilings()
-    max_strings = args.max_strings if args.max_strings is not None else cfg_strings
-    max_key_sets = args.max_key_sets if args.max_key_sets is not None else cfg_key_sets
     strings, key_sets = engine.scan_strings(), engine.scan_key_sets()
     log.info("%s", MagicLiterals.report(strings, key_sets))
-    # Ceilings freeze the legitimate non-enum-able floor: any NEW recurring literal pushes the count over
-    # and fails the merge. Re-migrate it to an enum, or raise the ceiling in the SAME commit with a reason.
-    if over := MagicLiterals.check_ratchet(len(strings), len(key_sets), max_strings, max_key_sets):
-        log.error(
-            "magic-literal ratchet exceeded (%s) — migrate the new literal or raise the ceiling with a reason",
-            "; ".join(over),
-        )
-        raise SystemExit(1)
+    # Freeze-the-floor ratchet (shared Ratchet primitive, bd 85l.1): CLI flag wins over the
+    # [tool.magic_literals] max_strings/max_key_sets FACT (the base gate — a fresh repo ships 0/0 and
+    # ratchets up as its legitimate literal floor grows). No ceiling anywhere -> advisory, never bites.
+    # Axis names live once (counts); overrides read `--max-<axis>` off argparse — no twin key-set literal.
+    counts = {"strings": len(strings), "key_sets": len(key_sets)}
+    overrides = {axis: getattr(args, f"max_{axis}") for axis in counts}
+    Ratchet("magic_literals").enforce(counts, overrides, log)
 
 
 if __name__ == "__main__":

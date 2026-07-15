@@ -44,27 +44,6 @@ def test_magic_literals_finds_repeated_key_set(write_pkg, tmp_path):
     assert MagicLiterals([solo]).scan_key_sets() == []
 
 
-def test_magic_literals_ratchet_bites_over_ceiling():
-    check = MagicLiterals.check_ratchet
-    assert check(5, 2, 4, 9) == ["strings 5 > 4"], "over the string ceiling must report"
-    assert check(2, 12, 9, 11) == ["key-sets 12 > 11"], "over the key-set ceiling must report"
-    assert check(5, 12, 9, 20) == [], "under both ceilings is silent"
-    assert check(999, 999, None, None) == [], "no ceilings = advisory (report-only), never bites"
-
-
-def test_magic_literals_ratchet_ceilings_from_pyproject(tmp_path):
-    pp = tmp_path / "pyproject.toml"
-    pp.write_text("[tool.magic_literals]\nmax_strings = 12\nmax_key_sets = 3\n")
-    assert MagicLiterals.ratchet_ceilings(str(pp)) == (12, 3), "the FACT slot drives the enforced ceiling (2cj)"
-    # a fresh base ships 0/0 -> enforced-at-zero
-    pp.write_text("[tool.magic_literals]\nmax_strings = 0\nmax_key_sets = 0\n")
-    assert MagicLiterals.ratchet_ceilings(str(pp)) == (0, 0)
-    # absent section/file -> (None, None) = advisory fallback, never bites
-    assert MagicLiterals.ratchet_ceilings(str(tmp_path / "none.toml")) == (None, None)
-    pp.write_text("[tool.ruff]\nline-length = 120\n")
-    assert MagicLiterals.ratchet_ceilings(str(pp)) == (None, None), "no [tool.magic_literals] -> advisory"
-
-
 def test_magic_literals_main_requires_packages(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["devtools.magic_literals"])
     with pytest.raises(SystemExit) as exc:
