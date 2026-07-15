@@ -75,7 +75,7 @@ and unit-tested in `tests/unit/`, so a broken check can't pass silently.
 | **Minimality** | nothing dead, nothing duplicated — each fact in exactly one home | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` · deptry (unused/undeclared deps) | R1–R3 |
 | **Simplicity** | each unit small + low-branching enough to hold in the head | *split / flatten* | ruff `C901/PLR09xx` · god-file (`graph.py`) | R1–R2 |
 | **Cohesion** | a unit is one idea — no hidden missing abstraction | *extract an object* | `lcom` · `state_candidates` · `data_clumps` · ast-grep shape | R2 |
-| **Structure** | the module graph is well-formed: acyclic, directional, bounded coupling, tests mirror source | *redirect / break edges* | `graph.py --assert` · import-linter | R3 |
+| **Structure** | the module graph is well-formed: acyclic, directional, bounded coupling, tests mirror source | *redirect / break edges* | `graph.py --assert` · import-linter · `archmap` (viz) | R3 |
 | **Completeness** | behaviour is exercised to a stated floor | *add tests* | coverage | ⟂ |
 
 Seven predicates, seven distinct fixes — *repair, conform, delete, split, extract, redirect, test*. The
@@ -96,7 +96,10 @@ Martin instability/main-sequence (Robert Martin; ArchUnitPython), import cycles 
 [tach](https://github.com/gauge-sh/tach)), complexity ([radon](https://pypi.org/project/radon/), ruff),
 duplication/dead-code/CVE/dep-hygiene (jscpd, vulture, pip-audit, deptry — all vendored). What the survey
 found *nowhere*: **cross-file magic-literal** detection, **data-clumps** and **namespace-state** detection,
-**jaxtyping shape contracts**, and the **test-mirror** gate. Full citation in
+**jaxtyping shape contracts**, the **test-mirror** gate, and **committed, diffable, tiered, edge-counted**
+architecture diagrams (`archmap` — the surveyed diagram tools render an ephemeral picture; ours emits a
+mermaid mirror-tree with per-arrow coupling counts and a `--check` stale gate, so architecture drifts loudly
+in review). Full citation in
 [`sdlc-devtools/README`](sdlc-devtools/README.md#prior-art--and-whats-actually-novel).
 
 **Structure, in the standard coupling vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`,

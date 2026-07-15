@@ -143,6 +143,13 @@ def test_select_and_ci_wiring(project):
     ci_text = (path / ".github" / "workflows" / "ci.yml").read_text()
     assert "deptry ." in ci_text, "the deptry gate is wired into CI (85l.2)"
     assert "devtools.complexity" in ci_text, "complexity runs in CI (advisory block; 0sx)"
+    # 2vt.4: archmap (architecture autoviz) wired into all three runners — CI advisory --check, a pre-commit
+    # regen hook, and a manual nox regen session. Doc-gen/advisory; import-linter stays the directional gate.
+    assert "devtools.archmap" in ci_text and "--check" in ci_text, "archmap --check runs in CI (advisory; 2vt.4)"
+    precommit_text = (path / ".pre-commit-config.yaml").read_text()
+    assert "id: archmap" in precommit_text, "the archmap regen hook ships in pre-commit (2vt.4)"
+    nox_text = (path / "noxfile.py").read_text()
+    assert "def archmap(" in nox_text, "the manual archmap regen session ships in noxfile (2vt.4)"
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
     # skr GAP1: an explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the enforced-lint CLI
     # repeats the ml F722 waiver (jaxtyping dim strings) — else a fresh ml gen red-CIs on its own config.
@@ -340,6 +347,25 @@ def test_complexity_advisory_runs_clean(project):
     name, path = project
     # ADVISORY explorer (0sx) — radon CC ranked report, always exit 0. ruff C901 is the FIXED complexity gate.
     run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.complexity", *layers(name)], path)
+
+
+def test_archmap_generates_and_check_bites(project):
+    name, path = project
+    archmap = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.archmap", *layers(name)]
+    # doc-gen: regenerate the tiered mermaid tree, then --check must be GREEN on the fresh output
+    run(archmap, path)
+    root = path / "docs" / "architecture" / "ARCHITECTURE.md"
+    assert root.exists(), "archmap writes the root architecture doc"
+    assert "```mermaid" in root.read_text(encoding="utf-8"), "the doc carries a mermaid diagram"
+    run([*archmap, "--check"], path)
+
+    # ...and the --check stale gate BITES when a committed doc drifts from the real graph (2vt.3)
+    def tamper(_):
+        original = root.read_text(encoding="utf-8")
+        root.write_text("stale — structure moved but the diagram was not regenerated\n", encoding="utf-8")
+        return lambda: root.write_text(original, encoding="utf-8")
+
+    assert_bites(path, [*archmap, "--check"], tamper)
 
 
 def test_deptry_enforced_runs_clean(project):

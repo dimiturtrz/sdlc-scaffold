@@ -11,7 +11,7 @@ bump (`devtools_ref`), not a re-vendored source diff:
 
 ```toml
 # pyproject.toml (rendered by copier)
-devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@v1.4.0#subdirectory=sdlc-devtools
+devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@v1.5.0#subdirectory=sdlc-devtools
 ```
 
 The import name stays `devtools`, so every gate invocation is unchanged.
@@ -47,6 +47,16 @@ The import name stays `devtools`, so every gate invocation is unchanged.
 - **complexity.py** — cyclomatic complexity on **radon**'s CC (McCabe), ranked report + current max.
   **ADVISORY** (exit 0). The FIXED complexity gate is ruff `C901`/`PLR09xx` (CC>10, legislated); this just
   surfaces the ranking as reviewer signal.
+- **archmap.py** — architecture autoviz: the marked package tree → **tiered, edge-counted, clickable**
+  mermaid docs. grimp builds the combined import graph (folder≡package≡module, so nodes come free from
+  `packages` — no separate architecture language); each nesting tier is one document whose arrows carry the
+  **count** of module→module imports crossing that pair (`viewer -->|3| core` = coupling weight), with a
+  `Drill:` markdown-link line descending into each sub-package. Output is a mirror tree under
+  `docs/architecture/`, **committed** so architecture erosion shows up as a diagram diff in review.
+  `python -m devtools.archmap <packages>` regenerates; `--check` fails if the committed tree is stale
+  (missing/stale/orphan). **DOC-GEN / ADVISORY** — it visualizes structure, it does not enforce it;
+  directional enforcement stays with import-linter. Drill rides markdown links, not mermaid `click` (GitHub's
+  CSP blocks `click` navigation), with a `click` directive emitted too as a free bonus where a renderer honors it.
 - **analytics.py** — a one-shot **explorer** (not a gate): per-area code lines, def count, src:test ratio,
   largest files. `python -m devtools.analytics --areas <packages> devtools`. Its McCabe branch-proxy is
   superseded by `complexity.py` (radon CC, properly); the area/ratio stats remain useful.
@@ -71,6 +81,10 @@ advisory surface) rather than headline them:
 - **complexity** (`analytics.py`) — a McCabe branch-proxy; [radon](https://pypi.org/project/radon/) (CC+MI)
   and ruff `C901`/`PLR09xx` do this properly (radon replaces it — bd 85l.4).
 - **DRY / dead code / CVE / dep hygiene** — jscpd, vulture, pip-audit, deptry: all vendored, not ours.
+- **architecture diagrams** (`archmap.py`) — the diagram ENGINE is commodity:
+  [pyreverse](https://pypi.org/project/pylint/) (UML from code), [pydeps](https://pypi.org/project/pydeps/)
+  (import graphs), and [tach](https://github.com/gauge-sh/tach) (a live interactive web viz) all draw import
+  structure. Ours rides grimp (already a dep). The niche is the FORMAT, below.
 
 The **moat** is the set of checks nothing in the survey does:
 
@@ -80,6 +94,10 @@ The **moat** is the set of checks nothing in the survey does:
 - **namespace-state candidates** (`state_candidates.py`) — latent shared instance state; novel.
 - **shape contracts** (`shape_contracts.py`) — jaxtyping boundary enforcement; novel.
 - **test-mirror gate** (`graph.py`) — every logic module has a mirrored test; novel as a gate.
+- **committed tiered edge-counted architecture docs** (`archmap.py`) — the surveyed diagram tools render an
+  ephemeral picture (a UML dump, a live web graph). Ours emits a **committed, diffable, tiered** mermaid
+  mirror-tree with **edge counts** (coupling weight per arrow) and a `--check` stale gate — so architecture
+  is a reviewable artifact that drifts loudly, not a diagram you regenerate and forget.
 
 ## Self-gating
 
