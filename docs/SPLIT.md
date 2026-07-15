@@ -51,8 +51,11 @@ package imports zero scaffold code (the F duplication is the price of standalone
    assertion and adjust the URL host in the `sdlc-devtools @ git+` checks (or the PyPI form).
 8. **Remove the workspace member (C).** Delete `[tool.uv.workspace]` from the root `pyproject.toml` — the
    package is no longer in-tree.
-9. **Update docs (H).** `docs/SPEC.md` "How the analyzers travel", `README.md` (drop the `cd sdlc-devtools`
-   dev command; the package develops in its own repo), and the `copier.yml` comments.
+9. **Move the API-diff gate.** `.github/workflows/api-diff.yml` runs `griffe check devtools -s sdlc-devtools`
+   from the scaffold root (the package is a subdir). In the package's own repo it becomes `-s .` (or drop
+   `-s` entirely) — move the workflow there, comparing the package's own tags.
+10. **Update docs (H).** `docs/SPEC.md` "How the analyzers travel", `README.md` (drop the `cd sdlc-devtools`
+    dev command; the package develops in its own repo), and the `copier.yml` comments.
 
 ## What does NOT change on split
 

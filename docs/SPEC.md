@@ -125,6 +125,11 @@ the install via `python -m devtools.config sgconfig|jscpd` (external CLIs need a
 `devtools/README.md` usage doc (no `__init__.py`, so it's a namespace portion that never shadows the
 installed package).
 
+**Release API-diff (bd 85l.6).** Consumers pin the package by tag, so a removed/changed public object is a
+breaking change they inherit on a `devtools_ref` bump. The scaffold's own `.github/workflows/api-diff.yml`
+runs `griffe check devtools -s sdlc-devtools -a <prev-tag>` on every `v*` tag — advisory (an intended break
+gets a major/minor bump, not a blocked release), but it forces the releaser to acknowledge the diff.
+
 **Dogfooding — the engines eat their FULL bar (bd dud + vip 16y/p99 + uo0.2).** The package owns its gate
 set in its OWN standalone `sdlc-devtools/noxfile.py` — `cd sdlc-devtools && uvx nox` runs the full bar with
 ZERO scaffold dependency (extraction-ready: lift the dir, keep the noxfile). The scaffold CI drives that

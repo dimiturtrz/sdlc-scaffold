@@ -1,0 +1,26 @@
+# The SCAFFOLD's own release gate (not the template's). On a version tag, diff the sdlc-devtools PUBLIC
+# API against the previous tag with griffe — consumers pin the package by tag, so a removed/changed public
+# object is a breaking change they inherit on a `devtools_ref` bump. Advisory: an INTENDED break (a major/
+# minor bump) shouldn't fail the release, but the annotation forces the releaser to acknowledge it and set
+# the version accordingly. griffe runs from the repo root with `-s sdlc-devtools` because the package is a
+# subdirectory (on extraction — see docs/SPLIT.md — it becomes `-s .` in the package's own repo). bd 85l.6.
+name: api-diff
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  api-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full tag history so the previous tag is resolvable
+      - uses: astral-sh/setup-uv@v5
+      - name: Breaking-API check vs previous tag (sdlc-devtools)
+        continue-on-error: true
+        run: |
+          PREV=$(git tag --sort=-v:refname | grep -vFx "${GITHUB_REF_NAME}" | head -1)
+          echo "comparing devtools public API: ${GITHUB_REF_NAME} vs ${PREV:-<none>}"
+          [ -z "$PREV" ] && { echo "no previous tag — nothing to diff"; exit 0; }
+          uv run --with griffe griffe check devtools -s sdlc-devtools -a "$PREV"
