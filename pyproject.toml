@@ -14,6 +14,13 @@ requires-python = ">=3.11"
 [dependency-groups]
 dev = ["pytest>=8"]
 
+# uv workspace: the repo is two products in one tree — the scaffold (this project) + the analyzer package
+# (sdlc-devtools/). Declaring it a member gives one shared lock + in-place editable dev, and makes eventual
+# extraction a one-line member removal (bd uo0). Generated consumer projects are NOT members — they pull the
+# package by git-dep (the e2e overrides that to the local path), so the workspace only shapes local dev.
+[tool.uv.workspace]
+members = ["sdlc-devtools"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-p no:cacheprovider -ra"
