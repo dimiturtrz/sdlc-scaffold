@@ -109,8 +109,17 @@ def lint(session: nox.Session) -> None:
     # archmap --check exits 1 on drift; success_codes swallows it so CI/nox report without failing the gate
     # (doc-gen, not enforcement — import-linter is the directional gate). Graduates to a gate per the creep.
     session.run(
-        "uv", "run", "--extra", "devtools", "python", "-m", "devtools.archmap", *LAYERS, "--check",
-        external=True, success_codes=[0, 1],
+        "uv",
+        "run",
+        "--extra",
+        "devtools",
+        "python",
+        "-m",
+        "devtools.archmap",
+        *LAYERS,
+        "--check",
+        external=True,
+        success_codes=[0, 1],
     )
 {% if enable_ml %}    # ENFORCED shape-contract gate (GRADUATED advisory->blocking, bd vip.4) — every public array/tensor
     # boundary must carry a jaxtyping shape, not a bare np.ndarray/Tensor (aliases in [tool.shape_contracts]).
