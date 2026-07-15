@@ -1,9 +1,9 @@
 # sdlc-scaffold
 
-**v1.1** — feature-complete guardrail set (all seven properties gated), stable copier contract, and now
-**fully self-gating**: the scaffold's own analyzers are classes that pass the same in-a-class + test-mirror
-rules they impose (they ship with their mirror tests). In use by three converged repos; upgrades flow by
-`copier update`.
+**v1.2** — feature-complete guardrail set (all seven properties gated), stable copier contract, fully
+**self-gating** (the analyzers pass the same in-a-class + test-mirror rules they impose), and the analyzers
+now ship as a **pinned package** (`sdlc-devtools`) rather than vendored source — an engine update is a
+one-line pin bump on `copier update`, no source churn in consumer PRs. In use by three converged repos.
 
 A [copier](https://copier.readthedocs.io) template that installs a codebase's **structural guardrails** —
 a set of executable checks that keep the code within stated architectural bounds as it grows, enforced
@@ -159,15 +159,17 @@ uvx copier update       # reads .copier-answers.yml, fetches the newest scaffold
 
 ## What a generated project gets
 
-- `pyproject.toml` — the portable ruff/vulture/coverage blocks + marked LOCAL-SLOT regions.
+- `pyproject.toml` — the portable ruff/vulture/coverage blocks + marked LOCAL-SLOT regions, and the
+  `devtools` optional-dependency: the analyzers as a **pinned package** (`sdlc-devtools @ git+…@<tag>`), not
+  vendored source. An engine improvement is a one-line pin bump (`devtools_ref`) on `copier update` — no
+  analyzer source diff in your PRs. They still import as `devtools` (`python -m devtools.graph …`); the
+  ast-grep/jscpd config ships inside the package and is located via `python -m devtools.config`.
 - `noxfile.py` · `.pre-commit-config.yaml` · `.github/workflows/ci.yml` — the same gates bound to the local
   runner, the commit event, and the merge.
-- `devtools/` — the analyzers (`graph.py`, the class-shape + magic-literal explorers, ast-grep rules, jscpd
-  config, `omit.py`, the shared `_common.py` walk/config primitives) with their own `README.md`, plus their
-  per-engine mirror tests under `tests/unit/devtools/` — the analyzers travel with their tests and pass the
-  same in-a-class + test-mirror rules they impose.
-- `tests/{unit,integration,e2e}/`, `docs/`, `CLAUDE.md` / `AGENTS.md` — the skeleton. No package code (the
-  only shipped tests are the devtools' own).
+- `devtools/README.md` — a short project-local doc: how the gates are invoked here, the `@shapecheck`
+  wiring (ML), and the import-linter contract guidance. No analyzer source lives here.
+- `tests/{unit,integration,e2e}/`, `docs/`, `CLAUDE.md` / `AGENTS.md` — the skeleton. No package code, and
+  no shipped tests (the analyzers are tested in their own package).
 
 The scaffold's own CI generates real projects and runs every gate against them, including tests that prove
 each gate *bites* on a planted violation — the guardrails guard themselves. See

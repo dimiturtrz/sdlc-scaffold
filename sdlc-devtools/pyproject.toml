@@ -1,0 +1,31 @@
+# sdlc-devtools — the structural-guardrail ANALYZERS of the sdlc-scaffold stack, as an installable
+# package. Consumers depend on it by a git tag pin (see the scaffold's template/pyproject.toml.jinja):
+#   devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@<tag>#subdirectory=sdlc-devtools
+# so an engine change is a one-line pin bump in the consumer, NOT a re-vendored source diff. The engines
+# import as `devtools` (unchanged CLI contract: `python -m devtools.graph`, etc.). The ast-grep rule data
+# (sgconfig/sg-rules) + jscpd config are NOT here — they are filesystem config consumed by external CLIs
+# by path, so they stay vendored in the scaffold template.
+[project]
+name = "sdlc-devtools"
+version = "1.2.0"
+description = "Structural-guardrail analyzers (import-graph arch-fitness, LCOM4, data-clumps, magic-literals, shape-contracts) for the sdlc-scaffold stack."
+requires-python = ">=3.11"
+# graph.py builds the honest import graph on grimp + ranks it with networkx; the other engines are
+# stdlib-only (ast). So the whole package's runtime footprint is these two.
+dependencies = ["grimp", "networkx"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# The whole `devtools/` dir ships — including the ast-grep rules + the ast-grep/jscpd config DATA (consumed
+# by external CLIs, located via `python -m devtools.config`), which hatchling includes alongside the .py.
+packages = ["devtools"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider -ra"

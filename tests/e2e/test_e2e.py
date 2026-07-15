@@ -18,6 +18,7 @@ from conftest import (
     VULTURE,
     NOX,
     assert_bites,
+    config_path,
     example_pkg,
     generate,
     seed_example,
@@ -26,6 +27,7 @@ from conftest import (
     layers,
     make_scaffold,
     run,
+    use_local_devtools,
 )
 
 pytestmark = pytest.mark.slow
@@ -61,14 +63,15 @@ def test_expected_layout(project):
     # example tests ship at their STRICT mirror path (tests/unit/<pkg>/test_<name>.py)
     assert (path / "tests" / "unit" / pkg / "test_math_ops.py").exists()
     assert (path / "tests" / "unit" / pkg / "test_pipeline.py").exists()
-    assert (path / "devtools" / "graph.py").exists()
-    assert (path / "devtools" / "omit.py").exists()
+    # the analyzers are an INSTALLED package now (sdlc-devtools, pinned by tag) — not vendored source,
+    # and neither is the ast-grep/jscpd config (located from the install via `python -m devtools.config`).
+    pyproject_dep = (path / "pyproject.toml").read_text()
+    assert not (path / "devtools" / "graph.py").exists(), "engines ship as a package, not vendored .py"
+    assert not (path / "devtools" / "sgconfig.yml").exists(), "ast-grep config ships inside the package"
+    assert "sdlc-devtools @ git+" in pyproject_dep, "the devtools git-dep is pinned in the devtools extra"
+    assert "#subdirectory=sdlc-devtools" in pyproject_dep, "pinned to the package subdirectory"
+    # the project-local gate-usage doc still ships (invocation + @shapecheck + import-linter guidance)
     assert (path / "devtools" / "README.md").exists()
-    # the gates are always-on now — every gate's files always ship
-    assert (path / "devtools" / "sgconfig.yml").exists()
-    assert (path / "devtools" / "jscpd.json").exists()
-    for tool in ("lcom.py", "data_clumps.py", "state_candidates.py", "magic_literals.py", "analytics.py"):
-        assert (path / "devtools" / tool).exists()
     # beads is always wired -> the CLAUDE/AGENTS beads section is always present
     assert "bd (beads)" in (path / "CLAUDE.md").read_text()
     assert "bd (beads)" in (path / "AGENTS.md").read_text()
@@ -90,7 +93,8 @@ def test_expected_layout(project):
     assert ('"learning"' in pyproject_text) == ml, "learning is a study-ramp convention — ML domain only"
     # ML-typing bundle (vip.1): jaxtyping+beartype deps, the F722 ignore, the shape gate engine + config,
     # and the @shapecheck helper note all ship IFF the ML domain (meaningless off a tensor codebase).
-    assert ((path / "devtools" / "shape_contracts.py").exists()) == ml, "shape gate ships ML-only"
+    # shape_contracts ships in the package unconditionally; the ml-gating is at the WIRING level — a ml
+    # project's ci/nox/pre-commit carry the shape --assert step, a domain-neutral one doesn't (asserted below).
     assert ('"jaxtyping"' in pyproject_text) == ml
     assert ('"beartype"' in pyproject_text) == ml
     assert ('"F722"' in pyproject_text) == ml, "F722 ignore is ML-only (jaxtyping shape strings)"
@@ -203,8 +207,8 @@ def test_hygiene_scope_widens_ruff_and_jscpd(scaffold, tmp_path_factory):
     assert "jscpd core viewer/web/src --config" in ci, "jscpd scans the widened jscpd_paths"
     assert 'LINT_LAYERS = ["core", "viewer", "tests"]' in nox
     assert 'JSCPD_LAYERS = ["core", "viewer/web/src"]' in nox
-    # arch gates (graph.py / ast-grep) STAY on the package arch set — hygiene widens, structure does not
-    assert "--assert core" in ci and "sgconfig.yml core" in ci, "arch gates keep the package set, not the wide scope"
+    # arch gates (graph / ast-grep) STAY on the package arch set — hygiene widens, structure does not
+    assert "--assert core" in ci and 'sgconfig)" core' in ci, "arch gates keep the package set, not the wide scope"
 
 
 def test_template_ships_no_package_code(scaffold, tmp_path_factory):
@@ -212,14 +216,15 @@ def test_template_ships_no_package_code(scaffold, tmp_path_factory):
     out = tmp_path_factory.mktemp("empty") / "proj"
     generate(scaffold, out, {"project_name": "empty", "packages": "myapp", "domain": "none", "coverage_floor": "80"})
     assert not (out / "myapp").exists(), "no package code ships — the project brings its own"
-    assert not (out / "tests" / "unit" / "myapp").exists(), "no package tests for the consumer's code"
-    assert list((out / "tests" / "unit").glob("*.py")) == [], "no loose shipped unit tests at the unit root"
-    # guardrails ARE shipped — and as of vip 16y the devtools engines travel WITH their own mirror tests
-    # (the analyzers pass the same test-mirror rule they impose), so tests/unit/devtools/ DOES ship.
-    assert (out / "tests" / "unit" / "devtools" / "test_graph.py").exists(), "devtools ship their mirror tests"
+    # the devtools engine tests are SCAFFOLD-side only — a consumer gets the engines, never their tests
+    # (those test template/devtools/*.py, not consumer code — bd d9x reversed the v1.1.0 vendoring).
+    assert not (out / "tests" / "unit" / "devtools").exists(), "devtools engine tests are never shipped"
+    assert list((out / "tests" / "unit").rglob("test_*.py")) == [], "no shipped unit tests — the project brings its own"
+    # the engines are an installed package, not vendored source — no devtools/*.py ships
+    assert not (out / "devtools" / "graph.py").exists(), "engines ship as the sdlc-devtools package, not source"
+    assert "sdlc-devtools @ git+" in (out / "pyproject.toml").read_text(), "the pinned devtools git-dep ships"
+    # the gate runners + config ARE shipped
     assert (out / "noxfile.py").exists()
-    assert (out / "devtools" / "graph.py").exists()
-    assert (out / "devtools" / "_common.py").exists()
     assert (out / "pyproject.toml").exists()
 
 
@@ -265,45 +270,43 @@ def test_coverage_floor(project):
 
 def test_graph_assert_all_layers(project):
     name, path = project
-    run(["uv", "run", "python", "-m", "devtools.graph", "--assert", *layers(name)], path)
+    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph", "--assert", *layers(name)], path)
 
 
 def test_astgrep(project):
     name, path = project
-    run(
-        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", *layers(name)],
-        path,
-    )
+    cfg = config_path(path, "sgconfig")  # located from the installed package (no vendored devtools/)
+    run(["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", cfg, *layers(name)], path)
 
 
 def test_jscpd(project):
     name, path = project
     if not has_node():
         pytest.skip("node/npx not available")
-    run(["npx", "--yes", "jscpd", *layers(name), "--config", "devtools/jscpd.json"], path)
+    run(["npx", "--yes", "jscpd", *layers(name), "--config", config_path(path, "jscpd")], path)
 
 
 def test_class_shape_smells(project):
     name, path = project
     # advisory explorers — must run clean (exit 0); findings are fine, they never block
     for tool in ("state_candidates", "lcom", "data_clumps"):
-        run(["uv", "run", "python", "-m", f"devtools.{tool}", *layers(name)], path)
+        run(["uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{tool}", *layers(name)], path)
 
 
 def test_magic_literals_enforced_runs_clean(project):
     name, path = project
     # ENFORCED via the base [tool.magic_literals] 0/0 ceiling (2cj) — the clean seed has no recurring
     # vocab, so it stays under the ceiling and exits 0. A NEW literal would bite (see the bite test).
-    run(["uv", "run", "python", "-m", "devtools.magic_literals", *layers(name)], path)
+    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", *layers(name)], path)
 
 
 def test_shape_contracts_enforced_runs_clean(project):
     name, path = project
-    if not (path / "devtools" / "shape_contracts.py").exists():
-        pytest.skip("shape_contracts is ML-domain only (absent off a tensor codebase)")
+    if COMBOS[name]["domain"] != "ml":
+        pytest.skip("the shape gate is wired ML-only (the engine ships in the package regardless)")
     # GRADUATED to blocking (vip.4) — the base runs it with --assert; the seed has no array boundaries so it
     # exits 0. A bare boundary would fail (see test_shape_contracts_assert_catches_bare_boundary).
-    run(["uv", "run", "python", "-m", "devtools.shape_contracts", *layers(name), "--assert"], path)
+    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.shape_contracts", *layers(name), "--assert"], path)
 
 
 # ---- gates, via the runners ------------------------------------------------------------------------
@@ -324,7 +327,7 @@ def test_precommit_all_hooks(project):
 
 # ---- the optional gates actually BITE --------------------------------------------------------------
 
-GRAPH_ASSERT = ["uv", "run", "python", "-m", "devtools.graph", "--assert", "full_pkg"]
+GRAPH_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph", "--assert", "full_pkg"]
 
 
 @pytest.fixture(scope="module")
@@ -332,6 +335,7 @@ def full_project(scaffold, tmp_path_factory):
     out = tmp_path_factory.mktemp("inject")
     generate(scaffold, out, COMBOS["full"])
     seed_example(out, "full_pkg")  # template ships no code — seed the demo the inject tests mutate
+    use_local_devtools(out)  # resolve the devtools git-dep to the working-tree package (test-only)
     git_init_commit(out)
     run(["uv", "sync", "--extra", "dev", "--extra", "devtools"], out)
     return out
@@ -344,8 +348,12 @@ def _append(path, text):
     return lambda: path.write_text(original)
 
 
-ASTGREP_SCAN = ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", "full_pkg"]
-SHAPE_ASSERT = ["uv", "run", "python", "-m", "devtools.shape_contracts", "--assert", "full_pkg"]
+def astgrep_scan(cfg):
+    """The ast-grep scan of full_pkg, config located from the installed package (per-project path)."""
+    return ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", cfg, "full_pkg"]
+
+
+SHAPE_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.shape_contracts", "--assert", "full_pkg"]
 
 
 def test_shape_contracts_assert_catches_bare_boundary(full_project):
@@ -364,7 +372,7 @@ def test_shape_contracts_assert_catches_bare_boundary(full_project):
 def test_astgrep_catches_top_level_function(full_project):
     assert_bites(
         full_project,
-        ASTGREP_SCAN,
+        astgrep_scan(config_path(full_project, "sgconfig")),
         lambda p: _append(p / "full_pkg" / "math_ops.py", "\n\ndef sneaky_top_level():\n    return 1\n"),
     )
 
@@ -373,7 +381,7 @@ def test_astgrep_catches_decorated_top_level_function(full_project):
     # a DECORATED free function is a decorated_definition wrapping the def — the 2nd rule branch must catch it
     assert_bites(
         full_project,
-        ASTGREP_SCAN,
+        astgrep_scan(config_path(full_project, "sgconfig")),
         lambda p: _append(
             p / "full_pkg" / "math_ops.py",
             "\n\nfrom functools import cache\n\n\n@cache\ndef sneaky_decorated():\n    return 1\n",
@@ -404,7 +412,7 @@ def test_jscpd_catches_duplication(full_project):
     mod.write_text(mod_orig + block)
     pkg.write_text(pkg_orig + block)
     result = run(
-        ["npx", "--yes", "jscpd", "full_pkg", "--config", "devtools/jscpd.json"],
+        ["npx", "--yes", "jscpd", "full_pkg", "--config", config_path(full_project, "jscpd")],
         full_project,
         check=False,
     )
@@ -439,7 +447,7 @@ def test_graph_assert_catches_unmirrored(full_project):
 
 
 # magic_literals is advisory by default; passing --max-strings opts into the count-ratchet, which BITES.
-MAGIC_RATCHET = ["uv", "run", "python", "-m", "devtools.magic_literals", "full_pkg", "--max-strings", "0"]
+MAGIC_RATCHET = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", "full_pkg", "--max-strings", "0"]
 
 
 def test_magic_literals_ratchet_bites(full_project):
@@ -455,7 +463,7 @@ def test_magic_literals_ratchet_bites(full_project):
 
 # 2cj: [tool.magic_literals] makes it a BASE ENFORCED gate — plain `magic_literals <pkg>` (no CLI flag, as
 # the runners call it) reads the 0/0 ceiling from pyproject and BITES a new recurring literal.
-MAGIC_ENFORCED = ["uv", "run", "python", "-m", "devtools.magic_literals", "full_pkg"]
+MAGIC_ENFORCED = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", "full_pkg"]
 
 
 def test_magic_literals_enforced_by_pyproject_ceiling(full_project):

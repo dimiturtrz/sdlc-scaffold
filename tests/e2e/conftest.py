@@ -149,6 +149,28 @@ def generate(scaffold: Path, out: Path, answers: dict):
     return out
 
 
+def use_local_devtools(out: Path):
+    """Point the generated project's `sdlc-devtools` git-dep at the WORKING-TREE package via a
+    `[tool.uv.sources]` override, so `uv sync --extra devtools` builds the local package instead of
+    fetching the (unpublished, at test time) scaffold tag from GitHub. What ships to a real consumer is
+    the pure git pin; this override is test-only."""
+    pkg = (REPO / "sdlc-devtools").as_posix()
+    pyproject = out / "pyproject.toml"
+    pyproject.write_text(
+        pyproject.read_text(encoding="utf-8")
+        + f'\n[tool.uv.sources]\nsdlc-devtools = {{ path = "{pkg}" }}\n',
+        encoding="utf-8",
+    )
+
+
+def config_path(project: Path, name: str) -> str:
+    """Resolve a packaged ast-grep/jscpd config path from the installed devtools package, as the gates do
+    (`python -m devtools.config <name>`) — for the e2e's direct ast-grep/jscpd invocations."""
+    return run(
+        ["uv", "run", "-q", "--extra", "devtools", "python", "-m", "devtools.config", name], project
+    ).stdout.strip()
+
+
 def git_init_commit(path: Path):
     run(["git", "init", "-q"], path)
     run(["git", "config", "user.email", "e2e@test"], path)
@@ -172,6 +194,7 @@ def project(request, scaffold, tmp_path_factory):
     out = tmp_path_factory.mktemp(f"proj_{name}")
     generate(scaffold, out, COMBOS[name])
     seed_example(out, example_pkg(name))  # the template ships zero code; the e2e owns the demo
+    use_local_devtools(out)  # resolve the devtools git-dep to the working-tree package (test-only override)
     git_init_commit(out)
     run(["uv", "sync", "--extra", "dev", "--extra", "devtools"], out)
     return name, out
