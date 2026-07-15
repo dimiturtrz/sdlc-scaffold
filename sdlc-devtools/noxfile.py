@@ -51,6 +51,11 @@ def lint(session: nox.Session) -> None:
     )
 
 
+    # Dependency hygiene — deptry (config in [tool.deptry]); env-aware via `--with` so it reads installed
+    # dist metadata (transitive detection). Blocks on undeclared/unused/transitive imports.
+    session.run("uv", "run", "--with", "deptry", "--group", "dev", "deptry", ".", external=True)
+
+
 @nox.session(venv_backend="none")
 def test(session: nox.Session) -> None:
     """The per-engine mirror tests (the analyzers' own guardrails)."""

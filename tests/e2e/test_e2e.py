@@ -11,6 +11,7 @@ import pytest
 from conftest import (
     COMBOS,
     COPIER,
+    DEPTRY,
     NOX,
     PRECOMMIT,
     RUFF,
@@ -133,8 +134,12 @@ def test_select_and_ci_wiring(project):
     # 2cj: magic_literals is a BASE ENFORCED gate — the [tool.magic_literals] ceiling FACT ships 0/0
     assert "[tool.magic_literals]" in pyproject_text, "magic-literals ratchet is a base gate (2cj)"
     assert "max_strings = 0" in pyproject_text and "max_key_sets = 0" in pyproject_text, "fresh repo = 0/0"
+    # 85l.2: deptry dependency-hygiene gate — [tool.deptry] config ships, the DEP002 starter-ignore carries
+    # the shipped deps (pytest/sdlc-devtools always; numpy/jaxtyping/beartype iff ml) so a fresh gen is green.
+    assert "[tool.deptry]" in pyproject_text, "deptry dependency-hygiene gate config ships (85l.2)"
     # 9mu: ruff enforced + jscpd default to the arch set but are hygiene-widenable (lint_paths/jscpd_paths)
     ci_text = (path / ".github" / "workflows" / "ci.yml").read_text()
+    assert "deptry ." in ci_text, "the deptry gate is wired into CI (85l.2)"
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
     # skr GAP1: an explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the enforced-lint CLI
     # repeats the ml F722 waiver (jaxtyping dim strings) — else a fresh ml gen red-CIs on its own config.
@@ -313,6 +318,14 @@ def test_magic_literals_enforced_runs_clean(project):
     run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", *layers(name)], path)
 
 
+def test_deptry_enforced_runs_clean(project):
+    name, path = project
+    # ENFORCED dependency hygiene. A fresh gen ships starter deps (pydantic + ml numpy/jaxtyping/beartype)
+    # and CLI/plugin deps (sdlc-devtools, pytest-cov) that no source imports yet — all ignored via
+    # [tool.deptry] (DEP002 slot) so the gate is GREEN on a fresh gen, biting only on a NEW undeclared import.
+    run(["uv", "run", "--with", DEPTRY, "deptry", "."], path)
+
+
 def test_shape_contracts_enforced_runs_clean(project):
     name, path = project
     if COMBOS[name]["domain"] != "ml":
@@ -379,6 +392,16 @@ def test_shape_contracts_assert_catches_bare_boundary(full_project):
             p / "full_pkg" / "math_ops.py",
             "\n\nclass Boundary:\n    def seg(self, x: np.ndarray) -> np.ndarray:\n        return x\n",
         ),
+    )
+
+
+def test_deptry_catches_undeclared_import(full_project):
+    # dependency hygiene bites: a source import of an undeclared 3rd-party package is DEP001 (imported but
+    # missing from the dependency definitions) — the exact drift the gate exists to catch.
+    assert_bites(
+        full_project,
+        ["uv", "run", "--with", DEPTRY, "deptry", "."],
+        lambda p: _append(p / "full_pkg" / "math_ops.py", "\n\nimport requests  # undeclared\n"),
     )
 
 

@@ -122,6 +122,9 @@ def lint(session: nox.Session) -> None:
     # candidates), the non-comparison axis ruff PLR2004 can't see. Blocks over the [tool.magic_literals]
     # ceiling (a per-repo FACT; fresh repo = 0/0). Migrate a new literal or raise the ceiling with a reason.
     session.run("uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", *LAYERS, external=True)
+    # ENFORCED dependency hygiene — deptry: undeclared (DEP001) / unused (DEP002) / transitive (DEP003)
+    # imports. `--with` adds deptry to the run so it reads installed dist metadata; config in [tool.deptry].
+    session.run("uv", "run", "--with", "deptry=={{ deptry_version }}", "deptry", ".", external=True)
 
 
 @nox.session(venv_backend="none")

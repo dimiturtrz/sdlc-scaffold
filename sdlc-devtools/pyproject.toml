@@ -29,3 +29,12 @@ dev = ["pytest>=8"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-p no:cacheprovider -ra"
+
+# Dependency hygiene (bd 85l.2): deptry flags imported-but-undeclared (DEP001), declared-but-unused
+# (DEP002), and transitive (DEP003). noxfile.py imports the `nox` runner (invoked via uvx, intentionally
+# undeclared) so it's excluded; test files legitimately import the dev-dep pytest (DEP004 ignored there).
+[tool.deptry]
+extend_exclude = ["noxfile.py"]
+
+[tool.deptry.per_rule_ignores]
+DEP004 = ["tests"]

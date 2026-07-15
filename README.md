@@ -71,7 +71,7 @@ and unit-tested in `tests/unit/`, so a broken check can't pass silently.
 |---|---|---|---|---|
 | **Correctness** | no line does the wrong thing, swallows an error, or is unreachable-as-a-bug | *repair* | ruff `F/B/BLE/S` · vulture · `shape_contracts` (ML) | R1 |
 | **Consistency** | one convention, no drift — formatting, import order, naming | *conform* | ruff `format`/`I`/`N`/`RUF` | R1 |
-| **Minimality** | nothing dead, nothing duplicated — each fact in exactly one home | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` | R1–R3 |
+| **Minimality** | nothing dead, nothing duplicated — each fact in exactly one home | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` · deptry (unused/undeclared deps) | R1–R3 |
 | **Simplicity** | each unit small + low-branching enough to hold in the head | *split / flatten* | ruff `C901/PLR09xx` · god-file (`graph.py`) | R1–R2 |
 | **Cohesion** | a unit is one idea — no hidden missing abstraction | *extract an object* | `lcom` · `state_candidates` · `data_clumps` · ast-grep shape | R2 |
 | **Structure** | the module graph is well-formed: acyclic, directional, bounded coupling, tests mirror source | *redirect / break edges* | `graph.py --assert` · import-linter | R3 |

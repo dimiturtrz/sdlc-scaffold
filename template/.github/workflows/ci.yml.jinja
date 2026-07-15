@@ -110,6 +110,11 @@ jobs:
       # ruff PLR2004 can't see.
       - name: Magic literals — enforced (ratchet over [tool.magic_literals] ceiling)
         run: uv run --extra devtools python -m devtools.magic_literals {{ pkgs }}
+      # Dependency hygiene — deptry: imported-but-undeclared (DEP001) + declared-but-unused (DEP002) +
+      # transitive (DEP003). Runs in the synced env (`--with` adds deptry) so it reads installed dist
+      # metadata. Config (excludes + per-rule ignores) in [tool.deptry]. Blocks the merge.
+      - name: Dependency hygiene — enforced (deptry)
+        run: uv run --with deptry=={{ deptry_version }} deptry .
 {% if enable_ml %}      # Shape contracts — ENFORCED (GRADUATED advisory->blocking, bd vip.4): every public array/tensor
       # boundary must carry a jaxtyping shape, not a bare np.ndarray/Tensor. A fresh gen has 0 boundaries
       # (passes); from the first typed boundary on, a bare one fails the merge — the ratchet at work. Aliases

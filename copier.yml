@@ -140,6 +140,11 @@ nox_version:
   default: "2026.7.11"
   when: false
 
+deptry_version:
+  type: str
+  default: "0.25.1"
+  when: false
+
 precommit_version:
   type: str
   default: "4.6.0"

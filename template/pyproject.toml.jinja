@@ -29,6 +29,22 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "--import-mode=importlib"
 
+# Dependency hygiene (deptry, ENFORCED): imported-but-undeclared (DEP001) / declared-but-unused (DEP002) /
+# transitive (DEP003) imports. noxfile.py imports the `nox` runner (invoked via uvx, deliberately not a
+# project dep) so it's excluded from the scan.
+[tool.deptry]
+extend_exclude = ["noxfile.py"]
+
+# deptry does not scan tests/ (its default exclude), so DEP002 (declared-but-unused) fires for anything
+# only exercised by the test suite or by tooling. PERMANENT ignores (never imported in scanned source by
+# design): the test-runner deps `pytest`/`pytest-cov`, and `sdlc-devtools` (the analyzers, invoked as a CLI
+# `python -m devtools.*`). STARTERS: the runtime deps the scaffold ships for you to build on
+# ({{ "numpy/jaxtyping/beartype/" if enable_ml }}pydantic) — they read as unused until you import them.
+[tool.deptry.per_rule_ignores]
+# >>> LOCAL-SLOT: deptry-unused — PRUNE a starter once you wire it (keep pytest/pytest-cov/sdlc-devtools)
+DEP002 = ["pytest", "pytest-cov", "sdlc-devtools", {% if enable_ml %}"numpy", "jaxtyping", "beartype", {% endif %}"pydantic"]
+# <<< LOCAL-SLOT: deptry-unused
+
 [tool.ruff]
 line-length = 120
 # >>> LOCAL-SLOT: ruff-exclude — edit freely, the template will not overwrite intent here

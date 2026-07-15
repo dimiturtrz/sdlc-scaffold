@@ -73,7 +73,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 |---|---|---|
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
-| `ruff_version` / `vulture_version` / `nox_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
+| `ruff_version` / `vulture_version` / `nox_version` / `deptry_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
 | `devtools_ref` | scaffold release tag (e.g. `v1.2.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
 
 ## Gate inventory
@@ -92,6 +92,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 9 | import-linter (self-gates on >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
 | 10 | magic-literals (ENFORCED ratchet) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; ceilings = `[tool.magic_literals] max_strings/max_key_sets` (FACT slot, fresh=0/0 — 2cj); `--max-*` CLI overrides |
 | 11 | shape-contracts (ENFORCED; ML-only) | OURS `shape_contracts.py --assert` | builtin `ndarray`/`Tensor` + jaxtyping vocab | ships iff `enable_ml`; `[tool.shape_contracts] array_aliases` (slot). GRADUATED advisory->blocking (bd vip.4) — a fresh gen has 0 boundaries so `--assert` passes; a bare array/tensor boundary then fails |
+| 12 | deptry dependency-hygiene (ENFORCED) | vendored deptry (`deptry_version`) | DEP001 undeclared / DEP002 unused / DEP003 transitive | `[tool.deptry] extend_exclude=noxfile`; `per_rule_ignores.DEP002` = shipped starters (pytest/pytest-cov/sdlc-devtools always; numpy/jaxtyping/beartype iff ml + pydantic) in the `deptry-unused` slot — deptry skips `tests/`, so tooling/starter deps read as unused until wired (85l.2). Runs env-aware (`uv run --with deptry`) to read installed dist metadata |
 
 import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import
 contracts — a one-way `core -> trainer` import is no cycle, so it passes `graph.py` but must fail here.
@@ -226,7 +227,7 @@ Result: a repo overrides at most ONE slot per divergent gate; a conforming repo 
 identically (every scope = `packages`). No new questions, no new slots.
 
 ## Pinned tool versions (single-sourced in copier.yml, `when: false`)
-- ruff `0.15.13` · vulture `2.16` · nox `2026.7.11` · pre-commit `4.6.0`
+- ruff `0.15.13` · vulture `2.16` · nox `2026.7.11` · deptry `0.25.1` · pre-commit `4.6.0`
 - ast-grep via `uvx --from ast-grep-cli ast-grep` · jscpd via `npx --yes jscpd` (config located via
   `python -m devtools.config`)
 - the analyzers themselves: `sdlc-devtools` package pinned by `devtools_ref` (the `devtools` extra pulls it
