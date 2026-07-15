@@ -174,3 +174,17 @@ uvx copier update       # reads .copier-answers.yml, fetches the newest scaffold
 The scaffold's own CI generates real projects and runs every gate against them, including tests that prove
 each gate *bites* on a planted violation — the guardrails guard themselves. See
 [`docs/SPEC.md`](docs/SPEC.md) for the contract and the generated `devtools/README.md` for each tool.
+
+## Developing this scaffold
+
+Two products, one tree — the copier template (scaffold) and `sdlc-devtools/` (the analyzer package). Each
+gates itself; the test suite is split by feedback speed (`slow` marker):
+
+```bash
+uv run --group dev pytest -m "not slow"          # QUICK (~0.4s): scaffold consistency + self-lint. The edit loop.
+uv run --group dev pytest                          # FULL: also the slow e2e (generate real projects + run every gate).
+cd sdlc-devtools && uvx nox                         # the analyzer PACKAGE's own standalone gate (lint + mirror tests).
+```
+
+The quick layer is scaffold meta-tests only; the slow layer generates projects with copier (~40s) and is
+what CI / pre-push runs. The package gate is fully independent of the scaffold (extraction-ready, bd uo0).

@@ -22,10 +22,13 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.skipif(
-    os.environ.get("SCAFFOLD_REMOTE_SMOKE") != "1",
-    reason="remote network smoke — set SCAFFOLD_REMOTE_SMOKE=1 to run (needs git access to the scaffold remote)",
-)
+pytestmark = [
+    pytest.mark.slow,  # network + full copier round-trip — lives in the slow layer (uo0.4)
+    pytest.mark.skipif(
+        os.environ.get("SCAFFOLD_REMOTE_SMOKE") != "1",
+        reason="remote network smoke — set SCAFFOLD_REMOTE_SMOKE=1 to run (needs git access to the scaffold remote)",
+    ),
+]
 
 COPIER = "copier@9.16.0"
 _TAG = re.compile(r"refs/tags/(v\d+\.\d+\.\d+)$")
