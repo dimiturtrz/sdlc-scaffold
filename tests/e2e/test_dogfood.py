@@ -9,7 +9,6 @@ The gate LOGIC has one home (the package noxfile); this file only asserts it run
 """
 
 import pytest
-
 from conftest import NOX, REPO, run
 
 pytestmark = pytest.mark.slow

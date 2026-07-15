@@ -46,7 +46,7 @@ def _git_env():
 
 
 def _sh(cmd, cwd=None, *, check=True):
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603 (test infra: cmd is a controlled list, never shell/untrusted input)
         [str(c) for c in cmd],
         cwd=cwd and str(cwd),
         env={**os.environ, **_git_env()},

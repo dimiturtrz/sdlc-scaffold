@@ -90,7 +90,7 @@ def seed_example(path, pkg):
 
 def run(cmd, cwd, *, check=True, env=None):
     """Run a subprocess, capturing output. On failure, surface stdout+stderr in the assertion."""
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603 (test infra: cmd is a controlled list, never shell/untrusted input)
         [str(c) for c in cmd],
         cwd=str(cwd),
         env={**os.environ, **(env or {})},

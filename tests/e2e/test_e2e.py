@@ -8,25 +8,24 @@ Run:  cd sdlc-scaffold && uv run pytest            (Linux/WSL; jscpd steps skip 
 """
 
 import pytest
-
 from conftest import (
     COMBOS,
     COPIER,
+    NOX,
     PRECOMMIT,
     RUFF,
     SELECT,
     VULTURE,
-    NOX,
     assert_bites,
     config_path,
     example_pkg,
     generate,
-    seed_example,
     git_init_commit,
     has_node,
     layers,
     make_scaffold,
     run,
+    seed_example,
     use_local_devtools,
 )
 
@@ -56,7 +55,6 @@ def test_no_leftover_jinja(project):
 
 def test_expected_layout(project):
     name, path = project
-    answers = COMBOS[name]
     pkg = example_pkg(name)
     assert (path / pkg / "math_ops.py").exists()
     assert (path / pkg / "pipeline.py").exists()
@@ -77,6 +75,12 @@ def test_expected_layout(project):
     assert "bd (beads)" in (path / "AGENTS.md").read_text()
     # import-linter only ships with >1 package (these combos are single-package -> absent even when enabled)
     assert "[tool.importlinter]" not in (path / "pyproject.toml").read_text()
+
+
+def test_domain_gating(project):
+    """domain=ml gates the ML-only bundle: numpy/typing deps, doc layers, shape config, naming vocab."""
+    name, path = project
+    answers = COMBOS[name]
     # domain=ml: numpy dep + ML-workflow gitignore present iff the ML domain
     ml = answers["domain"] == "ml"
     pyproject_text = (path / "pyproject.toml").read_text()
@@ -106,6 +110,15 @@ def test_expected_layout(project):
     # N (pep8-naming) is a UNIVERSAL rule -> the block always ships; only its ignore-names VOCAB is ML-flavored
     assert "[tool.ruff.lint.pep8-naming]" in pyproject_text, "N is universal — the naming block always ships"
     assert ('"X*"' in pyproject_text) == ml, "the tensor-idiom naming allowlist is ML-only"
+
+
+def test_select_and_ci_wiring(project):
+    """The union ruff select, the enforced/advisory split, the base gates, and the CI step wiring."""
+    name, path = project
+    answers = COMBOS[name]
+    pkg = example_pkg(name)
+    ml = answers["domain"] == "ml"
+    pyproject_text = (path / "pyproject.toml").read_text()
     # union ruff select (vip.2): cardiac's ratchet is the base — N/PTH123/S101 are enforced in EVERY combo
     assert "select = [" in pyproject_text
     for code in ('"N"', '"PTH123"', '"PERF401"', '"ICN001"', '"S101"'):
