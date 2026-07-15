@@ -54,6 +54,8 @@ def lint(session: nox.Session) -> None:
     # Dependency hygiene — deptry (config in [tool.deptry]); env-aware via `--with` so it reads installed
     # dist metadata (transitive detection). Blocks on undeclared/unused/transitive imports.
     session.run("uv", "run", "--with", "deptry", "--group", "dev", "deptry", ".", external=True)
+    # Cyclomatic complexity — radon CC ratchet against the [tool.complexity] max_complexity ceiling.
+    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.complexity", LAYER, external=True)
 
 
 @nox.session(venv_backend="none")

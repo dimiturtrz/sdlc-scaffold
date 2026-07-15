@@ -44,9 +44,13 @@ The import name stays `devtools`, so every gate invocation is unchanged.
   or a `[tool.shape_contracts] array_aliases` name) must carry a **jaxtyping** shape
   (`Float[Tensor, "b c h w"]`). `python -m devtools.shape_contracts <packages> --assert` — ENFORCED.
   Wired ML-only by the scaffold (meaningless off a tensor codebase), but the engine ships in every install.
-- **analytics.py** — a one-shot **explorer** (not a gate): per-area code lines, def count, McCabe
-  branch-proxy, branches-per-def, src:test ratio, largest files.
-  `python -m devtools.analytics --areas <packages> devtools`.
+- **complexity.py** — cyclomatic complexity on **radon**'s CC (McCabe), ranked report + an **ENFORCED
+  max-CC ratchet**: `[tool.complexity] max_complexity` freezes the repo's current worst; a more-complex
+  function fails. ruff `C901`/`PLR09xx` own the fixed CC>10 floor — this owns the ratchet *below* it (a
+  repo at max-CC 7 catches a CC-9 regression). Advisory (report-only) until the ceiling is set.
+- **analytics.py** — a one-shot **explorer** (not a gate): per-area code lines, def count, src:test ratio,
+  largest files. `python -m devtools.analytics --areas <packages> devtools`. Its McCabe branch-proxy is
+  superseded by `complexity.py` (radon CC, properly); the area/ratio stats remain useful.
 - **_common.py** — shared primitives: `Trees(packages).walk()/files()` (the one glob+parse),
   `Pyproject.tool_section()` (the one `[tool.*]` read), and **`Ratchet`** — the reusable freeze-the-floor
   gate (a named count's floor is frozen as a `[tool.<section>] max_<name>` FACT; a regression fails; a None

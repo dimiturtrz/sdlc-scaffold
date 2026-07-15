@@ -12,7 +12,7 @@ description = "Structural-guardrail analyzers (import-graph arch-fitness, LCOM4,
 requires-python = ">=3.11"
 # graph.py builds the honest import graph on grimp + ranks it with networkx; the other engines are
 # stdlib-only (ast). So the whole package's runtime footprint is these two.
-dependencies = ["grimp", "networkx"]
+dependencies = ["grimp", "networkx", "radon"]
 
 [build-system]
 requires = ["hatchling"]
@@ -38,3 +38,10 @@ extend_exclude = ["noxfile.py"]
 
 [tool.deptry.per_rule_ignores]
 DEP004 = ["tests"]
+
+# Cyclomatic-complexity ratchet (bd 85l.4): freeze the current worst radon CC as the ceiling. 16 is
+# _string_literals in magic_literals.py (dense: 3 exclusion-set comprehensions + a filter; radon counts
+# comprehension conditions stricter than ruff's C901). A NEW function above 16 fails; lower it as the worst
+# function is simplified.
+[tool.complexity]
+max_complexity = 16

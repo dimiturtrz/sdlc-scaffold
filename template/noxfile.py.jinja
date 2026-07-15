@@ -125,6 +125,9 @@ def lint(session: nox.Session) -> None:
     # ENFORCED dependency hygiene — deptry: undeclared (DEP001) / unused (DEP002) / transitive (DEP003)
     # imports. `--with` adds deptry to the run so it reads installed dist metadata; config in [tool.deptry].
     session.run("uv", "run", "--with", "deptry=={{ deptry_version }}", "deptry", ".", external=True)
+    # Cyclomatic complexity — radon CC ranked report + max-CC ratchet. Advisory (exits 0) until
+    # [tool.complexity] max_complexity is set; then it ratchets below ruff's fixed C901>10 floor.
+    session.run("uv", "run", "--extra", "devtools", "python", "-m", "devtools.complexity", *LAYERS, external=True)
 
 
 @nox.session(venv_backend="none")

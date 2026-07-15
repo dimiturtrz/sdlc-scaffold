@@ -138,9 +138,12 @@ def test_select_and_ci_wiring(project):
     # 85l.2: deptry dependency-hygiene gate — [tool.deptry] config ships, the DEP002 starter-ignore carries
     # the shipped deps (pytest/sdlc-devtools always; numpy/jaxtyping/beartype iff ml) so a fresh gen is green.
     assert "[tool.deptry]" in pyproject_text, "deptry dependency-hygiene gate config ships (85l.2)"
+    # 85l.4: complexity gate config ships (advisory until max_complexity is set — the ceiling is commented)
+    assert "[tool.complexity]" in pyproject_text, "radon complexity gate config ships (85l.4)"
     # 9mu: ruff enforced + jscpd default to the arch set but are hygiene-widenable (lint_paths/jscpd_paths)
     ci_text = (path / ".github" / "workflows" / "ci.yml").read_text()
     assert "deptry ." in ci_text, "the deptry gate is wired into CI (85l.2)"
+    assert "devtools.complexity" in ci_text, "the complexity gate is wired into CI (85l.4)"
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
     # skr GAP1: an explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the enforced-lint CLI
     # repeats the ml F722 waiver (jaxtyping dim strings) — else a fresh ml gen red-CIs on its own config.
@@ -335,6 +338,13 @@ def test_pip_audit_runs_clean(project):
     run(["uv", "run", "--with", PIP_AUDIT, "pip-audit", "--skip-editable"], path)
 
 
+def test_complexity_advisory_runs_clean(project):
+    name, path = project
+    # 85l.4: ships ADVISORY (no [tool.complexity] max_complexity ceiling) — the radon CC report prints but
+    # exits 0, so a fresh gen is green. A repo opts into the ratchet by setting the ceiling (bite test below).
+    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.complexity", *layers(name)], path)
+
+
 def test_deptry_enforced_runs_clean(project):
     name, path = project
     # ENFORCED dependency hygiene. A fresh gen ships starter deps (pydantic + ml numpy/jaxtyping/beartype)
@@ -420,6 +430,17 @@ def test_deptry_catches_undeclared_import(full_project):
         ["uv", "run", "--with", DEPTRY, "deptry", "."],
         lambda p: _append(p / "full_pkg" / "math_ops.py", "\n\nimport requests  # undeclared\n"),
     )
+
+
+def test_complexity_ratchet_bites_over_ceiling(full_project):
+    # the radon-CC ratchet: the seed's mean() is CC 2, so a ceiling of 1 (via the CLI, mirroring a low
+    # [tool.complexity] max_complexity) must fail — proving the opt-in ratchet blocks a too-complex function.
+    result = run(
+        ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.complexity", "full_pkg", "--max-complexity", "1"],
+        full_project,
+        check=False,
+    )
+    assert result.returncode != 0, "a function above the complexity ceiling must fail the ratchet"
 
 
 def test_astgrep_catches_top_level_function(full_project):

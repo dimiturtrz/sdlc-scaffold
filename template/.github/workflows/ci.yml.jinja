@@ -115,6 +115,11 @@ jobs:
       # metadata. Config (excludes + per-rule ignores) in [tool.deptry]. Blocks the merge.
       - name: Dependency hygiene — enforced (deptry)
         run: uv run --with deptry=={{ deptry_version }} deptry .
+      # Cyclomatic complexity — radon CC ranked report + max-CC ratchet. ADVISORY by default (exits 0, just
+      # prints the ranking); set [tool.complexity] max_complexity to your current max to RATCHET below ruff's
+      # fixed C901>10 floor (then a more-complex function blocks). ruff owns the fixed floor, this the ratchet.
+      - name: Cyclomatic complexity — ratchet (radon CC; opt-in via [tool.complexity])
+        run: uv run --extra devtools python -m devtools.complexity {{ pkgs }}
 {% if enable_ml %}      # Shape contracts — ENFORCED (GRADUATED advisory->blocking, bd vip.4): every public array/tensor
       # boundary must carry a jaxtyping shape, not a bare np.ndarray/Tensor. A fresh gen has 0 boundaries
       # (passes); from the first typed boundary on, a bare one fails the merge — the ratchet at work. Aliases

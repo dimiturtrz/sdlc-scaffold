@@ -159,6 +159,16 @@ test_layout = "mirror"   # every logic module needs a unit test: "mirror" = test
 max_strings = 0
 max_key_sets = 0
 # <<< LOCAL-SLOT: magic-ceilings
+
+# Cyclomatic-complexity gate (devtools/complexity.py, radon CC). ADVISORY by default — the report prints the
+# ranking + your current max, but nothing blocks. ruff C901/PLR09xx already own the FIXED CC>10 floor; this
+# owns the RATCHET below it. Set max_complexity to your current radon max (from the report) to freeze it —
+# then a more-complex function fails the merge, catching a regression long before ruff's 10.
+[tool.complexity]
+# >>> LOCAL-SLOT: complexity-ceiling — uncomment + set to your current max radon CC to ratchet (e.g. 8);
+# absent = advisory (report only).
+# max_complexity = 8
+# <<< LOCAL-SLOT: complexity-ceiling
 {% if enable_ml %}
 # Shape-contract gate (devtools/shape_contracts.py) — a public array/tensor boundary must carry a
 # jaxtyping shape, not a bare `np.ndarray`/`Tensor`. The universal `ndarray`/`Tensor` are builtin; a
