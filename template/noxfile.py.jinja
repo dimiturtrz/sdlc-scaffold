@@ -107,7 +107,16 @@ def lint(session: nox.Session) -> None:
     # boundary must carry a jaxtyping shape, not a bare np.ndarray/Tensor (aliases in [tool.shape_contracts]).
     # A fresh gen has 0 boundaries (passes); a bare boundary then fails. No success_codes swallow — it blocks.
     session.run(
-        "uv", "run", "--extra", "devtools", "python", "-m", "devtools.shape_contracts", *LAYERS, "--assert", external=True
+        "uv",
+        "run",
+        "--extra",
+        "devtools",
+        "python",
+        "-m",
+        "devtools.shape_contracts",
+        *LAYERS,
+        "--assert",
+        external=True,
     )
 {% endif %}    # ENFORCED magic-literal ratchet — recurring string vocab + repeated dict schemas (StrEnum/record
     # candidates), the non-comparison axis ruff PLR2004 can't see. Blocks over the [tool.magic_literals]
