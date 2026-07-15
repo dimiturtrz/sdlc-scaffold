@@ -88,6 +88,17 @@ One property axis is **domain-gated**: an `ml` project also ships `shape_contrac
 boundary must carry a **jaxtyping** shape — a checked contract, not a silent assumption; make it live at a
 call with a `@shapecheck` decorator) — meaningless off a tensor codebase, so a domain-neutral scaffold omits it.
 
+**Prior art — and the moat.** Most axes here have mature equivalents, and the honest pitch says so: LCOM
+cohesion ([`cohesion`](https://pypi.org/project/cohesion/), [ArchUnitPython](https://pypi.org/project/archunit/)),
+Martin instability/main-sequence (Robert Martin; ArchUnitPython), import cycles + directional layers
+([grimp](https://pypi.org/project/grimp/), [import-linter](https://pypi.org/project/import-linter/),
+[tach](https://github.com/gauge-sh/tach)), complexity ([radon](https://pypi.org/project/radon/), ruff),
+duplication/dead-code/CVE/dep-hygiene (jscpd, vulture, pip-audit, deptry — all vendored). What the survey
+found *nowhere*: the **cross-file magic-literal ratchet**, **data-clumps** and **namespace-state** detection,
+**jaxtyping shape contracts**, the **test-mirror** gate, and the **freeze-the-floor `Ratchet`** with
+advisory→blocking graduation — no surveyed tool ratchets. The integration play is wrapping best-of-breed
+counts in that ratchet. Full citation in [`sdlc-devtools/README`](sdlc-devtools/README.md#prior-art--and-whats-actually-novel).
+
 **Structure, in the standard coupling vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`,
 fan-in); out-arrows are *efferent* (`Ce`, fan-out). The scaffold enforces three structural sub-properties:
 **direction** (import-linter — a kernel that imports nothing is maximally stable by construction),

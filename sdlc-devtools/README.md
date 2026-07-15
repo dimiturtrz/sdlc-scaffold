@@ -47,14 +47,45 @@ The import name stays `devtools`, so every gate invocation is unchanged.
 - **analytics.py** — a one-shot **explorer** (not a gate): per-area code lines, def count, McCabe
   branch-proxy, branches-per-def, src:test ratio, largest files.
   `python -m devtools.analytics --areas <packages> devtools`.
-- **_common.py** — shared primitives: `Trees(packages).walk()/files()` (the one glob+parse) and
-  `Pyproject.tool_section()` (the one `[tool.*]` read) the engines build on.
+- **_common.py** — shared primitives: `Trees(packages).walk()/files()` (the one glob+parse),
+  `Pyproject.tool_section()` (the one `[tool.*]` read), and **`Ratchet`** — the reusable freeze-the-floor
+  gate (a named count's floor is frozen as a `[tool.<section>] max_<name>` FACT; a regression fails; a None
+  ceiling is advisory). `magic_literals` is its first user; count-based additions reuse it.
 - **omit.py** — the coverage-`omit` reader + glob matcher: the 'non-logic shell' set the test-mirror and
   state-candidate gates treat specially, kept in agreement with the coverage gate.
+
+## Prior art — and what's actually novel
+
+These analyzers stand on mature work; honesty about the overlap matters more than a flattering pitch. The
+**commodity axes** have battle-tested equivalents — we compute them inline (one walk, one config, one
+advisory surface) rather than headline them:
+
+- **LCOM4 cohesion** (`lcom.py`) — [`cohesion`](https://pypi.org/project/cohesion/) computes LCOM4;
+  [ArchUnitPython](https://pypi.org/project/archunit/) offers 8 LCOM variants. Ours is one LCOM4 ranking.
+- **Martin metrics** — instability `I` and main-sequence distance `D` (`graph.py`) are Robert Martin's
+  (*Agile Software Development*, 2002); ArchUnitPython computes them too.
+- **import axis** — cycles/god-modules ride [grimp](https://pypi.org/project/grimp/) (which we depend on);
+  directional contracts are [import-linter](https://pypi.org/project/import-linter/) (which the scaffold
+  ships as a gate). [tach](https://github.com/gauge-sh/tach) and pytest-archon cover the same ground.
+- **complexity** (`analytics.py`) — a McCabe branch-proxy; [radon](https://pypi.org/project/radon/) (CC+MI)
+  and ruff `C901`/`PLR09xx` do this properly (radon replaces it — bd 85l.4).
+- **DRY / dead code / CVE / dep hygiene** — jscpd, vulture, pip-audit, deptry: all vendored, not ours.
+
+The **moat** is the set nothing in the survey does — the novel checks plus the ratchet that wraps them:
+
+- **cross-file magic-literal ratchet** (`magic_literals.py`) — ruff `PLR2004` is comparison-only and
+  single-file, and allows strings by default; the recurring-vocab + repeated-key-set axis is unique here.
+- **data clumps** (`data_clumps.py`) — Fowler's smell, detected mechanically; no surveyed tool does it.
+- **namespace-state candidates** (`state_candidates.py`) — latent shared instance state; novel.
+- **shape contracts** (`shape_contracts.py`) — jaxtyping boundary enforcement; novel.
+- **test-mirror gate** (`graph.py`) — every logic module has a mirrored test; novel as a gate.
+- **the `Ratchet` primitive** — freeze-the-floor with advisory→blocking graduation. NO surveyed tool
+  ratchets; wrapping best-of-breed counts in it is the integration play.
 
 ## Self-gating
 
 The engines obey the same house rules they impose — every helper is a method on its engine class (only the
 thin `main()` is a top-level function, per the ast-grep rule), and each carries a per-engine mirror test
-under `tests/unit/devtools/`. `uv run --group dev pytest` runs the full suite including the engines' own
-`graph --assert` (with test-mirror), ast-grep class-shape, ruff, and the magic-literal ratchet.
+under `tests/unit/devtools/`. `cd sdlc-devtools && uvx nox` runs the full standalone bar: ruff, the engines'
+own `graph --assert` (with test-mirror), ast-grep class-shape, the magic-literal ratchet, deptry, and the
+per-engine mirror tests.
