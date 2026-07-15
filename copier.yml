@@ -145,6 +145,11 @@ deptry_version:
   default: "0.25.1"
   when: false
 
+pip_audit_version:
+  type: str
+  default: "2.10.1"
+  when: false
+
 precommit_version:
   type: str
   default: "4.6.0"

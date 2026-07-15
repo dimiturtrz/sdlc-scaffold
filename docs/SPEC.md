@@ -93,6 +93,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 10 | magic-literals (ENFORCED ratchet) | OURS `magic_literals.py` | `_STRING_THRESHOLD`/key-set mins | scan paths = `packages`; ceilings = `[tool.magic_literals] max_strings/max_key_sets` (FACT slot, fresh=0/0 — 2cj); `--max-*` CLI overrides |
 | 11 | shape-contracts (ENFORCED; ML-only) | OURS `shape_contracts.py --assert` | builtin `ndarray`/`Tensor` + jaxtyping vocab | ships iff `enable_ml`; `[tool.shape_contracts] array_aliases` (slot). GRADUATED advisory->blocking (bd vip.4) — a fresh gen has 0 boundaries so `--assert` passes; a bare array/tensor boundary then fails |
 | 12 | deptry dependency-hygiene (ENFORCED) | vendored deptry (`deptry_version`) | DEP001 undeclared / DEP002 unused / DEP003 transitive | `[tool.deptry] extend_exclude=noxfile`; `per_rule_ignores.DEP002` = shipped starters (pytest/pytest-cov/sdlc-devtools always; numpy/jaxtyping/beartype iff ml + pydantic) in the `deptry-unused` slot — deptry skips `tests/`, so tooling/starter deps read as unused until wired (85l.2). Runs env-aware (`uv run --with deptry`) to read installed dist metadata |
+| 13 | pip-audit known-CVE (NIGHTLY) | vendored pip-audit (`pip_audit_version`) | PyPA advisory DB; `--skip-editable` drops the git-pinned devtools | its OWN `audit.yml` workflow (cron + `workflow_dispatch`) + opt-in `nox -s audit`, NOT the per-PR ci.yml — advisories change under you, so a scheduled scan that fails on a known vuln is the honest cadence (85l.3). Security/supply-chain is an axis ORTHOGONAL to the 7 structural properties |
 
 import-linter is a shipped gate (all 3 house repos run it): it enforces DIRECTIONAL forbidden-import
 contracts — a one-way `core -> trainer` import is no cycle, so it passes `graph.py` but must fail here.
@@ -227,7 +228,7 @@ Result: a repo overrides at most ONE slot per divergent gate; a conforming repo 
 identically (every scope = `packages`). No new questions, no new slots.
 
 ## Pinned tool versions (single-sourced in copier.yml, `when: false`)
-- ruff `0.15.13` · vulture `2.16` · nox `2026.7.11` · deptry `0.25.1` · pre-commit `4.6.0`
+- ruff `0.15.13` · vulture `2.16` · nox `2026.7.11` · deptry `0.25.1` · pip-audit `2.10.1` · pre-commit `4.6.0`
 - ast-grep via `uvx --from ast-grep-cli ast-grep` · jscpd via `npx --yes jscpd` (config located via
   `python -m devtools.config`)
 - the analyzers themselves: `sdlc-devtools` package pinned by `devtools_ref` (the `devtools` extra pulls it

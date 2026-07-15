@@ -13,6 +13,7 @@ from conftest import (
     COPIER,
     DEPTRY,
     NOX,
+    PIP_AUDIT,
     PRECOMMIT,
     RUFF,
     SELECT,
@@ -316,6 +317,22 @@ def test_magic_literals_enforced_runs_clean(project):
     # ENFORCED via the base [tool.magic_literals] 0/0 ceiling (2cj) — the clean seed has no recurring
     # vocab, so it stays under the ceiling and exits 0. A NEW literal would bite (see the bite test).
     run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", *layers(name)], path)
+
+
+def test_audit_workflow_rendered(project):
+    name, path = project
+    # 85l.3: the nightly security scan ships as its OWN workflow (not the per-PR ci.yml) — scheduled cron +
+    # manual dispatch, running pip-audit. Advisories change under you, so it's nightly, never a PR gate.
+    audit = (path / ".github" / "workflows" / "audit.yml").read_text()
+    assert "schedule:" in audit and "cron:" in audit, "audit runs on a nightly schedule, not per-PR"
+    assert "pip-audit" in audit, "the audit workflow runs pip-audit (PyPA CVE scan)"
+
+
+def test_pip_audit_runs_clean(project):
+    name, path = project
+    # a fresh gen's declared deps carry no known CVE, so the nightly is green from day one. --skip-editable
+    # drops the git-pinned sdlc-devtools (no PyPI release to look up). Real run (hits the advisory DB).
+    run(["uv", "run", "--with", PIP_AUDIT, "pip-audit", "--skip-editable"], path)
 
 
 def test_deptry_enforced_runs_clean(project):

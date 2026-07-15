@@ -165,7 +165,8 @@ uvx copier update       # reads .copier-answers.yml, fetches the newest scaffold
   analyzer source diff in your PRs. They still import as `devtools` (`python -m devtools.graph …`); the
   ast-grep/jscpd config ships inside the package and is located via `python -m devtools.config`.
 - `noxfile.py` · `.pre-commit-config.yaml` · `.github/workflows/ci.yml` — the same gates bound to the local
-  runner, the commit event, and the merge.
+  runner, the commit event, and the merge. Plus `.github/workflows/audit.yml` — a nightly pip-audit CVE scan
+  (`nox -s audit` locally), the one gate on a schedule rather than per-PR (advisories change under you).
 - `devtools/README.md` — a short project-local doc: how the gates are invoked here, the `@shapecheck`
   wiring (ML), and the import-linter contract guidance. No analyzer source lives here.
 - `tests/{unit,integration,e2e}/`, `docs/`, `CLAUDE.md` / `AGENTS.md` — the skeleton. No package code, and

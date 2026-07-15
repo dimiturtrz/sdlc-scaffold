@@ -156,3 +156,12 @@ def gates(session: nox.Session) -> None:
     lint(session)
     test(session)
     cov(session)
+
+
+# NOT in nox.options.sessions — opt-in (`nox -s audit`), mirroring the nightly `audit` workflow. Security
+# advisories change under you, so this is a scheduled/on-demand scan, not part of the per-commit gate set.
+@nox.session(venv_backend="none")
+def audit(session: nox.Session) -> None:
+    """Known-CVE scan of the dependency closure (pip-audit); --skip-editable drops local/git source installs."""
+    session.run("uv", "sync", "--all-extras", external=True)
+    session.run("uv", "run", "--with", "pip-audit=={{ pip_audit_version }}", "pip-audit", "--skip-editable", external=True)
