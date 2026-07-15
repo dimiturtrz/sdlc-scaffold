@@ -30,6 +30,9 @@ of every repo's rules, not a 2/3 majority. Two kinds of thing, and only one is p
   domain FPs, `[tool.structure]` thresholds. Additive per-repo LOCAL-SLOTs. `monai` ≠ `mne` is a fact, not
   a loosened rule. This is where legitimate divergence lives — and only here.
 
+For the full breakdown of every rule by **General vs Specific** and **Authored / Generated / Evolved** (and
+the decide-vs-derive threshold rule), see [`RULE_INVENTORY.md`](RULE_INVENTORY.md).
+
 A new gate follows the same law: if any repo runs it, it enters the BASE (ml-specific gates ride
 `enable_ml`, e.g. shape_contracts). There are no permanent repo-local *gates* either — union forbids them.
 
