@@ -212,10 +212,14 @@ def test_template_ships_no_package_code(scaffold, tmp_path_factory):
     out = tmp_path_factory.mktemp("empty") / "proj"
     generate(scaffold, out, {"project_name": "empty", "packages": "myapp", "domain": "none", "coverage_floor": "80"})
     assert not (out / "myapp").exists(), "no package code ships — the project brings its own"
-    assert list((out / "tests" / "unit").glob("*.py")) == [], "no shipped unit tests either"
-    # guardrails ARE shipped
+    assert not (out / "tests" / "unit" / "myapp").exists(), "no package tests for the consumer's code"
+    assert list((out / "tests" / "unit").glob("*.py")) == [], "no loose shipped unit tests at the unit root"
+    # guardrails ARE shipped — and as of vip 16y the devtools engines travel WITH their own mirror tests
+    # (the analyzers pass the same test-mirror rule they impose), so tests/unit/devtools/ DOES ship.
+    assert (out / "tests" / "unit" / "devtools" / "test_graph.py").exists(), "devtools ship their mirror tests"
     assert (out / "noxfile.py").exists()
     assert (out / "devtools" / "graph.py").exists()
+    assert (out / "devtools" / "_common.py").exists()
     assert (out / "pyproject.toml").exists()
 
 

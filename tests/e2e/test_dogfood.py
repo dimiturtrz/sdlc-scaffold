@@ -1,15 +1,16 @@
-"""Dogfood — the scaffold's own devtools engines meet the bar they enforce (bd dud).
+"""Dogfood — the scaffold's own devtools engines meet the FULL bar they enforce (bd dud + vip 16y).
 
 Scaffold-side ONLY: the engines are template-owned, so this is the one place they're editable + fixable
-(a generated project can't act on a finding in template-owned code, and bd 0lh keeps devtools tests out of
-consumers). Applicable subset for a bag of single-file CLI tools: ruff + graph (god-module / cycle /
-god-file) + magic-literals. DELIBERATELY NOT run: ast-grep class-shape (the engines are module-level
-`main()` + functions BY DESIGN — the same house-gate-vs-mandated-pattern conflict as bd 8ex), test-mirror
-(devtools are tested as one bundle in test_devtools.py, not per-engine — hence `graph --no-test-mirror`),
-and jscpd (its config is shaped for a generated project root; DRY across independent CLIs is low-value).
-"""
+(a generated project can't act on a finding in template-owned code). As of v1.1.0 the engines are classes
+with a thin `main()` (ast-grep clean) and carry per-engine mirror tests under template/tests/unit/devtools/
+(test-mirror clean), so the dogfood runs the COMPLETE applicable gate set — ruff + graph (god-module /
+cycle / god-file / TEST-MIRROR) + ast-grep class-shape + magic-literals — with NO carve-outs.
 
-import subprocess
+Still not run: jscpd (its config + threshold are shaped for a generated project root; DRY across the
+handful of independent single-file CLIs is low-value, and the shared logic already lives in _common.py).
+The class-shape smell explorers (lcom / data_clumps / state_candidates) are advisory everywhere by design,
+so they are not a gate here either.
+"""
 
 import pytest
 
@@ -18,11 +19,11 @@ from conftest import REPO, RUFF, SELECT, run
 pytestmark = pytest.mark.slow
 
 TEMPLATE = REPO / "template"
-# ceiling for magic-literals: standalone engines legitimately repeat a few literals that can't be DRY'd
-# without a shared module (which would break the single-file-per-tool design) — 'utf-8' (read_text encoding),
-# 'packages' (the shared CLI arg name), 'tool' (pyproject section). Freeze that floor; a 4th distinct
-# recurring literal bites.
-MAGIC_MAX_STRINGS = "3"
+# Magic-literal ceiling: after the _common.py extraction the engines legitimately repeat exactly two
+# value-position tokens — 'utf-8' (read_text encoding, in _common + the two line/AST readers) and
+# 'packages' (the shared CLI positional every engine's main() declares). Freeze that floor; a 3rd distinct
+# recurring literal bites. ('tool' fell below threshold once the pyproject read moved into _common.)
+MAGIC_MAX_STRINGS = "2"
 MAGIC_MAX_KEY_SETS = "0"
 
 
@@ -42,8 +43,19 @@ def test_devtools_ruff_clean():
 
 
 def test_devtools_arch_fitness_clean():
-    # god-module / import-cycle / god-file — but NOT test-mirror (bundle-tested, 0lh): --no-test-mirror.
-    _engine("devtools.graph", "devtools", "--assert", "--no-test-mirror")
+    # god-module / import-cycle / god-file AND test-mirror — the FULL --assert (the engines now carry their
+    # per-engine mirror tests, so the check that consumers get is the check the engines themselves pass).
+    _engine("devtools.graph", "devtools", "--assert")
+
+
+def test_devtools_class_shape_clean():
+    # ast-grep house rule: every helper is a method on its engine class, only main() is a top-level function
+    # (the engines obey the same in-a-class rule they impose). The config is valid YAML pre-render, so it
+    # reads straight from the on-disk .jinja (no vars to interpolate).
+    run(
+        ["uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml.jinja", "devtools"],
+        TEMPLATE,
+    )
 
 
 def test_devtools_magic_under_ceiling():

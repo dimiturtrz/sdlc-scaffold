@@ -11,8 +11,9 @@ _exclude:
   - "__pycache__"
   - "*.pyc"
   # shape_contracts is the ML-domain shape gate (jaxtyping/beartype) — meaningless off a tensor codebase,
-  # so a `domain: none` scaffold ships neither the engine nor its wiring/deps.
+  # so a `domain: none` scaffold ships neither the engine nor its wiring/deps (nor its mirror test).
   - "{% if not enable_ml %}devtools/shape_contracts.py{% endif %}"
+  - "{% if not enable_ml %}tests/unit/devtools/test_shape_contracts.py{% endif %}"
 
 project_name:
   type: str

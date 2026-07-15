@@ -109,13 +109,18 @@ workflow. Mechanism identical across repos; only the slot CONTENTS are a per-rep
 a no-arg invocation is an argparse usage error, NOT a silent scan of a phantom `src/` (which made
 `shape_contracts --assert` vacuously PASS). The rendered runners always pass `packages` explicitly.
 
-**Dogfooding — the engines eat their own bar (bd dud).** The scaffold's own CI (`tests/e2e/test_dogfood.py`,
-run by `pytest tests`) holds `template/devtools/` to the applicable subset of its own gates: ruff union +
-`graph --assert --no-test-mirror` (god-module/cycle/god-file) + `magic_literals` (ceiling 3/0 for the
-standalone-engine literals `utf-8`/`packages`/`tool`). DELIBERATELY EXCLUDED: ast-grep class-shape (the
-engines are module-level `main()`+functions by design — the 8ex conflict) and test-mirror (bundle-tested,
-0lh). This is SCAFFOLD-side only — never gate `devtools/` in a generated project (template-owned = a
-finding there is unfixable without hand-editing regenerated code).
+**Dogfooding — the engines eat their FULL bar (bd dud + vip 16y).** The scaffold's own CI
+(`tests/e2e/test_dogfood.py`, run by `pytest tests`) holds `template/devtools/` to the COMPLETE applicable
+gate set, no carve-outs: ruff union + `graph --assert` (god-module/cycle/god-file **and test-mirror**) +
+ast-grep class-shape + `magic_literals` (ceiling 2/0 for the shared literals `utf-8`/`packages`; the
+pyproject-read `tool` fell below threshold once it moved into `_common.py`). The two former exemptions are
+gone: as of v1.1.0 the engines are CLASSES with a thin `main()` (the only top-level function ast-grep
+exempts) and each carries a per-engine mirror test under `template/tests/unit/devtools/`, so the analyzers
+now pass the same in-a-class + test-mirror rules they impose. The engines + their mirror tests SHIP to
+consumers (the analyzers travel with their tests). Still excluded: jscpd (its config/threshold are shaped
+for a generated project root; the shared file-walk/config-read already live in `_common.py`) and the
+advisory-everywhere class-shape smell explorers. SCAFFOLD-side only — never gate `devtools/` in a generated
+project's own run (template-owned = a finding there is unfixable without hand-editing regenerated code).
 
 ## PORTABLE SUPERSET VALUES
 
