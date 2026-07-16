@@ -164,7 +164,7 @@ def test_select_and_ci_wiring(project):
     assert "LOCAL-SLOT: ci-test-steps" in ci_text, "the ci-test-steps slot ships (skr GAP3)"
     # 4c2/8ex reopened: E501+SLF001 graduated into the enforced select, so the advisory --statistics run
     # carries NO --extend-select (ruff_advisory_select is empty). The enforced select is asserted above.
-    assert "--extend-select" not in ci_text, "advisory ruff carries no --extend-select once the surface is empty (4c2/8ex)"
+    assert "--extend-select" not in ci_text, "advisory ruff has no --extend-select (surface empty, 4c2/8ex)"
     # vip.4: shape_contracts GRADUATED advisory->blocking — a ml gen carries an ENFORCED --assert step (a
     # fresh gen has 0 boundaries so it passes); a domain-neutral gen has no shape gate at all.
     assert ("shape_contracts {} --assert".format(pkg) in ci_text) == ml, "ml ci enforces shape --assert (vip.4)"
@@ -396,7 +396,7 @@ def test_archviz_pages_workflow_gated(scaffold, tmp_path_factory):
     assert "devtools.archmap pg" in txt, "the packages answer renders into the archmap invocation"
 
     off = tmp_path_factory.mktemp("pages_off")
-    generate(scaffold, off / "p", {"project_name": "pg", "packages": "pg", "domain": "none"})  # archviz_pages default false
+    generate(scaffold, off / "p", {"project_name": "pg", "packages": "pg", "domain": "none"})  # pages default off
     assert not (off / "p" / ".github" / "workflows" / "pages.yml").exists(), "default (false) omits pages.yml"
 
 
@@ -440,7 +440,10 @@ def test_shape_contracts_enforced_runs_clean(project):
         pytest.skip("the shape gate is wired ML-only (the engine ships in the package regardless)")
     # GRADUATED to blocking (vip.4) — the base runs it with --assert; the seed has no array boundaries so it
     # exits 0. A bare boundary would fail (see test_shape_contracts_assert_catches_bare_boundary).
-    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.shape_contracts", *layers(name), "--assert"], path)
+    run(
+        ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.shape_contracts", *layers(name), "--assert"],
+        path,
+    )
 
 
 # ---- gates, via the runners ------------------------------------------------------------------------
@@ -599,7 +602,11 @@ def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):
     (out / "app").mkdir()
     (out / "app" / "__init__.py").write_text("")
     (out / "app" / "thing.py").write_text(
-        "from kern.math_ops import MathOps\n\n\nclass Thing:\n    @staticmethod\n    def go() -> float:\n        return MathOps.mean([1.0])\n"
+        "from kern.math_ops import MathOps\n\n\n"
+        "class Thing:\n"
+        "    @staticmethod\n"
+        "    def go() -> float:\n"
+        "        return MathOps.mean([1.0])\n"
     )
     (out / "tests" / "unit" / "app").mkdir(parents=True)
     (out / "tests" / "unit" / "app" / "test_thing.py").write_text(

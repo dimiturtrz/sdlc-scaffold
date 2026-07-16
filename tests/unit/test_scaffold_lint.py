@@ -31,4 +31,4 @@ def test_scaffold_own_code_passes_house_ruff():
         capture_output=True,
         check=False,
     )
-    assert result.returncode == 0, f"scaffold's own code must pass the house ruff bar:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"scaffold must pass its own house ruff bar:\n{result.stdout}\n{result.stderr}"
