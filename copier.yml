@@ -24,6 +24,34 @@ packages:
   help: "Packages the guardrails target — comma-separated, snake_case (add your others, e.g. core,neuroscan,neuroviz)"
   default: "{{ project_name.replace('-', '_') }}"
 
+# The repo's own git root (this project's remote), the ONE place a generated project records where it lives.
+# Used for the README clone line + to DERIVE the architecture Pages link (below). Blank = skip both. Note:
+# this is the CONSUMER repo — distinct from the scaffold URL baked into the devtools git-dep pin.
+repo_url:
+  type: str
+  help: "Git remote of THIS repo (e.g. https://github.com/you/repo) — README clone line + architecture link; blank to skip"
+  default: ""
+
+# Derived, never asked: OWNER/REPO parsed from repo_url (https OR scp/ssh remote), else "". The one slug the
+# README badges (CI, license) + the Pages link build on.
+repo_slug:
+  type: str
+  when: false
+  default: >-
+    {%- if repo_url and 'github.com' in repo_url -%}
+    {{ repo_url.split('github.com')[1] | replace('.git', '') | trim('/:') }}
+    {%- endif -%}
+
+# Derived, never asked: the GitHub Pages base — https://OWNER.github.io/REPO. Empty unless repo_slug parsed.
+# README appends /architecture/ (only when archviz_pages ships the site).
+pages_url:
+  type: str
+  when: false
+  default: >-
+    {%- if repo_slug -%}
+    https://{{ repo_slug.split('/')[0] }}.github.io/{{ repo_slug.split('/')[1] }}
+    {%- endif -%}
+
 # The quality gates + beads are the non-optional house bar — always shipped, no prompt, no toggle: their
 # blocks render unconditionally in the templates (bd 9nq unwrapped the last inert `{% if %}` guards).
 # import-linter is the one gate that self-gates: it needs >1 package to have anything to forbid.
@@ -171,5 +199,5 @@ precommit_version:
 # sdlc-devtools/ was published at. `when: false` (never asked, always the release value).
 devtools_ref:
   type: str
-  default: "v1.7.0"
+  default: "v1.8.0"
   when: false

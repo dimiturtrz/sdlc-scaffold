@@ -52,6 +52,8 @@ Asked at copy time:
 | `author` | str | `project_name` | copyright holder for the generated MIT `LICENSE` (bd c64 — a scaffold with no LICENSE leaves every gen all-rights-reserved) |
 | `lint_paths` / `jscpd_paths` | str | `packages` (space-joined) | R1 hygiene scan scope (ruff / jscpd) — Enter to accept, or widen to a viewer/tests tree. ASKED (not computed) so a non-default value persists + survives `copier update` (bd fsl) |
 | `data_env_var` | str (ml only) | `{PROJECT_UPPER}_DATA` | ml data-skip CI env var NAME — asked for `domain=ml` only, persisted so a repo's real name (e.g. `CARDIAC_DATA`) survives update instead of reverting to the derived default (bd skr GAP3a / fsl) |
+| `repo_url` | str | `""` | the repo's own git remote — README clone line + the source for the DERIVED architecture Pages link. Blank skips both. The CONSUMER repo, distinct from the scaffold URL in the devtools pin |
+| `archviz_pages` | bool | `false` | opt-in: ship the sole-owner staged Pages deploy workflow (`/architecture/` main + `/preview/` dev + root redirect). Off = no workflow (compose into an existing Pages deploy instead — see README) |
 
 That's the whole prompt surface. **The quality gates + beads are NON-optional (no toggles): arch-fitness,
 import-linter, ast-grep, jscpd, class-shape, beads are always shipped** — the house bar (bd rji). Their
@@ -77,7 +79,9 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
 | `ruff_version` / `vulture_version` / `nox_version` / `deptry_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
-| `devtools_ref` | scaffold release tag (e.g. `v1.7.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
+| `devtools_ref` | scaffold release tag (e.g. `v1.8.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
+| `repo_slug` | `OWNER/REPO` parsed from `repo_url` (https or scp/ssh github remote), else `""` | README CI + license badges; the base for `pages_url` |
+| `pages_url` | `https://OWNER.github.io/REPO` from `repo_slug` (empty if unparsed) | the README architecture-link base — `{pages_url}/architecture/`, rendered only when `archviz_pages` (sole-owner site); compose consumers add their own |
 
 ## Gate inventory
 

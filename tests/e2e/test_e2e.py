@@ -399,6 +399,32 @@ def test_archviz_pages_workflow_gated(scaffold, tmp_path_factory):
     assert not (off / "p" / ".github" / "workflows" / "pages.yml").exists(), "default (false) omits pages.yml"
 
 
+def test_readme_repo_url_badges_and_arch_link(scaffold, tmp_path_factory):
+    # 0hp: repo_url drives README CI + license badges (owner/repo slug) and, with archviz_pages, the live
+    # architecture-viewer link (derived https://OWNER.github.io/REPO/architecture/). scp/ssh remotes parse too.
+    on = tmp_path_factory.mktemp("readme_on")
+    generate(scaffold, on / "p", {"project_name": "pg", "packages": "pg", "domain": "none",
+                                   "archviz_pages": "true", "repo_url": "git@github.com:me/pg.git"})
+    readme = (on / "p" / "README.md").read_text(encoding="utf-8")
+    assert "github.com/me/pg/actions/workflows/ci.yml/badge.svg" in readme, "CI badge from the parsed slug"
+    assert "license-MIT-blue" in readme, "license badge"
+    assert "https://me.github.io/pg/architecture/" in readme, "live viewer link derived from repo_url + archviz_pages"
+    assert "git clone git@github.com:me/pg.git" in readme, "clone line uses repo_url verbatim"
+
+    # No repo_url -> no badges, no clone line, no live link (blank-safe).
+    bare = tmp_path_factory.mktemp("readme_bare")
+    generate(scaffold, bare / "p", {"project_name": "pg", "packages": "pg", "domain": "none", "archviz_pages": "true"})
+    r2 = (bare / "p" / "README.md").read_text(encoding="utf-8")
+    assert "badge.svg" not in r2 and "github.io" not in r2 and "git clone" not in r2, "blank repo_url renders nothing"
+
+    # repo_url but archviz_pages off (compose case) -> badges yes, live link NO (consumer folds it in themselves).
+    comp = tmp_path_factory.mktemp("readme_compose")
+    generate(scaffold, comp / "p", {"project_name": "pg", "packages": "pg", "domain": "none", "repo_url": "https://github.com/me/pg"})
+    r3 = (comp / "p" / "README.md").read_text(encoding="utf-8")
+    assert "badge.svg" in r3, "badges still render (repo_url set)"
+    assert "github.io" not in r3, "no auto live-link without archviz_pages (compose case)"
+
+
 def test_deptry_enforced_runs_clean(project):
     name, path = project
     # ENFORCED dependency hygiene. A fresh gen ships starter deps (pydantic + ml numpy/jaxtyping/beartype)
