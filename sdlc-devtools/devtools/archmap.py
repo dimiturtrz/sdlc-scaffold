@@ -18,6 +18,7 @@ renderer honors it).
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 from collections import Counter
 from pathlib import Path
@@ -28,6 +29,7 @@ log = logging.getLogger("devtools.archmap")
 
 _ROOT = Path("docs/architecture")
 _DOC = "ARCHITECTURE.md"
+_JSON = _ROOT / "graph.json"
 
 
 class Archmap:
@@ -125,6 +127,44 @@ class Archmap:
             written.append(path)
         return sorted(written)
 
+    @staticmethod
+    def _parent(module: str, module_set: set[str]) -> str | None:
+        """The containment parent that EXISTS as a node (None for a top package or a gap in the tree)."""
+        p = module.rsplit(".", 1)[0] if "." in module else None
+        return p if p in module_set else None
+
+    def graph_data(self) -> dict:
+        """The full graph as committed-diffable JSON — the diff-truth the cytoscape viewer hydrates. Every
+        module is a node carrying its containment `parent` (compound nesting) + `descendants` count (the
+        collapsed-node badge); every module→module import is an edge weighted by import-statement count
+        (the viewer aggregates these into counted meta-edges when a parent collapses). Deterministic order
+        (modules + imports sorted, keys sorted) so the committed diff is minimal and meaningful."""
+        graph = self.graph()
+        modules = sorted(graph.modules)
+        module_set = set(modules)
+        nodes = [
+            {
+                "id": m,
+                "label": m.split(".")[-1],
+                "parent": self._parent(m, module_set),
+                "descendants": sum(1 for n in modules if n.startswith(m + ".")),
+            }
+            for m in modules
+        ]
+        edges = [
+            {"source": m, "target": imp, "weight": len(graph.get_import_details(importer=m, imported=imp))}
+            for m in modules
+            for imp in sorted(graph.find_modules_directly_imported_by(m))
+            if imp in module_set
+        ]
+        return {"nodes": nodes, "edges": edges}
+
+    def write_json(self, path: Path = _JSON) -> Path:
+        """Write the committed graph.json (deterministic) — the diffable erosion signal + viewer input."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(self.graph_data(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return path
+
     def check(self) -> list[str]:
         """Drift between the committed mirror tree and a fresh derivation (empty == in sync). Catches a
         missing doc, a stale doc (structure moved but the diagram wasn't regenerated), and an orphan doc
@@ -151,9 +191,17 @@ def main():
         action="store_true",
         help="fail (exit 1) if the committed docs/architecture/ tree is out of sync — do not write",
     )
+    ap.add_argument(
+        "--json",
+        action="store_true",
+        help=f"write the committed graph.json (nodes + weighted import edges) to {_JSON.as_posix()}",
+    )
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     engine = Archmap(args.packages)
+    if args.json:
+        log.info("archmap: wrote %s", engine.write_json().as_posix())
+        return
     if args.check:
         drift = engine.check()
         if drift:
