@@ -50,7 +50,7 @@ a fresh gen.
 | recurring magic literals | `magic_literals` | **advisory** | none — no honest universal ceiling |
 | cyclomatic-complexity ranking | `complexity` (radon) | **advisory** | none — ruff C901 is the gate |
 | cohesion / data-clumps / namespace-state | `lcom` / `data_clumps` / `state_candidates` | **advisory** | none |
-| tiered architecture diagrams | `archmap` (grimp → mermaid) | **advisory / doc-gen** | none — nodes/edges derived from `packages`, nothing to legislate |
+| interactive architecture viewer | `archmap` (grimp → graph.json + cytoscape) | **advisory / doc-gen** | none — nodes/edges derived from `packages`, nothing to legislate |
 
 ### Decided absolutes — General-normative · Authored default · Evolved-tunable
 Numbers that encode a **human ceiling** (what's humane to read / hold), not a measurement. Legislated, not
@@ -77,7 +77,7 @@ never a config knob — a legislated knob is added on real need, not speculative
 | recurring magic literals | some recurrence is legit vocab (0 too strict), any budget N is arbitrary |
 | radon cyclomatic complexity | ruff `C901=10` is already the fixed gate; radon just ranks below it |
 | LCOM / data-clumps / namespace-state | heuristic refactor candidates, not defects |
-| architecture diagrams (`archmap`) | doc-gen, not a metric — visualizes the import graph as tiered mermaid; `--check` only asserts the committed docs match the graph (staleness), never judges the structure. Enforcement is import-linter's job |
+| architecture viewer (`archmap`) | doc-gen, not a metric — emits a committed graph.json + an interactive cytoscape viewer; `--check` only asserts the committed graph.json matches the import graph (staleness), never judges the structure. Enforcement is import-linter's job |
 
 ### Project answers — Specific · Generated at `copier` · frozen
 Facts asked once and baked into the generated files (survive `copier update` via `.copier-answers.yml`).

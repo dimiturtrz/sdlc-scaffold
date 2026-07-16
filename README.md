@@ -96,10 +96,10 @@ Martin instability/main-sequence (Robert Martin; ArchUnitPython), import cycles 
 [tach](https://github.com/gauge-sh/tach)), complexity ([radon](https://pypi.org/project/radon/), ruff),
 duplication/dead-code/CVE/dep-hygiene (jscpd, vulture, pip-audit, deptry — all vendored). What the survey
 found *nowhere*: **cross-file magic-literal** detection, **data-clumps** and **namespace-state** detection,
-**jaxtyping shape contracts**, the **test-mirror** gate, and **committed, diffable, tiered, edge-counted**
-architecture diagrams (`archmap` — the surveyed diagram tools render an ephemeral picture; ours emits a
-mermaid mirror-tree with per-arrow coupling counts and a `--check` stale gate, so architecture drifts loudly
-in review). Full citation in
+**jaxtyping shape contracts**, the **test-mirror** gate, and **auto-derived + committed + interactive**
+architecture (`archmap` — no surveyed tool does all three at once; ours splits a committed diffable
+`graph.json` from a self-contained interactive viewer served as a GitHub Pages site, filling the empty leg
+of that triangle). Full citation in
 [`sdlc-devtools/README`](sdlc-devtools/README.md#prior-art--and-whats-actually-novel).
 
 **Structure, in the standard coupling vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`,

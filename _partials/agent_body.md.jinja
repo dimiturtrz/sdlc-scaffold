@@ -47,11 +47,13 @@ the repo's current state. The linter is a bug-finder, not cosmetics.
 {% endif %}- **arch-fitness** — `python -m devtools.graph --assert`: god-module (fan-in/out), god-file, import-cycle,
   and test-mirror (a logic module needs its `tests/unit/<pkg>/…/test_<name>.py`); thresholds in
   `[tool.structure]`. Advisory: line-floor (off) + chokepoint.
-- **archmap** (advisory / doc-gen) — `python -m devtools.archmap <packages>` regenerates tiered,
-  edge-counted, clickable mermaid diagrams under `docs/architecture/` (one per nesting tier; arrow numbers =
-  import counts). Regenerate with `nox -s archmap` and **commit the diff** — the diagram diff is the
-  architecture-erosion record. The pre-commit hook regenerates on commit; CI runs `--check` (advisory) to
-  flag a stale tree. Doc-gen, not enforcement{% if use_import_linter %} — import-linter is the directional gate{% endif %}.
+- **archmap** (advisory / doc-gen) — `python -m devtools.archmap <packages>` emits
+  `docs/architecture/graph.json` (the committed, diffable architecture — nodes + weighted import edges) plus
+  a self-contained interactive **cytoscape viewer** (`index.html`, regenerated + gitignored) that folds/expands
+  packages to any depth and focuses a module's neighbourhood. Regenerate with `nox -s archmap` and **commit the
+  graph.json diff** — it's the architecture-erosion record. The pre-commit hook regenerates on commit; CI runs
+  `--check` (advisory) to flag a stale graph.json. Opt-in `archviz_pages` publishes the viewer as a GitHub
+  Pages site. Doc-gen, not enforcement{% if use_import_linter %} — import-linter is the directional gate{% endif %}.
 {% if enable_ml %}- **shape-contracts** (advisory) — `python -m devtools.shape_contracts`: a public array/tensor boundary must
   carry a **jaxtyping** shape (`Float[Tensor, "b c h w"]`), not a bare `np.ndarray`/`Tensor`. Aliases in
   `[tool.shape_contracts]`; make shapes live at runtime with a `@shapecheck` decorator (jaxtyping+beartype,

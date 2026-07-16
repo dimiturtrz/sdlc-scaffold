@@ -7,8 +7,8 @@
 # by path, so they stay vendored in the scaffold template.
 [project]
 name = "sdlc-devtools"
-version = "1.5.0"
-description = "Structural-guardrail analyzers (import-graph arch-fitness, LCOM4, data-clumps, magic-literals, shape-contracts, archmap autoviz) for the sdlc-scaffold stack."
+version = "1.6.0"
+description = "Structural-guardrail analyzers (import-graph arch-fitness, LCOM4, data-clumps, magic-literals, shape-contracts, archmap interactive autoviz) for the sdlc-scaffold stack."
 requires-python = ">=3.11"
 # graph.py builds the honest import graph on grimp + ranks it with networkx; the other engines are
 # stdlib-only (ast). So the whole package's runtime footprint is these two.

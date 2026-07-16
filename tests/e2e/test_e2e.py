@@ -7,6 +7,8 @@ portable-rule change while preserving a project-local edit.
 Run:  cd sdlc-scaffold && uv run pytest            (Linux/WSL; jscpd steps skip if node is absent)
 """
 
+import json
+
 import pytest
 from conftest import (
     COMBOS,
@@ -349,23 +351,45 @@ def test_complexity_advisory_runs_clean(project):
     run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.complexity", *layers(name)], path)
 
 
-def test_archmap_generates_and_check_bites(project):
+def test_archmap_generates_site_and_check_bites(project):
     name, path = project
     archmap = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.archmap", *layers(name)]
-    # doc-gen: regenerate the tiered mermaid tree, then --check must be GREEN on the fresh output
+    # doc-gen (m5c): archmap emits graph.json (diff-truth) + a self-contained interactive viewer; --check
+    # must be GREEN on the fresh output.
     run(archmap, path)
-    root = path / "docs" / "architecture" / "ARCHITECTURE.md"
-    assert root.exists(), "archmap writes the root architecture doc"
-    assert "```mermaid" in root.read_text(encoding="utf-8"), "the doc carries a mermaid diagram"
+    graph = path / "docs" / "architecture" / "graph.json"
+    index = path / "docs" / "architecture" / "index.html"
+    assert graph.exists(), "archmap writes the committed graph.json"
+    data = json.loads(graph.read_text(encoding="utf-8"))
+    assert set(data) == {"nodes", "edges"} and data["nodes"], "graph.json carries nodes + edges"
+    assert index.exists(), "archmap writes the interactive viewer alongside"
+    html = index.read_text(encoding="utf-8")
+    assert "<script src=" not in html, "the viewer is self-contained (no external script)"
+    assert "fetch('./graph.json')" in html, "the viewer hydrates the sibling graph.json"
     run([*archmap, "--check"], path)
 
-    # ...and the --check stale gate BITES when a committed doc drifts from the real graph (2vt.3)
+    # ...and the --check stale gate BITES when the committed graph.json drifts from the real graph (m5c.4)
     def tamper(_):
-        original = root.read_text(encoding="utf-8")
-        root.write_text("stale — structure moved but the diagram was not regenerated\n", encoding="utf-8")
-        return lambda: root.write_text(original, encoding="utf-8")
+        original = graph.read_text(encoding="utf-8")
+        graph.write_text('{"nodes": [], "edges": []}\n', encoding="utf-8")
+        return lambda: graph.write_text(original, encoding="utf-8")
 
     assert_bites(path, [*archmap, "--check"], tamper)
+
+
+def test_archviz_pages_workflow_gated(scaffold, tmp_path_factory):
+    # opt-in (m5c.5): archviz_pages=true ships the Pages deploy workflow; the default (false) omits it via a
+    # conditional filename that renders empty. graph.json/viewer emit regardless — only the deploy is gated.
+    on = tmp_path_factory.mktemp("pages_on")
+    generate(scaffold, on / "p", {"project_name": "pg", "packages": "pg", "domain": "none", "archviz_pages": "true"})
+    pages = on / "p" / ".github" / "workflows" / "pages.yml"
+    assert pages.exists(), "archviz_pages=true ships pages.yml"
+    txt = pages.read_text(encoding="utf-8")
+    assert "deploy-pages" in txt and "devtools.archmap" in txt, "the Pages workflow regenerates + deploys"
+
+    off = tmp_path_factory.mktemp("pages_off")
+    generate(scaffold, off / "p", {"project_name": "pg", "packages": "pg", "domain": "none"})  # archviz_pages default false
+    assert not (off / "p" / ".github" / "workflows" / "pages.yml").exists(), "default (false) omits pages.yml"
 
 
 def test_deptry_enforced_runs_clean(project):
