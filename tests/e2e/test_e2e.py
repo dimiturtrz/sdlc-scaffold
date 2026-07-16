@@ -466,6 +466,20 @@ def test_precommit_all_hooks(project):
     run(["uvx", PRECOMMIT, "run", "--all-files"], path)
 
 
+def test_gitattributes_marks_generated_tracked(project):
+    # izdo: generated-but-tracked files collapse in PRs so churn/erosion diffs don't clutter the page.
+    _, path = project
+    lines = (path / ".gitattributes").read_text().splitlines()
+    beads = next(ln for ln in lines if ln.startswith(".beads/issues.jsonl"))
+    graph = next(ln for ln in lines if ln.startswith("docs/architecture/graph.json"))
+    # tier 1 — beads state: fully hidden + auto-merged (a line file re-exported wholesale each session)
+    assert "-diff" in beads and "linguist-generated=true" in beads and "merge=union" in beads
+    # tier 3 — graph.json: collapsed but expandable; NO -diff/union (its diff is the erosion signal, and a
+    # JSON object can't be union-merged without corrupting it)
+    assert "linguist-generated=true" in graph and "-diff" not in graph and "merge=union" not in graph
+    assert any("LOCAL-SLOT: generated-tracked paths" in ln for ln in lines), "consumer slot ships (izdo)"
+
+
 # The pre-push unit hook is a distinct STAGE (`--all-files` above runs commit-stage hooks only), so it needs
 # `--hook-stage pre-push` — which also proves pre-commit accepts the stage wiring.
 PREPUSH_UNIT = ["uvx", PRECOMMIT, "run", "unit-tests", "--hook-stage", "pre-push", "--all-files"]

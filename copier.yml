@@ -200,5 +200,5 @@ precommit_version:
 # sdlc-devtools/ was published at. `when: false` (never asked, always the release value).
 devtools_ref:
   type: str
-  default: "v1.12.0"
+  default: "v1.13.0"
   when: false
