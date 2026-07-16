@@ -1,0 +1,46 @@
+{% set pkgs = packages.split(",") | map("trim") | join(" ") -%}
+name: pages
+
+# Publish the archmap interactive architecture viewer to GitHub Pages (opt-in: `archviz_pages`). Regenerates
+# docs/architecture/ (graph.json + the self-contained index.html viewer) from the current import graph, then
+# deploys. graph.json is ALSO committed (the diffable erosion signal); index.html is rebuilt here, not
+# committed (see .gitignore). Enable once in repo Settings -> Pages -> Source = "GitHub Actions".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least-privilege scopes the Pages deploy needs.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One publish at a time; never cancel an in-flight deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: {% raw %}${{ steps.deployment.outputs.page_url }}{% endraw %}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      # Regenerate the site from the current graph (the committed graph.json is the diff-truth; the ~700KB
+      # viewer shell is built fresh here rather than committed).
+      - name: Build the architecture site (graph.json + interactive viewer)
+        run: |
+          uv sync --extra devtools
+          uv run --extra devtools python -m devtools.archmap {{ pkgs }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/architecture
+      - id: deployment
+        uses: actions/deploy-pages@v4

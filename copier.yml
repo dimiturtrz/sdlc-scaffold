@@ -88,6 +88,15 @@ author:
   help: "Copyright holder for the generated LICENSE (your name or org)"
   default: "{{ project_name }}"
 
+# archmap always emits docs/architecture/graph.json (committed diff-truth) + a self-contained interactive
+# viewer, regardless of this flag. This ONLY gates shipping the GitHub Pages deploy workflow — opt-in
+# because Pages needs enabling in repo settings and publishes a PUBLIC site (a private repo needs GitHub
+# Pro for private Pages, or accepts the architecture being public). Off = no pages.yml; regen/--check still run.
+archviz_pages:
+  type: bool
+  help: "Publish the interactive architecture viewer to GitHub Pages? (needs Pages enabled; public site — private repos need GH Pro)"
+  default: false
+
 # Single source of truth for the ruff select codes — rendered into pyproject.toml, ci.yml, noxfile.py
 # and .pre-commit-config.yaml so the list lives in ONE place. The house bar = the UNION of all repos'
 # rules (bd o70): every code ANY house repo enforces belongs here, byte-identical across repos — no

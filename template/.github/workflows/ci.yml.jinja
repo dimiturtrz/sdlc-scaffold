@@ -126,12 +126,12 @@ jobs:
           uv run --extra devtools python -m devtools.data_clumps {{ pkgs }}
           uv run --extra devtools python -m devtools.magic_literals {{ pkgs }}
           uv run --extra devtools python -m devtools.complexity {{ pkgs }}
-      # ADVISORY (never blocks): flag a stale docs/architecture/ tree — the committed diagrams drifted from
-      # the real import graph. Regenerate locally with `nox -s archmap` and commit the diff. Doc-gen, not
-      # enforcement (import-linter is the directional gate); graduates to a gate per the creep-to-gate program.
-      - name: Architecture diagrams — advisory (archmap --check, stale docs/architecture/)
+      # ADVISORY (never blocks): flag a stale docs/architecture/graph.json — the committed graph drifted from
+      # the real import graph. Regenerate locally with `nox -s archmap` and commit. Doc-gen, not enforcement
+      # (import-linter is the directional gate); graduates to a gate per the creep-to-gate program.
+      - name: Architecture graph — advisory (archmap --check, stale graph.json)
         continue-on-error: true
-        run: uv run --extra devtools python -m devtools.archmap {{ pkgs }} --check || echo "::warning::docs/architecture/ is stale — run 'nox -s archmap' and commit"
+        run: uv run --extra devtools python -m devtools.archmap {{ pkgs }} --check || echo "::warning::docs/architecture/graph.json is stale — run 'nox -s archmap' and commit"
       # >>> LOCAL-SLOT: ci-test-steps — repo-specific test/coverage/gate steps on top of the base (e.g. a
       # separate viewer-coverage floor calibrated to library logic, or a repo-only enforced check). Survives
       # copier update; empty by default (bd skr GAP3).

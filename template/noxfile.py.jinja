@@ -105,7 +105,7 @@ def lint(session: nox.Session) -> None:
     # complexity gate; this just ranks). Reviewer signal only.
     for _tool in ("state_candidates", "lcom", "data_clumps", "magic_literals", "complexity"):
         session.run("uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{_tool}", *LAYERS, external=True)
-    # Advisory (never blocks): flag a stale docs/architecture/ tree — regenerate with `nox -s archmap`.
+    # Advisory (never blocks): flag a stale docs/architecture/graph.json — regenerate with `nox -s archmap`.
     # archmap --check exits 1 on drift; success_codes swallows it so CI/nox report without failing the gate
     # (doc-gen, not enforcement — import-linter is the directional gate). Graduates to a gate per the creep.
     session.run(
@@ -174,12 +174,13 @@ def gates(session: nox.Session) -> None:
 
 # NOT in nox.options.sessions — opt-in (`nox -s audit`), mirroring the nightly `audit` workflow. Security
 # advisories change under you, so this is a scheduled/on-demand scan, not part of the per-commit gate set.
-# NOT in nox.options.sessions — the manual regen call. archmap is doc-gen: it (re)writes the tiered
-# docs/architecture/ mermaid tree from the current import graph. Run it after a structural change, then
-# commit the diff — the diagram diff IS the architecture-erosion record in review. `lint`/CI only --check.
+# NOT in nox.options.sessions — the manual regen call. archmap is doc-gen: it (re)writes docs/architecture/
+# {graph.json, index.html} from the current import graph — graph.json is the diffable erosion signal,
+# index.html the self-contained interactive viewer (a GitHub Pages architecture site). Run it after a
+# structural change and commit the graph.json diff. `lint`/CI only --check that graph.json is current.
 @nox.session(venv_backend="none")
 def archmap(session: nox.Session) -> None:
-    """Regenerate the tiered edge-counted architecture diagrams under docs/architecture/ (commit the diff)."""
+    """Regenerate docs/architecture/ (graph.json + the interactive viewer) — commit the graph.json diff."""
     session.run("uv", "run", "--extra", "devtools", "python", "-m", "devtools.archmap", *LAYERS, external=True)
 
 
