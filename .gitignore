@@ -12,7 +12,6 @@ uv.lock
 # self-scaffolding: the scaffold maps its own engines. graph.json IS committed (the diffable architecture);
 # the ~700KB interactive viewer shell is regenerated locally / in the pages workflow — not committed.
 sdlc-devtools/docs/architecture/index.html
-sdlc-devtools/_site/
 .grimp_cache/
 
 # Beads / Dolt files (added by bd init)
