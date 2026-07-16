@@ -170,6 +170,9 @@ uv sync --extra dev --extra devtools && nox -s gates   # fix whatever fires
 ```bash
 uvx copier update       # reads .copier-answers.yml, fetches the newest scaffold tag; commit the result
 ```
+When a gate graduates (advisory → enforced) an update can go red on pre-existing code — that's the ratchet,
+not a regression. [`docs/UPGRADING.md`](docs/UPGRADING.md) is the per-version migration recipe (e.g. the
+v1.12 `SLF001` op-namespace fix), so you fix the code the intended way instead of carving the gate back out.
 
 ## What a generated project gets
 
