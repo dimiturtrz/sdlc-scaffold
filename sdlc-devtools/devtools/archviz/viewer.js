@@ -44,7 +44,9 @@
         width: (e) => Math.min(1 + Math.sqrt(e.data('weight') || 1) * 1.1, 8), 'line-color': '#c8873b',
         'target-arrow-color': '#c8873b', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier',
         label: (e) => String(e.data('weight')), 'font-size': 11, color: '#f0c674',
-        'text-background-color': '#0d1117', 'text-background-opacity': 0.9, 'text-background-padding': 2, 'arrow-scale': 1 } },
+        'text-background-color': '#05060a', 'text-background-opacity': 0.9, 'text-background-padding': 2, 'arrow-scale': 1 } },
+      { selector: '.dim', style: { opacity: 0.16 } },                                  // focus spotlight: faded context
+      { selector: '.lit', style: { opacity: 1 } },                                      // ...neighbourhood kept bright
       { selector: '.hl', style: { opacity: 1, 'border-width': 3, 'border-color': '#f0c674', 'line-color': '#f0c674', 'target-arrow-color': '#f0c674' } },
     ],
     layout: { name: 'grid' },
@@ -83,17 +85,17 @@
     cy.fit(cy.elements(), 40);
   }
 
-  // focus = ISOLATE: show only the node + its dependency neighbours + connecting edges (+ ancestor boxes),
-  // hide the rest, zoom to the cluster. Clearer than dimming in a dense graph.
+  // focus = SPOTLIGHT: the node + its dependency neighbours + connecting edges (+ ancestor boxes) stay lit;
+  // everything else DIMS but remains on screen (context is kept, not hidden), and we zoom to the cluster.
   function focus(n) {
     const hood = n.closedNeighborhood().union(n.ancestors());
-    cy.elements().style('display', 'none');
-    hood.style('display', 'element');
-    cy.nodes().removeClass('hl'); n.addClass('hl');
+    cy.elements().removeClass('hl').addClass('dim');
+    hood.removeClass('dim').addClass('lit');
+    n.removeClass('dim').addClass('hl');
     cy.fit(hood, 60);
     focused = n;
   }
-  function clearFocus() { cy.elements().style('display', 'element').removeClass('hl'); cy.fit(cy.elements(), 40); focused = null; }
+  function clearFocus() { cy.elements().removeClass('dim lit hl'); cy.fit(cy.elements(), 40); focused = null; }
 
   // LEFT-click = navigate the hierarchy: drill a folded box one level, or fold an open package. A leaf has
   // nowhere to drill, so it's a no-op. RIGHT-click (below) = focus, on ANY node.
