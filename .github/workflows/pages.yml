@@ -1,11 +1,15 @@
 name: architecture
 
-# Self-scaffolding: publish the scaffold's OWN architecture to GitHub Pages under /architecture/. archmap
-# maps the guardrail engines (sdlc-devtools/devtools) -> graph.json (committed diff-truth) + a self-contained
-# interactive viewer, regenerated here and deployed. Served at a /architecture/ SUBPATH (not the site root)
-# so the single Pages site stays free for other pages. Enable once: Settings -> Pages -> Source = "GitHub
-# Actions". (One repo = one Pages site; a repo already deploying Pages must fold this build into that one
-# workflow rather than add a second deployer — the github-pages environment allows only one.)
+# Self-scaffolding: publish the scaffold's OWN architecture to GitHub Pages as ONE site with staged views
+# (one repo = one Pages site, so every view lives under it):
+#   /architecture/         = main  (stable, reviewed)
+#   /architecture/preview/ = dev   (always-latest working branch)
+#   /                      -> redirects to /architecture/
+# archmap maps the guardrail engines (sdlc-devtools/devtools) -> graph.json (committed diff-truth) + a
+# self-contained interactive viewer, regenerated here. Deploys from `main` (the github-pages environment is
+# branch-protected to the default branch); each main build ALSO rebuilds the dev preview so it tracks dev.
+# This dogfoods the main/dev staging the template provisions for consumers. Enable once: Settings -> Pages
+# -> Source = "GitHub Actions".
 on:
   push:
     branches: [main]
@@ -26,28 +30,35 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: sdlc-devtools
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # need origin/dev too, to build the preview
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      # Regenerate the site from the current engine graph (committed graph.json is the diff-truth; the
-      # ~700KB viewer shell is built fresh here rather than committed).
-      - name: Build the architecture site (graph.json + interactive viewer)
-        run: uv run --group dev python -m devtools.archmap devtools
-      # Stage under an architecture/ subfolder so the site publishes at /architecture/ (root stays free for
-      # other pages), plus a root index.html that redirects there — so the Pages site URL itself resolves.
-      - name: Stage the /architecture/ subpath (+ root redirect)
+      # /architecture/ = main (the checked-out default branch)
+      - name: Build main architecture
         run: |
-          mkdir -p _site/architecture
-          cp docs/architecture/graph.json docs/architecture/index.html _site/architecture/
-          printf '<!doctype html><meta http-equiv="refresh" content="0; url=./architecture/">\n' > _site/index.html
+          cd sdlc-devtools
+          uv run --group dev python -m devtools.archmap devtools
+          mkdir -p "$GITHUB_WORKSPACE/_site/architecture"
+          cp docs/architecture/graph.json docs/architecture/index.html "$GITHUB_WORKSPACE/_site/architecture/"
+      # /architecture/preview/ = dev (extract dev's sdlc-devtools + build it, so the preview tracks dev)
+      - name: Build dev architecture preview
+        run: |
+          rm -rf /tmp/devbuild && mkdir -p /tmp/devbuild
+          git archive origin/dev sdlc-devtools | tar -x -C /tmp/devbuild
+          cd /tmp/devbuild/sdlc-devtools
+          uv run --group dev python -m devtools.archmap devtools
+          mkdir -p "$GITHUB_WORKSPACE/_site/architecture/preview"
+          cp docs/architecture/graph.json docs/architecture/index.html "$GITHUB_WORKSPACE/_site/architecture/preview/"
+      # root redirect so the Pages site URL itself resolves to the stable view
+      - name: Root redirect -> /architecture/
+        run: printf '<!doctype html><meta http-equiv="refresh" content="0; url=./architecture/">\n' > "$GITHUB_WORKSPACE/_site/index.html"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: sdlc-devtools/_site
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
