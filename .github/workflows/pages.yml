@@ -1,9 +1,11 @@
-name: pages
+name: architecture
 
-# Self-scaffolding: publish the scaffold's OWN architecture to GitHub Pages. archmap maps the guardrail
-# engines (sdlc-devtools/devtools) -> graph.json (committed diff-truth) + a self-contained interactive
-# viewer, regenerated here and deployed. Proves archviz on real code every push + a live portfolio artifact.
-# Enable once: repo Settings -> Pages -> Source = "GitHub Actions".
+# Self-scaffolding: publish the scaffold's OWN architecture to GitHub Pages under /architecture/. archmap
+# maps the guardrail engines (sdlc-devtools/devtools) -> graph.json (committed diff-truth) + a self-contained
+# interactive viewer, regenerated here and deployed. Served at a /architecture/ SUBPATH (not the site root)
+# so the single Pages site stays free for other pages. Enable once: Settings -> Pages -> Source = "GitHub
+# Actions". (One repo = one Pages site; a repo already deploying Pages must fold this build into that one
+# workflow rather than add a second deployer — the github-pages environment allows only one.)
 on:
   push:
     branches: [main]
@@ -36,9 +38,14 @@ jobs:
       # ~700KB viewer shell is built fresh here rather than committed).
       - name: Build the architecture site (graph.json + interactive viewer)
         run: uv run --group dev python -m devtools.archmap devtools
+      # Stage under an architecture/ subfolder so the site publishes at /architecture/, not the root.
+      - name: Stage the /architecture/ subpath
+        run: |
+          mkdir -p _site/architecture
+          cp docs/architecture/graph.json docs/architecture/index.html _site/architecture/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: sdlc-devtools/docs/architecture
+          path: sdlc-devtools/_site
       - id: deployment
         uses: actions/deploy-pages@v4
