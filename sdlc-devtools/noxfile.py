@@ -47,6 +47,13 @@ def lint(session: nox.Session) -> None:
     # exit 0 (the fixed complexity gate is ruff C901; there is no honest universal magic-literal ceiling).
     session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.magic_literals", LAYER, external=True)
     session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.complexity", LAYER, external=True)
+    # Self-scaffolding (advisory): the scaffold maps its OWN guardrail engines — archmap --check flags a
+    # stale committed docs/architecture/graph.json. Regenerate with `python -m devtools.archmap devtools`.
+    # success_codes swallows the exit-1-on-drift so it reports without blocking (doc-gen, not a gate).
+    session.run(
+        "uv", "run", "--group", "dev", "python", "-m", "devtools.archmap", LAYER, "--check",
+        external=True, success_codes=[0, 1],
+    )
 
 
 @nox.session(venv_backend="none")

@@ -1,0 +1,134 @@
+{
+  "edges": [
+    {
+      "source": "devtools.complexity",
+      "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "source": "devtools.data_clumps",
+      "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "source": "devtools.graph",
+      "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "source": "devtools.graph",
+      "target": "devtools.omit",
+      "weight": 1
+    },
+    {
+      "source": "devtools.lcom",
+      "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "source": "devtools.magic_literals",
+      "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "source": "devtools.omit",
+      "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "source": "devtools.shape_contracts",
+      "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "source": "devtools.state_candidates",
+      "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "source": "devtools.state_candidates",
+      "target": "devtools.omit",
+      "weight": 1
+    }
+  ],
+  "nodes": [
+    {
+      "descendants": 12,
+      "id": "devtools",
+      "label": "devtools",
+      "parent": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools._common",
+      "label": "_common",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics",
+      "label": "analytics",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap",
+      "label": "archmap",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.complexity",
+      "label": "complexity",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.config",
+      "label": "config",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps",
+      "label": "data_clumps",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph",
+      "label": "graph",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom",
+      "label": "lcom",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals",
+      "label": "magic_literals",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.omit",
+      "label": "omit",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts",
+      "label": "shape_contracts",
+      "parent": "devtools"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates",
+      "label": "state_candidates",
+      "parent": "devtools"
+    }
+  ]
+}

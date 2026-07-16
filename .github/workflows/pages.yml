@@ -1,0 +1,44 @@
+name: pages
+
+# Self-scaffolding: publish the scaffold's OWN architecture to GitHub Pages. archmap maps the guardrail
+# engines (sdlc-devtools/devtools) -> graph.json (committed diff-truth) + a self-contained interactive
+# viewer, regenerated here and deployed. Proves archviz on real code every push + a live portfolio artifact.
+# Enable once: repo Settings -> Pages -> Source = "GitHub Actions".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdlc-devtools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      # Regenerate the site from the current engine graph (committed graph.json is the diff-truth; the
+      # ~700KB viewer shell is built fresh here rather than committed).
+      - name: Build the architecture site (graph.json + interactive viewer)
+        run: uv run --group dev python -m devtools.archmap devtools
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: sdlc-devtools/docs/architecture
+      - id: deployment
+        uses: actions/deploy-pages@v4
