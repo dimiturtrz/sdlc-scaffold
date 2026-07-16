@@ -52,8 +52,11 @@ the repo's current state. The linter is a bug-finder, not cosmetics.
   a self-contained interactive **cytoscape viewer** (`index.html`, regenerated + gitignored) that folds/expands
   packages to any depth and focuses a module's neighbourhood. Regenerate with `nox -s archmap` and **commit the
   graph.json diff** — it's the architecture-erosion record. The pre-commit hook regenerates on commit; CI runs
-  `--check` (advisory) to flag a stale graph.json. Opt-in `archviz_pages` publishes the viewer as a GitHub
-  Pages site. Doc-gen, not enforcement{% if use_import_linter %} — import-linter is the directional gate{% endif %}.
+  `--check` (advisory) to flag a stale graph.json. **Publishing** (one repo = one Pages site): if the repo has
+  no other Pages deployer, opt in with `archviz_pages` — it owns a staged site (`/architecture/` = main,
+  `/architecture/preview/` = dev, `/` redirects). If the repo ALREADY deploys Pages, do NOT enable it; fold
+  archmap into the existing workflow as an `/architecture/` subpath instead (see README: "Compose archmap into
+  an existing Pages site"). Doc-gen, not enforcement{% if use_import_linter %} — import-linter is the directional gate{% endif %}.
 {% if enable_ml %}- **shape-contracts** (advisory) — `python -m devtools.shape_contracts`: a public array/tensor boundary must
   carry a **jaxtyping** shape (`Float[Tensor, "b c h w"]`), not a bare `np.ndarray`/`Tensor`. Aliases in
   `[tool.shape_contracts]`; make shapes live at runtime with a `@shapecheck` decorator (jaxtyping+beartype,
