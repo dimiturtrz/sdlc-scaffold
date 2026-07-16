@@ -30,6 +30,16 @@ log = logging.getLogger("devtools.archmap")
 _ROOT = Path("docs/architecture")
 _DOC = "ARCHITECTURE.md"
 _JSON = _ROOT / "graph.json"
+_INDEX = _ROOT / "index.html"
+_ARCHVIZ = Path(__file__).parent / "archviz"  # vendored cytoscape/fcose libs + our engine + the page shell
+# viewer <script> placeholder -> vendored asset filename (inlined so the page is static / offline / no CDN).
+_ASSETS = {
+    "__CYTOSCAPE__": "cytoscape.min.js",
+    "__LAYOUT_BASE__": "layout-base.js",
+    "__COSE_BASE__": "cose-base.js",
+    "__FCOSE__": "cytoscape-fcose.js",
+    "__VIEWER__": "viewer.js",
+}
 
 
 class Archmap:
@@ -165,6 +175,19 @@ class Archmap:
         path.write_text(json.dumps(self.graph_data(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return path
 
+    def write_viewer(self, path: Path = _INDEX, project: str | None = None) -> Path:
+        """Assemble the self-contained interactive viewer (index.html) from the vendored cytoscape/fcose libs
+        + our engine, all inlined so the page is static (GitHub Pages / offline / no CDN). It fetches the
+        sibling graph.json at load, so graph.json stays the diffable artifact and this shell is template-
+        identical across repos (only the project label differs)."""
+        html = (_ARCHVIZ / "index.html.tmpl").read_text(encoding="utf-8")
+        html = html.replace("{project}", project or " / ".join(self.packages))
+        for marker, filename in _ASSETS.items():
+            html = html.replace(f"/*{marker}*/", (_ARCHVIZ / filename).read_text(encoding="utf-8"))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(html, encoding="utf-8")
+        return path
+
     def check(self) -> list[str]:
         """Drift between the committed mirror tree and a fresh derivation (empty == in sync). Catches a
         missing doc, a stale doc (structure moved but the diagram wasn't regenerated), and an orphan doc
@@ -194,13 +217,15 @@ def main():
     ap.add_argument(
         "--json",
         action="store_true",
-        help=f"write the committed graph.json (nodes + weighted import edges) to {_JSON.as_posix()}",
+        help=f"write the committed graph.json + the interactive viewer to {_ROOT.as_posix()}/ (the static site)",
     )
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     engine = Archmap(args.packages)
     if args.json:
-        log.info("archmap: wrote %s", engine.write_json().as_posix())
+        engine.write_json()
+        engine.write_viewer()
+        log.info("archmap: wrote %s + %s", _JSON.as_posix(), _INDEX.as_posix())
         return
     if args.check:
         drift = engine.check()

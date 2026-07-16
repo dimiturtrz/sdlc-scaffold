@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture — {project}</title>
+<style>
+  html, body { margin: 0; height: 100%; }
+  .wrap { position: fixed; inset: 0; display: flex; flex-direction: column; background: #0d1117; }
+  .bar { padding: 8px 12px; font: 13px system-ui, sans-serif; color: #c9d1d9; background: #161b22; border-bottom: 1px solid #30363d; }
+  .bar button { margin: 0 2px; padding: 3px 9px; font-size: 12px; background: #21313f; color: #cfe3f7; border: 1px solid #3a5570; border-radius: 5px; cursor: pointer; }
+  .bar button:hover { background: #2c4256; }
+  .hint { color: #7d8590; font-size: 11px; margin-left: 6px; }
+  #cy { flex: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <strong>{project}</strong> architecture &nbsp;·&nbsp;
+    <span id="nodes">?</span> modules, <span id="edges">?</span> import edges &nbsp;·&nbsp;
+    <button id="expandAll">expand all</button>
+    <button id="collapseAll">collapse all</button>
+    <button id="reset">reset view</button>
+    <span class="hint">click a box = drill one level in · click an open package = fold it · click a leaf = focus · arrow [n] = summed import count</span>
+  </div>
+  <div id="cy"></div>
+</div>
+<script>/*__CYTOSCAPE__*/</script>
+<script>/*__LAYOUT_BASE__*/</script>
+<script>/*__COSE_BASE__*/</script>
+<script>/*__FCOSE__*/</script>
+<script>/*__VIEWER__*/</script>
+</body>
+</html>

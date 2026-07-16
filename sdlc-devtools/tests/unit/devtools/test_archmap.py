@@ -181,6 +181,18 @@ def test_write_json_is_deterministic(tmp_path, monkeypatch):
     assert set(data) == {"nodes", "edges"}, "the committed json is {nodes, edges}"
 
 
+def test_write_viewer_is_self_contained(tmp_path):
+    # write_viewer only assembles the template + vendored assets (no grimp) — the interactive site shell
+    p = Archmap(["core"]).write_viewer(tmp_path / "index.html", project="demo-proj")
+    html = p.read_text(encoding="utf-8")
+    assert "<script src=" not in html, "no external <script src> — every lib is inlined (self-contained)"
+    assert "fetch('./graph.json')" in html, "the viewer hydrates the sibling graph.json at load"
+    assert "demo-proj" in html, "the project label is injected into the page"
+    assert "cytoscape" in html, "the cytoscape lib is inlined"
+    for marker in ("__CYTOSCAPE__", "__FCOSE__", "__VIEWER__"):
+        assert f"/*{marker}*/" not in html, f"the {marker} placeholder was filled, not left in the output"
+
+
 def test_main_json_writes_graph(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.syspath_prepend(str(tmp_path))
