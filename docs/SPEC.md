@@ -79,7 +79,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `` (empty) | extra codes for the advisory whole-tree `--statistics` run (`--extend-select`, guarded off when empty); E501/SLF001 graduated into the enforced union (bd 4c2/8ex reopened) so nothing rides here now |
 | `ruff_version` / `vulture_version` / `nox_version` / `deptry_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
-| `devtools_ref` | scaffold release tag (e.g. `v1.12.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
+| `devtools_ref` | scaffold release tag (e.g. `v1.13.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
 | `repo_slug` | `OWNER/REPO` parsed from `repo_url` (https or scp/ssh github remote), else `""` | README CI + license badges; the base for `pages_url` |
 | `pages_url` | `https://OWNER.github.io/REPO` from `repo_slug` (empty if unparsed) | the README architecture-link base — `{pages_url}/architecture/`, rendered only when `archviz_pages` (sole-owner site); compose consumers add their own |
 
@@ -110,6 +110,17 @@ The GATE is universal; the CONTRACTS are project-local (kernel-independence star
 gate that self-gates: shipped only when `packages` has >1 entry (nothing to forbid in a single package),
 via the computed `use_import_linter`. Every other gate is unconditional (no toggle). jscpd is ENFORCED
 (blocks over threshold) in ci+nox — the cardiac/mindscape majority — not a commit hook (Node).
+
+**Generated-but-tracked collapse (bd izdo).** The shipped `.gitattributes` keeps generated files that stay
+committed from cluttering a PR. Three tiers from two knobs — `linguist-generated=true` (GitHub: collapse in
+Files-changed, expandable; drop from the language bar) and the git pair `-diff` (binary → no textual diff
+anywhere) + `merge=union` (keep-both on conflict, safe ONLY for line-oriented wholesale-regenerated files;
+corrupts structured JSON/TOML). Defaults: `.beads/issues.jsonl` = tier 1 (`-diff` + `linguist` + `union` —
+a huge churny state file re-exported each session, never hand-read); `docs/architecture/graph.json` = tier 3
+(`linguist` only — generated, but its diff is the architecture-erosion signal so it stays reachable, and a
+JSON object can't be union-merged). A `# >>> LOCAL-SLOT: generated-tracked paths` region documents all three
+tiers for a consumer's own generated-tracked files (RESULTS.json, sync markers, run logs). The scaffold
+dogfoods the same two rules in its own root `.gitattributes`.
 
 **CI repo-step slots (bd skr GAP3).** `ci.yml` carries two `# >>> LOCAL-SLOT` regions — `ci-lint-steps`
 (lint job) and `ci-test-steps` (tests job) — empty by default, so a consumer whose CI is a SUPERSET of the

@@ -3,3 +3,9 @@
 * text=auto eol=lf
 *.png binary
 *.jpg binary
+
+# Generated but TRACKED — dogfood the same rules the template ships (see template/.gitattributes for the
+# three-tier rationale). tier 1 = beads state (line file, wholesale re-export, never hand-read → hide +
+# union); tier 3 = archmap graph.json (generated, but the diff is the erosion signal → collapse, expandable).
+.beads/issues.jsonl                        -diff linguist-generated=true merge=union
+sdlc-devtools/docs/architecture/graph.json linguist-generated=true
