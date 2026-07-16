@@ -386,6 +386,13 @@ def test_archviz_pages_workflow_gated(scaffold, tmp_path_factory):
     assert pages.exists(), "archviz_pages=true ships pages.yml"
     txt = pages.read_text(encoding="utf-8")
     assert "deploy-pages" in txt and "devtools.archmap" in txt, "the Pages workflow regenerates + deploys"
+    # clf.3: it ships the STAGED pattern — main at /architecture/, dev at /architecture/preview/ (guarded so a
+    # repo with no dev branch skips cleanly), and a root redirect. Packages ({{ pkgs }}) render into the build.
+    assert "_site/architecture" in txt, "main view -> /architecture/"
+    assert "_site/architecture/preview" in txt, "dev view -> /architecture/preview/"
+    assert "git archive origin/dev" in txt and "rev-parse --verify" in txt, "dev preview built from origin/dev, guarded"
+    assert "url=./architecture/" in txt, "root redirects to the stable view"
+    assert "devtools.archmap pg" in txt, "the packages answer renders into the archmap invocation"
 
     off = tmp_path_factory.mktemp("pages_off")
     generate(scaffold, off / "p", {"project_name": "pg", "packages": "pg", "domain": "none"})  # archviz_pages default false
