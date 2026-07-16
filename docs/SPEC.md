@@ -79,8 +79,9 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
 | `ruff_version` / `vulture_version` / `nox_version` / `deptry_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
-| `devtools_ref` | scaffold release tag (e.g. `v1.7.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
-| `pages_url` | derived from `repo_url`: `github.com[:/ ]OWNER/REPO(.git)` → `https://OWNER.github.io/REPO` (empty for non-github / blank `repo_url`) | the README architecture-link base (`{pages_url}/architecture/`). Tolerates https + scp/ssh remotes |
+| `devtools_ref` | scaffold release tag (e.g. `v1.8.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
+| `repo_slug` | `OWNER/REPO` parsed from `repo_url` (https or scp/ssh github remote), else `""` | README CI + license badges; the base for `pages_url` |
+| `pages_url` | `https://OWNER.github.io/REPO` from `repo_slug` (empty if unparsed) | the README architecture-link base — `{pages_url}/architecture/`, rendered only when `archviz_pages` (sole-owner site); compose consumers add their own |
 
 ## Gate inventory
 

@@ -1,5 +1,8 @@
 # {{ project_name }}
-
+{% if repo_slug %}
+[![ci](https://github.com/{{ repo_slug }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ repo_slug }}/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+{% endif %}
 One-line description of {{ project_name }}. (Replace me.)
 
 ## Layout
@@ -33,8 +36,8 @@ nox -s lint test cov
 `nox -s archmap` writes `docs/architecture/graph.json` (committed, diffable — nodes + weighted import edges)
 plus a self-contained interactive viewer (`index.html`, gitignored, rebuilt on demand). **Commit the
 graph.json diff** — it's the architecture-erosion record.
-{% if pages_url %}
-▶ **Live viewer: [{{ pages_url }}/architecture/]({{ pages_url }}/architecture/)**{% if archviz_pages %} — main; dev preview at [{{ pages_url }}/architecture/preview/]({{ pages_url }}/architecture/preview/){% endif %}
+{% if archviz_pages and pages_url %}
+▶ **Live viewer: [{{ pages_url }}/architecture/]({{ pages_url }}/architecture/)** — main; dev preview at [{{ pages_url }}/architecture/preview/]({{ pages_url }}/architecture/preview/)
 {% endif %}
 
 Publishing to GitHub Pages — one repo = one Pages site, so pick ONE of:
