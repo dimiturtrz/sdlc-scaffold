@@ -77,7 +77,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
 | `ruff_version` / `vulture_version` / `nox_version` / `deptry_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
-| `devtools_ref` | scaffold release tag (e.g. `v1.6.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
+| `devtools_ref` | scaffold release tag (e.g. `v1.7.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
 
 ## Gate inventory
 
