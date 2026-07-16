@@ -11,7 +11,7 @@ bump (`devtools_ref`), not a re-vendored source diff:
 
 ```toml
 # pyproject.toml (rendered by copier)
-devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@v1.13.0#subdirectory=sdlc-devtools
+devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@v1.13.1#subdirectory=sdlc-devtools
 ```
 
 The import name stays `devtools`, so every gate invocation is unchanged.

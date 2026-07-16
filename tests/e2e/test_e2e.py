@@ -150,6 +150,11 @@ def test_select_and_ci_wiring(project):
     assert "devtools.archmap" in ci_text and "--check" in ci_text, "archmap --check runs in CI (advisory; 2vt.4)"
     precommit_text = (path / ".pre-commit-config.yaml").read_text()
     assert "id: archmap" in precommit_text, "the archmap regen hook ships in pre-commit (2vt.4)"
+    # c80: archmap regen moved to the PRE-PUSH stage (fast commits; refresh once before the deploying push) and
+    # blocks the push if graph.json drifted, so the committed diff-truth stays current with no manual regen.
+    assert "python -m devtools.archmap" in precommit_text, "archmap regen present (c80)"
+    assert "regenerated & staged; commit it and push again" in precommit_text, "archmap blocks on drift (c80)"
+    assert precommit_text.count("stages: [pre-push]") >= 2, "archmap + unit-tests both ride pre-push (c80/cma)"
     # cma: fast unit suite bound to the PRE-PUSH stage (shift-left the CI test gate). Push-only, unit-only.
     assert "id: unit-tests" in precommit_text, "the pre-push unit-tests hook ships (cma)"
     assert "stages: [pre-push]" in precommit_text, "unit-tests runs at the pre-push stage, not commit (cma)"
@@ -495,6 +500,39 @@ def test_prepush_unit_hook_blocks_broken_contract(full_project):
         PREPUSH_UNIT,
         lambda p: _replace(p / "full_pkg" / "math_ops.py", "def mean(", "def mean_x("),
     )
+
+
+PREPUSH_ARCHMAP = ["uvx", PRECOMMIT, "run", "archmap", "--hook-stage", "pre-push", "--all-files"]
+
+
+def _add_module(root):
+    """Mutate: add a new package module (new node + import edge) so the architecture graph changes; return a
+    restore that removes it AND resets the hook-regenerated graph.json back to the committed baseline."""
+    f = root / "full_pkg" / "extra.py"
+    f.write_text(
+        "from full_pkg.math_ops import MathOps\n\n\n"
+        "class Extra:\n"
+        "    @classmethod\n"
+        "    def use(cls) -> float:\n"
+        "        return MathOps.mean([1.0])\n"
+    )
+
+    def restore():
+        f.unlink()
+        run(["git", "checkout", "--", "docs/architecture/graph.json"], root, check=False)
+        run(["git", "reset", "--", "docs/architecture/graph.json"], root, check=False)
+
+    return restore
+
+
+def test_prepush_archmap_regenerates_and_blocks_on_drift(full_project):
+    # c80: the pre-push archmap hook regenerates graph.json and BLOCKS the push if it drifted, so the committed
+    # diff-truth (and the /architecture/ page it feeds) stays current without a manual `nox -s archmap`.
+    run(PREPUSH_ARCHMAP, full_project, check=False)  # first run creates graph.json (was untracked)
+    run(["git", "add", "docs/architecture/graph.json"], full_project)
+    run(["git", "commit", "-m", "baseline graph.json", "--no-verify"], full_project)
+    run(PREPUSH_ARCHMAP, full_project)  # graph matches source -> hook passes
+    assert_bites(full_project, PREPUSH_ARCHMAP, _add_module)  # drift -> regen differs -> push blocked
 
 
 # ---- the optional gates actually BITE --------------------------------------------------------------
