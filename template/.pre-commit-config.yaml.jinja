@@ -99,6 +99,19 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-{% endif %}      {# jscpd is ENFORCED in CI + nox (blocks over the jscpd.json threshold, the cardiac/mindscape
+{% endif %}      # Fast unit suite at the PRE-PUSH stage (not pre-commit): shift-left the CI `tests` gate so a change
+      # that lints clean but breaks a test CONTRACT (e.g. a signature change a mirror test still calls the old
+      # way) is caught locally before the push round-trip, not after. pre-push (pushes are rare) not pre-commit
+      # (torch-import + tests every commit kills flow); tests/unit only (no integration/e2e/GPU/download — fast
+      # + deterministic); NOT coverage (the floor stays a CI job). Enable once: `pre-commit install --hook-type
+      # pre-push` (it is NOT installed by the default `pre-commit install`, which wires only the commit stage).
+      - id: unit-tests
+        name: unit tests — pre-push (fast contract check; shift-left the CI test gate)
+        entry: uv run --extra dev pytest tests/unit -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      {# jscpd is ENFORCED in CI + nox (blocks over the jscpd.json threshold, the cardiac/mindscape
          majority) but kept OFF the commit hook — it needs Node and is slower than the static gates. A
          repo that wants it at commit time too adds a jscpd hook here. #}

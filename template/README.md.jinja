@@ -67,3 +67,17 @@ Publishing to GitHub Pages — one repo = one Pages site, so pick ONE of:
 
 Tooling + quality gates are provisioned by an in-house copier template (**sdlc-scaffold**). Refresh with
 `uvx copier update`; `.copier-answers.yml` pins the template version.
+
+### Local hooks
+
+The same gates CI enforces are bound to git events via pre-commit. Install **both** stages:
+
+```bash
+pre-commit install                        # commit stage — fast static gates (ruff/vulture/arch-fitness/…)
+pre-commit install --hook-type pre-push   # push stage — fast unit suite (tests/unit)
+```
+
+The pre-push hook runs `pytest tests/unit` so a change that lints clean but breaks a test **contract** (a
+signature change a mirror test still calls the old way) is caught before the push, not after CI goes red. It
+is deliberately push-only (not every commit) and unit-only (no integration/e2e); the coverage floor stays a
+CI job. The default `pre-commit install` does **not** wire pre-push — run the second line once per clone.
