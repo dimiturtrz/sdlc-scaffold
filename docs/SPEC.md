@@ -183,7 +183,9 @@ line-length = 120
 # real reach-in signal — the earlier "conflicts with the py-top-level-function ast-grep gate" claim was
 # debunked (that gate only forces "helpers on a class", not static/private/class-name calls; `self._helper`
 # satisfies it and never trips SLF001, so no rule forces the FP shape). Tests carve SLF001 out (privates
-# under test). Both ship clean on a fresh gen, so they block regressions from day one.
+# under test). Both ship clean on a fresh gen, so they block regressions from day one. An op-namespace repo
+# updating past v1.12 sees a wall of SLF001 from stateless @staticmethod + Cls._helper sibling calls; the
+# compliant fix is @classmethod + cls._helper (external callers unchanged) — recipe in docs/UPGRADING.md (b8i).
 select = ["F","B","I","T201","FBT","BLE001","S101","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","N","E741","E742","E743","PLR0124","PLR1714","PLW3301","RUF012","RUF005","RUF007","RUF010","RUF022","RUF046","C408","C420","SIM","PERF401","PLW0108","E731","E402","ICN001","S603","S607","PTH123","E501","SLF001"]
 ignore = []                              # + "F722" iff enable_ml (jaxtyping shape strings — bd vip.1)
 [tool.ruff.lint.pep8-naming]             # N is universal; ignore-names VOCAB is a FACT (LOCAL-SLOT)
