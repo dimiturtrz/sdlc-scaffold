@@ -77,9 +77,9 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | var | value | used for |
 |---|---|---|
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
-| `ruff_advisory_select` | `E501,SLF001` | codes surfaced by the advisory `--statistics` run (`--extend-select`), never a merge gate — cosmetic (E501) / house-gate-conflicting (SLF001), bd 4c2/8ex |
+| `ruff_advisory_select` | `` (empty) | extra codes for the advisory whole-tree `--statistics` run (`--extend-select`, guarded off when empty); E501/SLF001 graduated into the enforced union (bd 4c2/8ex reopened) so nothing rides here now |
 | `ruff_version` / `vulture_version` / `nox_version` / `deptry_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
-| `devtools_ref` | scaffold release tag (e.g. `v1.10.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
+| `devtools_ref` | scaffold release tag (e.g. `v1.11.0`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
 | `repo_slug` | `OWNER/REPO` parsed from `repo_url` (https or scp/ssh github remote), else `""` | README CI + license badges; the base for `pages_url` |
 | `pages_url` | `https://OWNER.github.io/REPO` from `repo_slug` (empty if unparsed) | the README architecture-link base — `{pages_url}/architecture/`, rendered only when `archviz_pages` (sole-owner site); compose consumers add their own |
 
@@ -167,13 +167,13 @@ line-length = 120
 # 383 N-hits are fixed, not exempted). S101 = no-assert-in-prod (stripped under `python -O`; all 3 honor it,
 # tests carve it out). DELIBERATELY OUT (owner, on record): UP (annotation churn), E701/702 (dense `a; b`
 # compaction is house style), W (formatter owns it).
-# ADVISORY-SURFACED, NOT ENFORCED (bd 4c2/8ex, owner 2026-07-14 — reported by `ruff check . --statistics
-# --extend-select {ruff_advisory_select}`, never a merge gate): E501 (line-too-long = cosmetic, a gate is a
-# bug-finder not a style cop — cardiac keeps 138 lines >120 on purpose); SLF001 (private-access STRUCTURALLY
-# conflicts with the py-top-level-function ast-grep gate — that gate forces same-module `Cls._helper`
-# references SLF001 mis-reads as reach-ins; ruff can't express 'same module'; 99 FP on mind). Demoted to
-# advisory house-wide, NOT a per-repo rule slot (a select-subtract slot = o70 dodge vector, rejected).
-select = ["F","B","I","T201","FBT","BLE001","S101","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","N","E741","E742","E743","PLR0124","PLR1714","PLW3301","RUF012","RUF005","RUF007","RUF010","RUF022","RUF046","C408","C420","SIM","PERF401","PLW0108","E731","E402","ICN001","S603","S607","PTH123"]  # + advisory E501,SLF001
+# E501 + SLF001 ENFORCED (bd 4c2/8ex, owner 2026-07-16 — graduated advisory->gate). E501: line-length 120
+# is a legislated absolute, the gate just enforces it (a genuine long line takes `# noqa: E501`). SLF001: a
+# real reach-in signal — the earlier "conflicts with the py-top-level-function ast-grep gate" claim was
+# debunked (that gate only forces "helpers on a class", not static/private/class-name calls; `self._helper`
+# satisfies it and never trips SLF001, so no rule forces the FP shape). Tests carve SLF001 out (privates
+# under test). Both ship clean on a fresh gen, so they block regressions from day one.
+select = ["F","B","I","T201","FBT","BLE001","S101","S110","C901","PLR0912","PLR0913","PLR0915","PLR2004","PLC0415","RUF100","N","E741","E742","E743","PLR0124","PLR1714","PLW3301","RUF012","RUF005","RUF007","RUF010","RUF022","RUF046","C408","C420","SIM","PERF401","PLW0108","E731","E402","ICN001","S603","S607","PTH123","E501","SLF001"]
 ignore = []                              # + "F722" iff enable_ml (jaxtyping shape strings — bd vip.1)
 [tool.ruff.lint.pep8-naming]             # N is universal; ignore-names VOCAB is a FACT (LOCAL-SLOT)
 ignore-names = []                        # ML default: ["X*","Y*","B","C","H","W","F"]; repo adds its idioms

@@ -75,10 +75,10 @@ ignore-names = [{% if enable_ml %}"X*", "Y*", "B", "C", "H", "W", "F"{% endif %}
 [tool.ruff.lint.per-file-ignores]
 # Tests get a wider carve-out: literal fixtures (PLR2004) + bool flags (FBT); mock classes mirror external
 # PascalCase APIs + local math/alias scratch (N8xx); fixtures take many params (PLR0913). The SUBSTANTIVE
-# gates (imports-at-top, real bugs, dead code) still apply to tests. (SLF001 is no longer enforced anywhere
-# — moved to the advisory surface, bd 8ex — so it needs no tests carve-out.)
+# gates (imports-at-top, real bugs, dead code) still apply to tests. SLF001 is enforced house-wide again
+# (bd 8ex reopened) but tests legitimately poke privates-under-test, so it sits in the tests carve-out.
 "__init__.py" = ["F401"]
-"tests/**" = ["S101", "PLR2004", "FBT", "N801", "N802", "N803", "N806", "N812", "PLR0913"]
+"tests/**" = ["S101", "PLR2004", "FBT", "SLF001", "N801", "N802", "N803", "N806", "N812", "PLR0913"]
 # >>> LOCAL-SLOT: per-file-ignores — repo-specific file carve-outs (e.g. a best-effort telemetry shell
 # that must never raise). Add lines here; copier update won't overwrite this region.
 # <<< LOCAL-SLOT: per-file-ignores

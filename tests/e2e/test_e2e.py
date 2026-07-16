@@ -127,11 +127,11 @@ def test_select_and_ci_wiring(project):
     assert "select = [" in pyproject_text
     for code in ('"N"', '"PTH123"', '"PERF401"', '"ICN001"', '"S101"'):
         assert code in pyproject_text, f"union select must carry {code} (cardiac ratchet + S101)"
-    # 4c2/8ex: E501 (cosmetic) + SLF001 (conflicts with the op-namespace ast-grep gate) are DEMOTED from
-    # the enforced union to the advisory surface — reported, never blocking. (ci --extend-select checked below.)
+    # 4c2/8ex reopened: E501 (line-length 120 is legislated) + SLF001 (real reach-in signal; the old
+    # ast-grep-conflict claim was debunked — no rule forces the tripping shape) are ENFORCED in the union.
     enforced_select = pyproject_text[pyproject_text.index("select = [") : pyproject_text.index("select = [") + 900]
-    assert '"E501"' not in enforced_select, "E501 must NOT be in the enforced select (advisory only — 4c2)"
-    assert '"SLF001"' not in enforced_select, "SLF001 must NOT be in the enforced select (advisory only — 8ex)"
+    assert '"E501"' in enforced_select, "E501 must be in the enforced select (graduated to gate — 4c2)"
+    assert '"SLF001"' in enforced_select, "SLF001 must be in the enforced select (graduated to gate — 8ex)"
     # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
     assert "main_sequence_max" in pyproject_text, "the instability/main-sequence gate threshold ships (x3b)"
     # 0sx: magic_literals + complexity ship NO config — they are advisory explorers, not ratcheted gates.
@@ -162,8 +162,9 @@ def test_select_and_ci_wiring(project):
     # skr GAP3b: ci repo-step LOCAL-SLOTs let a consumer superset ride on slots, not a fork (both domains).
     assert "LOCAL-SLOT: ci-lint-steps" in ci_text, "the ci-lint-steps slot ships (skr GAP3)"
     assert "LOCAL-SLOT: ci-test-steps" in ci_text, "the ci-test-steps slot ships (skr GAP3)"
-    # 4c2/8ex: E501+SLF001 ride the advisory --statistics surface (reported, never a merge gate).
-    assert "--extend-select E501,SLF001" in ci_text, "E501/SLF001 surface via advisory --statistics (4c2/8ex)"
+    # 4c2/8ex reopened: E501+SLF001 graduated into the enforced select, so the advisory --statistics run
+    # carries NO --extend-select (ruff_advisory_select is empty). The enforced select is asserted above.
+    assert "--extend-select" not in ci_text, "advisory ruff carries no --extend-select once the surface is empty (4c2/8ex)"
     # vip.4: shape_contracts GRADUATED advisory->blocking — a ml gen carries an ENFORCED --assert step (a
     # fresh gen has 0 boundaries so it passes); a domain-neutral gen has no shape gate at all.
     assert ("shape_contracts {} --assert".format(pkg) in ci_text) == ml, "ml ci enforces shape --assert (vip.4)"

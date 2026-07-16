@@ -19,11 +19,16 @@ class Config:
     _FILES: ClassVar[dict[str, str]] = {"sgconfig": "sgconfig.yml", "jscpd": "jscpd.json"}
 
     @staticmethod
+    def names() -> list[str]:
+        """The known config short-names (the valid `name` arguments), sorted — the public view of `_FILES`."""
+        return sorted(Config._FILES)
+
+    @staticmethod
     def path(name: str) -> Path:
         """The installed filesystem path of a packaged config file, by short name (`sgconfig` / `jscpd`)."""
         fname = Config._FILES.get(name)
         if fname is None:
-            raise SystemExit(f"unknown config {name!r} (known: {', '.join(sorted(Config._FILES))})")
+            raise SystemExit(f"unknown config {name!r} (known: {', '.join(Config.names())})")
         p = Path(__file__).resolve().parent / fname
         if not p.exists():
             raise SystemExit(f"packaged config {fname} missing at {p} (broken install?)")
@@ -34,7 +39,7 @@ def main():
     ap = argparse.ArgumentParser(
         prog="python -m devtools.config", description="print the installed path of a packaged config file"
     )
-    ap.add_argument("name", choices=sorted(Config._FILES), help="which config to locate")
+    ap.add_argument("name", choices=Config.names(), help="which config to locate")
     args = ap.parse_args()
     print(Config.path(args.name))  # noqa: T201 — printing the path IS the contract (for shell `$(...)`)
 

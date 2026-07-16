@@ -26,17 +26,18 @@ def lint(session: nox.Session) -> None:
     # here — matching CI (bd skr GAP1/kqk). F722 = multi-token dim strings ("b c h w"); F821 = single-axis
     # ("n") which parses as an undefined forward-ref. Off domain=ml both are absent (no jaxtyping dep).
     session.run("uvx", RUFF, "check", *LINT_LAYERS, "--select", SELECT, {% if enable_ml %}"--ignore", "F722,F821", {% endif %}external=True)
-    # Advisory (mirrors CI, never blocks): full curated config + the advisory-only codes (E501/SLF001 —
-    # cosmetic / house-gate-conflicting, bd 4c2/8ex) surfaced via --extend-select, plus format drift.
+    # Advisory (mirrors CI, never blocks): the full enforced select over the whole tree, plus format drift.
+    # ruff_advisory_select is empty by default (E501/SLF001 graduated into the enforced union, bd 4c2/8ex),
+    # so --extend-select is appended only when it carries a code.
     session.run(
         "uvx",
         RUFF,
         "check",
         ".",
         "--statistics",
-        "--extend-select",
+        {% if ruff_advisory_select %}"--extend-select",
         "{{ ruff_advisory_select }}",
-        external=True,
+        {% endif %}external=True,
         success_codes=[0, 1],
     )
     session.run("uvx", RUFF, "format", "--check", ".", external=True, success_codes=[0, 1])
