@@ -15,7 +15,8 @@ packages are **opt-in** (add import-linter yourself — see `devtools/README.md`
 ## Quickstart
 
 ```bash
-uv sync --extra dev --extra devtools
+{% if repo_url %}git clone {{ repo_url }}
+{% endif %}uv sync --extra dev --extra devtools
 nox -s lint test cov
 ```
 
@@ -32,6 +33,9 @@ nox -s lint test cov
 `nox -s archmap` writes `docs/architecture/graph.json` (committed, diffable — nodes + weighted import edges)
 plus a self-contained interactive viewer (`index.html`, gitignored, rebuilt on demand). **Commit the
 graph.json diff** — it's the architecture-erosion record.
+{% if pages_url %}
+▶ **Live viewer: [{{ pages_url }}/architecture/]({{ pages_url }}/architecture/)**{% if archviz_pages %} — main; dev preview at [{{ pages_url }}/architecture/preview/]({{ pages_url }}/architecture/preview/){% endif %}
+{% endif %}
 
 Publishing to GitHub Pages — one repo = one Pages site, so pick ONE of:
 

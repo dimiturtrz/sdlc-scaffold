@@ -24,6 +24,25 @@ packages:
   help: "Packages the guardrails target — comma-separated, snake_case (add your others, e.g. core,neuroscan,neuroviz)"
   default: "{{ project_name.replace('-', '_') }}"
 
+# The repo's own git root (this project's remote), the ONE place a generated project records where it lives.
+# Used for the README clone line + to DERIVE the architecture Pages link (below). Blank = skip both. Note:
+# this is the CONSUMER repo — distinct from the scaffold URL baked into the devtools git-dep pin.
+repo_url:
+  type: str
+  help: "Git remote of THIS repo (e.g. https://github.com/you/repo) — README clone line + architecture link; blank to skip"
+  default: ""
+
+# Derived, never asked: the GitHub Pages base for repo_url. https://github.com/OWNER/REPO(.git) ->
+# https://OWNER.github.io/REPO. Empty unless repo_url is a github.com URL. README appends /architecture/.
+pages_url:
+  type: str
+  when: false
+  default: >-
+    {%- if repo_url and 'github.com' in repo_url -%}
+    {%- set slug = repo_url.split('github.com')[1] | replace('.git', '') | trim('/:') -%}
+    https://{{ slug.split('/')[0] }}.github.io/{{ slug.split('/')[1] }}
+    {%- endif -%}
+
 # The quality gates + beads are the non-optional house bar — always shipped, no prompt, no toggle: their
 # blocks render unconditionally in the templates (bd 9nq unwrapped the last inert `{% if %}` guards).
 # import-linter is the one gate that self-gates: it needs >1 package to have anything to forbid.
