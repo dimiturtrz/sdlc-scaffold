@@ -98,8 +98,8 @@ duplication/dead-code/CVE/dep-hygiene (jscpd, vulture, pip-audit, deptry — all
 found *nowhere*: **cross-file magic-literal** detection, **data-clumps** and **namespace-state** detection,
 **jaxtyping shape contracts**, the **test-mirror** gate, and **auto-derived + committed + interactive**
 architecture (`archmap` — no surveyed tool does all three at once; ours splits a committed diffable
-`graph.json` from a self-contained interactive viewer served as a GitHub Pages site, filling the empty leg
-of that triangle). Full citation in
+`graph.json` from a self-contained interactive viewer served as a staged GitHub Pages site (`/architecture/`
+= main, `/preview/` = dev), filling the empty leg of that triangle). Full citation in
 [`sdlc-devtools/README`](sdlc-devtools/README.md#prior-art--and-whats-actually-novel).
 
 **Structure, in the standard coupling vocabulary.** In-arrows to a module are *afferent* coupling (`Ca`,
