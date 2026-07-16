@@ -95,20 +95,24 @@
   }
   function clearFocus() { cy.elements().style('display', 'element').removeClass('hl'); cy.fit(cy.elements(), 40); focused = null; }
 
+  // LEFT-click = navigate the hierarchy: drill a folded box one level, or fold an open package. A leaf has
+  // nowhere to drill, so it's a no-op. RIGHT-click (below) = focus, on ANY node.
   cy.on('tap', 'node', (evt) => {
-    const n = evt.target, id = n.id();
-    if (collapsed.has(id)) {                    // folded box -> drill ONE level (re-fold its child packages)
+    const id = evt.target.id();
+    if (collapsed.has(id)) {                     // folded box -> drill ONE level (re-fold its child packages)
       collapsed.delete(id);
       (KIDS[id] || []).filter((c) => DESC[c] > 0).forEach((c) => collapsed.add(c));
       refresh();
-    } else if (DESC[id] > 0) {                  // open package -> fold it
+    } else if (DESC[id] > 0) {                   // open package -> fold it
       collapsed.add(id);
       refresh();
-    } else {                                    // leaf module -> focus/unfocus its neighbourhood
-      if (focused === n) clearFocus(); else focus(n);
     }
   });
+  // RIGHT-click any node = focus/unfocus (isolate its aggregated dependency neighbourhood — packages too).
+  cy.on('cxttap', 'node', (evt) => { const n = evt.target; if (focused === n) clearFocus(); else focus(n); });
   cy.on('tap', (evt) => { if (evt.target === cy && focused) clearFocus(); });
+  // suppress the browser context menu so right-click is ours
+  cy.container().addEventListener('contextmenu', (e) => e.preventDefault());
 
   document.getElementById('expandAll').onclick = () => { collapsed.clear(); refresh(); };
   document.getElementById('collapseAll').onclick = () => { initCollapse(); refresh(); };
