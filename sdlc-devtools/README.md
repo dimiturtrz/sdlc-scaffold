@@ -55,7 +55,10 @@ The import name stays `devtools`, so every gate invocation is unchanged.
   architecture erosion shows as a JSON diff in review; and **index.html** — a static viewer (vendored
   cytoscape/fcose inlined, no CDN/server/Java) that hydrates graph.json and lets you **fold/expand packages
   to any depth** (a folded pair is ONE arrow labelled the summed import count), and **focus** a module's
-  dependency neighbourhood. Served as a per-repo **GitHub Pages** architecture site.
+  dependency neighbourhood. Served as a per-repo **GitHub Pages** architecture site — one repo = one Pages
+  site, so it's either sole-owner (opt-in `archviz_pages`: a staged `/architecture/` main + `/preview/` dev +
+  root redirect) or composed as an `/architecture/` subpath into a repo's existing Pages deploy (see
+  [SPEC](../docs/SPEC.md) row 15).
   `python -m devtools.archmap <packages>` regenerates both; `--check` fails if the committed graph.json is
   stale. **DOC-GEN / ADVISORY** — it visualizes structure, it does not enforce it; directional enforcement
   stays with import-linter. (Superseded the static mermaid mirror-tree of v1.5.0 — epic m5c.)
