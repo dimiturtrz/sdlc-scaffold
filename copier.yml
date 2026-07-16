@@ -138,25 +138,26 @@ archviz_pages:
 # bug-class — `assert` is stripped under `python -O`, so a prod invariant on a bare assert silently
 # vanishes; all 3 repos honor it by convention (zero fix when clean). Tests use asserts -> S101 sits in the
 # tests per-file-ignores.
-# ADVISORY, NOT ENFORCED (moved out of the blocking union — bd 4c2 + 8ex, owner 2026-07-14): E501
-# (line-too-long) is COSMETIC — a gate is a bug-finder, not a style cop (cardiac keeps 138 lines >120 on
-# purpose). SLF001 (private-access) STRUCTURALLY conflicts with the py-top-level-function ast-grep gate:
-# that gate mandates helpers live on a class, so a same-module `Cls._helper` registry/sibling call is
-# forced, and SLF001 mis-flags it as a reach-in (ruff can't express 'same module'; 99 FP hits on mind).
-# Both are a rule that fights readability-intent (E501) or another house gate (SLF001) — so they GRADUATE
-# DOWN to the advisory `--statistics` surface (still reported, never blocks) rather than a per-repo carve-out
-# (a rule slot = o70 dodge vector, rejected). They ride `ruff_advisory_select`. `when: false`.
+# E501 + SLF001 GRADUATED advisory->enforced (owner 2026-07-16, bd 4c2/8ex reopened). Prior framing was
+# wrong on both: (a) SLF001 does NOT conflict with the py-top-level-function ast-grep gate — that gate only
+# forces "helpers live on a class", NOT static-vs-instance, NOT private naming, NOT class-name calls. A plain
+# instance method (`self._helper`) satisfies the house rule and never trips SLF001; the "99 FP on mind" came
+# from a self-imposed style (stateless statics + private + `Cls._helper`), which no rule requires. SLF001 is
+# a real reach-in signal. (b) E501 is legislated already — line-length 120 is a decided absolute; the gate
+# just enforces it. A genuine long line (URL, dense literal) takes a per-line `# noqa: E501`. Both ship clean
+# on a fresh gen (0 hits), so they BLOCK regressions from day one, same as the rest of the union.
 ruff_select:
   type: str
-  default: "F,B,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123"
+  default: "F,B,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123,E501,SLF001"
   when: false
 
-# Advisory-surfaced ruff codes (bd 4c2/8ex): reported by the non-blocking `ruff check . --statistics` run
-# (via --extend-select) but NEVER a merge gate — the honest home for a rule that's cosmetic (E501) or
-# structurally at odds with another house gate (SLF001). A repo that WANTS one hard opts in itself.
+# Extra codes surfaced by the non-blocking `ruff check . --statistics` run over the WHOLE tree (`.` vs the
+# enforced `lint_paths`) — reported, never a merge gate. Empty since E501/SLF001 graduated into the enforced
+# union (nothing is advisory-only now); the `--extend-select` is guarded off when this is blank. Kept as a
+# seam: a future code that needs whole-tree visibility before it's honest to gate rides here.
 ruff_advisory_select:
   type: str
-  default: "E501,SLF001"
+  default: ""
   when: false
 
 # Single source of truth for the pinned tool versions — rendered into ci.yml / noxfile.py /
@@ -199,5 +200,5 @@ precommit_version:
 # sdlc-devtools/ was published at. `when: false` (never asked, always the release value).
 devtools_ref:
   type: str
-  default: "v1.10.0"
+  default: "v1.11.0"
   when: false

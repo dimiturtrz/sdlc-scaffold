@@ -62,7 +62,9 @@ _SEED = {
         "class MathOps:\n"
         "    @staticmethod\n"
         "    def mean(values: list[float]) -> float:\n"
-        '        if not values:\n            msg = "mean() requires at least one value"\n            raise ValueError(msg)\n'
+        "        if not values:\n"
+        '            msg = "mean() requires at least one value"\n'
+        "            raise ValueError(msg)\n"
         "        return sum(values) / len(values)\n"
     ),
     "{pkg}/pipeline.py": (
@@ -75,10 +77,14 @@ _SEED = {
     "tests/unit/{pkg}/test_math_ops.py": (
         "import pytest\n\nfrom {pkg}.math_ops import MathOps\n\n\n"
         "def test_mean():\n    assert MathOps.mean([1.0, 3.0]) == 2.0\n\n\n"
-        'def test_mean_empty():\n    with pytest.raises(ValueError, match="at least one value"):\n        MathOps.mean([])\n'
+        "def test_mean_empty():\n"
+        '    with pytest.raises(ValueError, match="at least one value"):\n'
+        "        MathOps.mean([])\n"
     ),
     "tests/unit/{pkg}/test_pipeline.py": (
-        "from {pkg}.pipeline import Pipeline\n\n\ndef test_doubled_mean():\n    assert Pipeline.doubled_mean([1.0, 3.0]) == 4.0\n"
+        "from {pkg}.pipeline import Pipeline\n\n\n"
+        "def test_doubled_mean():\n"
+        "    assert Pipeline.doubled_mean([1.0, 3.0]) == 4.0\n"
     ),
 }
 
