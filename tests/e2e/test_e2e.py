@@ -150,6 +150,10 @@ def test_select_and_ci_wiring(project):
     assert "devtools.archmap" in ci_text and "--check" in ci_text, "archmap --check runs in CI (advisory; 2vt.4)"
     precommit_text = (path / ".pre-commit-config.yaml").read_text()
     assert "id: archmap" in precommit_text, "the archmap regen hook ships in pre-commit (2vt.4)"
+    # cma: fast unit suite bound to the PRE-PUSH stage (shift-left the CI test gate). Push-only, unit-only.
+    assert "id: unit-tests" in precommit_text, "the pre-push unit-tests hook ships (cma)"
+    assert "stages: [pre-push]" in precommit_text, "unit-tests runs at the pre-push stage, not commit (cma)"
+    assert "pytest tests/unit" in precommit_text, "the pre-push hook runs the fast unit suite (cma)"
     nox_text = (path / "noxfile.py").read_text()
     assert "def archmap(" in nox_text, "the manual archmap regen session ships in noxfile (2vt.4)"
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
@@ -462,6 +466,23 @@ def test_precommit_all_hooks(project):
     run(["uvx", PRECOMMIT, "run", "--all-files"], path)
 
 
+# The pre-push unit hook is a distinct STAGE (`--all-files` above runs commit-stage hooks only), so it needs
+# `--hook-stage pre-push` — which also proves pre-commit accepts the stage wiring.
+PREPUSH_UNIT = ["uvx", PRECOMMIT, "run", "unit-tests", "--hook-stage", "pre-push", "--all-files"]
+
+
+def test_prepush_unit_hook_blocks_broken_contract(full_project):
+    # cma: the pre-push hook runs tests/unit so a broken test CONTRACT is caught locally before the push, not
+    # after CI. The clean seed passes; renaming the public method the mirror test calls keeps lint green (an
+    # attribute call ruff can't see across modules) but breaks pytest — so the hook must block the push.
+    run(PREPUSH_UNIT, full_project)  # clean seed -> the pre-push unit hook passes
+    assert_bites(
+        full_project,
+        PREPUSH_UNIT,
+        lambda p: _replace(p / "full_pkg" / "math_ops.py", "def mean(", "def mean_x("),
+    )
+
+
 # ---- the optional gates actually BITE --------------------------------------------------------------
 
 GRAPH_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph", "--assert", "full_pkg"]
@@ -482,6 +503,14 @@ def _append(path, text):
     """Mutate: append `text` to a file; return a restore callable (for assert_bites)."""
     original = path.read_text()
     path.write_text(original + text)
+    return lambda: path.write_text(original)
+
+
+def _replace(path, old, new):
+    """Mutate: substitute `old`->`new` in a file; return a restore callable (for assert_bites)."""
+    original = path.read_text()
+    assert old in original, f"mutate target {old!r} not found in {path}"
+    path.write_text(original.replace(old, new))
     return lambda: path.write_text(original)
 
 
