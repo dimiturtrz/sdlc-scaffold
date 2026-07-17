@@ -15,7 +15,7 @@ import logging
 
 from radon.complexity import cc_visit
 
-from devtools._common import Trees
+from devtools._common import ENCODING, Trees
 
 log = logging.getLogger("devtools.complexity")
 
@@ -38,7 +38,7 @@ class Complexity:
         """(complexity, 'path:line', name) for every function across the packages, most complex first."""
         rows = []
         for path in Trees(self.packages).files():
-            for name, complexity, lineno in self._functions(path.read_text(encoding="utf-8")):
+            for name, complexity, lineno in self._functions(path.read_text(encoding=ENCODING)):
                 rows.append((complexity, f"{path}:{lineno}", name))
         return sorted(rows, key=lambda r: -r[0])
 

@@ -56,25 +56,26 @@ class MagicLiterals:
         return isinstance(value, str) and value not in _STOP and bool(_TOKEN.match(value))
 
     @staticmethod
+    def _excluded_value_ids(tree: ast.AST) -> set[int]:
+        """ids of Constant nodes NOT in a plain value position — owned by other smells/tools, so this detector
+        skips them: dict KEYS + subscript indices (`d["field"]`, schema field refs → the key-set smell) and
+        COMPARISON operands (`x == "foo"` → ruff PLR2004). Collected in ONE walk with a per-node dispatch."""
+        excluded: set[int] = set()
+        for n in ast.walk(tree):
+            if isinstance(n, ast.Dict):
+                excluded |= {id(k) for k in n.keys if k is not None}
+            elif isinstance(n, ast.Subscript) and isinstance(n.slice, ast.Constant):
+                excluded.add(id(n.slice))
+            elif isinstance(n, ast.Compare):
+                excluded |= {id(op) for op in (n.left, *n.comparators) if isinstance(op, ast.Constant)}
+        return excluded
+
+    @staticmethod
     def _string_literals(tree: ast.AST) -> list[str]:
-        """Identifier-shaped string constants in a VALUE position, EXCLUDING three contexts owned elsewhere:
-          - dict KEYS + subscript indices (`d["field"]`) — schema FIELD refs, caught by the key-set smell;
-          - COMPARISON operands (`x == "foo"`) — ruff PLR2004 owns those (with allow-magic-value-types=[]),
-            so this detector doesn't double-flag them.
-        What's left is the value/arg-position recurrence ruff can't see across files. Docstrings aren't tokens."""
-        excluded = {id(k) for n in ast.walk(tree) if isinstance(n, ast.Dict) for k in n.keys if k is not None}
-        excluded |= {
-            id(n.slice)  # `d["field"]` subscript = a field ref
-            for n in ast.walk(tree)
-            if isinstance(n, ast.Subscript) and isinstance(n.slice, ast.Constant)
-        }
-        excluded |= {
-            id(operand)  # x == "foo" -> ruff PLR2004
-            for n in ast.walk(tree)
-            if isinstance(n, ast.Compare)
-            for operand in (n.left, *n.comparators)
-            if isinstance(operand, ast.Constant)
-        }
+        """Identifier-shaped string constants in a VALUE position — the value/arg-position recurrence ruff
+        can't see across files. Dict keys, subscript indices, and comparison operands are excluded (owned by
+        the key-set smell + ruff PLR2004; see `_excluded_value_ids`). Docstrings aren't tokens."""
+        excluded = MagicLiterals._excluded_value_ids(tree)
         return [
             n.value
             for n in ast.walk(tree)

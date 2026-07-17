@@ -79,7 +79,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | `ruff_select` | curated ENFORCED union (below) | rendered into pyproject/ci/nox/pre-commit + parsed by the E2E conftest |
 | `ruff_advisory_select` | `` (empty) | extra codes for the advisory whole-tree `--statistics` run (`--extend-select`, guarded off when empty); E501/SLF001 graduated into the enforced union (bd 4c2/8ex reopened) so nothing rides here now |
 | `ruff_version` / `vulture_version` / `nox_version` / `deptry_version` / `precommit_version` | pins (below) | single-sourced into ci/nox/pre-commit + conftest |
-| `devtools_ref` | scaffold release tag (e.g. `v1.13.1`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
+| `devtools_ref` | scaffold release tag (e.g. `v1.13.2`) | the `sdlc-devtools` git-dep pin in the generated `pyproject.toml`'s `devtools` extra — bumped per release so `copier update` re-renders one pin line (bd p99) |
 | `repo_slug` | `OWNER/REPO` parsed from `repo_url` (https or scp/ssh github remote), else `""` | README CI + license badges; the base for `pages_url` |
 | `pages_url` | `https://OWNER.github.io/REPO` from `repo_slug` (empty if unparsed) | the README architecture-link base — `{pages_url}/architecture/`, rendered only when `archviz_pages` (sole-owner site); compose consumers add their own |
 

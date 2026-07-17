@@ -27,6 +27,8 @@ from pathlib import Path
 
 import grimp
 
+from devtools._common import ENCODING
+
 log = logging.getLogger("devtools.archmap")
 
 _ROOT = Path("docs/architecture")
@@ -92,7 +94,7 @@ class Archmap:
     def write_json(self, path: Path = _JSON) -> Path:
         """Write the committed graph.json (deterministic) — the diffable erosion signal + viewer input."""
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(self._json_text(), encoding="utf-8")
+        path.write_text(self._json_text(), encoding=ENCODING)
         return path
 
     def write_viewer(self, path: Path = _INDEX, project: str | None = None) -> Path:
@@ -100,12 +102,12 @@ class Archmap:
         + our engine, all inlined so the page is static (GitHub Pages / offline / no CDN). It fetches the
         sibling graph.json at load, so graph.json stays the diffable artifact and this shell is template-
         identical across repos (only the project label differs)."""
-        html = (_ARCHVIZ / "index.html.tmpl").read_text(encoding="utf-8")
+        html = (_ARCHVIZ / "index.html.tmpl").read_text(encoding=ENCODING)
         html = html.replace("{project}", project or " / ".join(self.packages))
         for marker, filename in _ASSETS.items():
-            html = html.replace(f"/*{marker}*/", (_ARCHVIZ / filename).read_text(encoding="utf-8"))
+            html = html.replace(f"/*{marker}*/", (_ARCHVIZ / filename).read_text(encoding=ENCODING))
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(html, encoding="utf-8")
+        path.write_text(html, encoding=ENCODING)
         return path
 
     def check(self) -> list[str]:
@@ -113,7 +115,7 @@ class Archmap:
         is template-owned + regenerated, so only graph.json — the diff-truth — is gated for staleness."""
         if not _JSON.exists():
             return [f"missing:  {_JSON.as_posix()}"]
-        if _JSON.read_text(encoding="utf-8") != self._json_text():
+        if _JSON.read_text(encoding=ENCODING) != self._json_text():
             return [f"stale:    {_JSON.as_posix()}"]
         return []
 

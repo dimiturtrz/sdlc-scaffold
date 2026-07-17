@@ -10,6 +10,8 @@ import tomllib
 from collections.abc import Iterator
 from pathlib import Path
 
+ENCODING = "utf-8"  # the one text encoding every engine reads/writes source + config with
+
 
 class Trees:
     """The source-tree AST walk shared by every engine that scans packages (one glob+parse home)."""
@@ -21,7 +23,7 @@ class Trees:
         """(path, parsed-AST) for every `*.py` under each root package, sorted within a package."""
         for pkg in self.packages:
             for path in sorted(Path(pkg).rglob("*.py")):
-                yield path, ast.parse(path.read_text(encoding="utf-8"))
+                yield path, ast.parse(path.read_text(encoding=ENCODING))
 
     def files(self) -> list[Path]:
         """Every `*.py` path under the root packages (no parse) — for line-count / path-only scans."""
@@ -37,4 +39,4 @@ class Pyproject:
         p = Path(pyproject)
         if not p.exists():
             return {}
-        return tomllib.loads(p.read_text(encoding="utf-8")).get("tool", {}).get(section, {})
+        return tomllib.loads(p.read_text(encoding=ENCODING)).get("tool", {}).get(section, {})
