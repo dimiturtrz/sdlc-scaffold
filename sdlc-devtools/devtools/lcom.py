@@ -89,19 +89,22 @@ class Lcom:
         )
 
     @staticmethod
+    def _raises_notimplemented(node: ast.stmt) -> bool:
+        """`raise NotImplementedError` in either form — bare name (`raise NotImplementedError`) or called
+        (`raise NotImplementedError(...)`)."""
+        if not isinstance(node, ast.Raise):
+            return False
+        if isinstance(node.exc, ast.Call) and isinstance(node.exc.func, ast.Name):
+            return node.exc.func.id == "NotImplementedError"
+        return isinstance(node.exc, ast.Name) and node.exc.id == "NotImplementedError"
+
+    @staticmethod
     def _is_trivial(fn: ast.FunctionDef) -> bool:
         """A stub/abstract body: only a docstring, `...`, `pass`, or `raise NotImplementedError`."""
         for n in fn.body:
             if isinstance(n, ast.Pass) or (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant)):
                 continue
-            if (
-                isinstance(n, ast.Raise)
-                and isinstance(n.exc, ast.Call)
-                and isinstance(n.exc.func, ast.Name)
-                and n.exc.func.id == "NotImplementedError"
-            ):
-                continue
-            if isinstance(n, ast.Raise) and isinstance(n.exc, ast.Name) and n.exc.id == "NotImplementedError":
+            if Lcom._raises_notimplemented(n):
                 continue
             return False
         return True

@@ -19,6 +19,8 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from devtools._common import ENCODING
+
 log = logging.getLogger("devtools.analytics")
 
 _AREAS = ["src"]  # generic default — pass --areas <your packages> (+ devtools)
@@ -78,7 +80,7 @@ class Analytics:
 
     @staticmethod
     def analyze_file(path: Path) -> FileStat:
-        source = path.read_text(encoding="utf-8")
+        source = path.read_text(encoding=ENCODING)
         tree = ast.parse(source)
         defs = sum(isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef) for n in ast.walk(tree))
         branches = sum(isinstance(n, _BRANCH_NODES) for n in ast.walk(tree))
@@ -100,7 +102,7 @@ class Analytics:
 
     def _test_lines(self) -> int:
         return sum(
-            self._code_lines(p.read_text(encoding="utf-8"))
+            self._code_lines(p.read_text(encoding=ENCODING))
             for p in (self.repo / "tests").rglob("*.py")
             if "__pycache__" not in p.parts
         )

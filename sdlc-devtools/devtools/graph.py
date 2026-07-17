@@ -28,7 +28,7 @@ from pathlib import Path
 import grimp
 import networkx as nx
 
-from devtools._common import Pyproject, Trees
+from devtools._common import ENCODING, Pyproject, Trees
 from devtools.omit import Omit
 
 log = logging.getLogger("devtools.graph")
@@ -79,7 +79,7 @@ class ImportGraph:
 
     def file_lines(self) -> list[tuple[str, int]]:
         """(path, line-count) for every .py under the root packages — the file-shape axis the graph can't see."""
-        return [(str(f), f.read_text(encoding="utf-8").count("\n") + 1) for f in Trees(self.packages).files()]
+        return [(str(f), f.read_text(encoding=ENCODING).count("\n") + 1) for f in Trees(self.packages).files()]
 
     @staticmethod
     def _god_modules(g: nx.DiGraph, degree: int) -> list[str]:
@@ -118,14 +118,20 @@ class ImportGraph:
             for f in sorted(Path(pkg).rglob("*.py")):
                 if f.name in _STRUCTURAL or Omit.matches_omit(f.as_posix(), omit):
                     continue
-                if layout == "flat":
-                    if f"test_{f.name}" not in flat_names:
-                        out.append(f"{f.as_posix()} — no test_{f.name} anywhere under tests/")
-                else:
-                    mirror = Path(test_root) / f.parent / f"test_{f.name}"
-                    if not mirror.exists():
-                        out.append(f"{f.as_posix()} — no mirrored {mirror.as_posix()}")
+                if msg := self._missing_test(f, layout, test_root, flat_names):
+                    out.append(msg)
         return out
+
+    @staticmethod
+    def _missing_test(f: Path, layout: str, test_root: str, flat_names: set[str]) -> str | None:
+        """The 'no unit test' message for logic module `f` under `layout`, or None if it's covered — `flat`:
+        a `test_<name>.py` exists anywhere under tests/; `mirror`: the strict path-mirror test exists."""
+        if layout == "flat":
+            if f"test_{f.name}" in flat_names:
+                return None
+            return f"{f.as_posix()} — no test_{f.name} anywhere under tests/"
+        mirror = Path(test_root) / f.parent / f"test_{f.name}"
+        return None if mirror.exists() else f"{f.as_posix()} — no mirrored {mirror.as_posix()}"
 
     @staticmethod
     def _undersized(files: list[tuple[str, int]], mn: int) -> list[str]:
@@ -184,7 +190,7 @@ class ImportGraph:
         f = ImportGraph._module_file(mod)
         if f is None:
             return None
-        classes = [n for n in ast.walk(ast.parse(f.read_text(encoding="utf-8"))) if isinstance(n, ast.ClassDef)]
+        classes = [n for n in ast.walk(ast.parse(f.read_text(encoding=ENCODING))) if isinstance(n, ast.ClassDef)]
         if not classes:
             return None
         return sum(ImportGraph._is_abstract(c) for c in classes) / len(classes)
