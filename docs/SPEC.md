@@ -5,10 +5,16 @@ Derived from the 3 real repos (cardiac-seg / mindscape / synthscape), read-only 
 
 ## Design model
 
-**What a gate defends.** Every gate protects one or more of **seven properties** — Correctness · Consistency
-· Minimality · Simplicity · Cohesion · Structure · Completeness — each at a **radius** (R1 line / R2 module /
-R3 graph, plus Completeness as the orthogonal behavioural axis). The property↔tool map is many-to-many. The
-README owns that taxonomy (the *why*); this file owns the *what-exactly* (names, values, mechanics).
+**What a gate defends.** Every gate protects one or more of **four structural properties** — Correctness ·
+Consistency · Minimality · Structure — each at a **radius** = the minimum code a check must READ to fire
+(R1 unit / R2 module / R3 system, the structural mirror of the test pyramid). Plus an orthogonal **Security**
+axis (ruff `S` · pip-audit). Three deliberate calls: **Minimality** is pure removal (delete/dedupe — the
+economy axis); **Structure** absorbs both old *Simplicity* (split the over-complex) and *Cohesion*
+(extract the missing object / LCOM) — every *reshape* fix, intra-unit up to the graph, is one shape axis; and
+**Completeness** (math sense: every required subcase proven) is **absent** — it needs a requirements spec this
+scaffold has no access to, so coverage floors test-presence under Correctness, not requirement-completeness.
+The property↔tool map is many-to-many. The README owns that taxonomy (the *why*); this file owns the
+*what-exactly* (names, values, mechanics).
 
 A **gate** = engine + parameters + invocation. Two axes decide delivery:
 - **engine owner**: vendored (ruff/vulture/coverage/ast-grep/jscpd) → pinned version; ours
