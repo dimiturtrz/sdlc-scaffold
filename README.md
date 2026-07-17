@@ -1,6 +1,6 @@
 # sdlc-scaffold
 
-**v1.2** — feature-complete guardrail set (all seven properties gated), stable copier contract, fully
+**v1.2** — feature-complete guardrail set (the full property set gated), stable copier contract, fully
 **self-gating** (the analyzers pass the same in-a-class + test-mirror rules they impose), and the analyzers
 now ship as a **pinned package** (`sdlc-devtools`) rather than vendored source — an engine update is a
 one-line pin bump on `copier update`, no source churn in consumer PRs. In use by three converged repos.
@@ -32,26 +32,31 @@ The design rests on three commitments:
 ## The guardrail pyramid
 
 The test pyramid organizes tests by **scope** — unit → integration → e2e, many-cheap → few-expensive.
-Structural guardrails stratify the same way, by **radius of analysis**: how much code a check must read to
-fire. Each tier sees things the tiers below it structurally cannot, and the gradient tracks cost-to-fix and
+Structural guardrails stratify the same way, by **radius of analysis** = the minimum code a check must READ
+to fire (R1 unit / R2 module / R3 system — the structural mirror of the test pyramid's unit→integration→e2e).
+Each tier sees things the tiers below it structurally cannot, and the gradient tracks cost-to-fix and
 blast-radius — a magic number is a local nit; an import cycle is architectural debt.
 
 ```
         ┌────────────────────────────────────────────────────┐
-  R3    │  ACROSS THE MODULE GRAPH    (whole corpus)          │
- graph  │  Structure  — cycles · fan-in/out · layering ·      │
-        │               test tree mirrors source              │
-        │  Minimality — cross-file duplication · vocab drift   │
+  R3    │  ACROSS THE SYSTEM GRAPH    (whole corpus)          │
+ system │  Structure  — cycles · fan-in/out · layering ·      │
+        │               test-mirror (Correctness) · god-file · │
+        │               data clumps                            │
+        │  Minimality — cross-file dup · vocab drift · dead    │
         ├────────────────────────────────────────────────────┤
-  R2    │  WITHIN A MODULE / CLASS    (one file)              │
- module │  Cohesion   — LCOM · latent state · data clumps     │
-        │  Simplicity — god-file       Minimality — dead code │
+  R2    │  WITHIN A MODULE / CLASS    (one file, self-cont.)  │
+ module │  Structure  — LCOM cohesion · latent shared state    │
         ├────────────────────────────────────────────────────┤
   R1    │  WITHIN A LINE / FUNCTION   (one construct)         │
-  line  │  Correctness — real-bug lints   Simplicity — cyclo. │
-        │  Minimality  — magic values     Consistency — style │
+  unit  │  Correctness — real-bug lints · shapes              │
+        │  Structure   — cyclomatic complexity                │
+        │  Minimality  — magic values                         │
+        │  Consistency — style / naming                       │
         └────────────────────────────────────────────────────┘
-   ⟂  Completeness  (behavioural, not spatial): coverage floor — is the behaviour exercised at all?
+   ⟂  Security      (supply-chain): ruff S unsafe-construct · pip-audit known-CVE
+   ⟂  Completeness  (math: all required subcases) — ABSENT, no requirements spec; coverage floors
+                    test presence under Correctness, not requirement-completeness
 ```
 
 Running many small checks instead of one is the point: a linter reading a single line can't see an import
@@ -61,8 +66,12 @@ often recurs at several radii (a duplicated fact is a Minimality failure whether
 
 ## The properties — and the tools that enforce them
 
-The checks decompose into **seven properties** — the *what is protected*. The honest test that each is
-distinct: each has its own **remediation verb** (if two properties are fixed the same way, they're one). The
+The checks decompose into **four structural properties** (plus an orthogonal **Security** axis) — the *what
+is protected*. The honest test that each is distinct: a distinct **kind of defect** it defends. Two are the
+behaviour-preserving-cleanup pair, split by *remove vs reshape*: **Minimality** = economy (how *much* code —
+delete dead, dedupe) and **Structure** = shape (how it's *arranged* — split the over-complex, extract the
+missing object, redirect a bad edge), the latter spanning intra-unit cohesion (LCOM) up to the module graph.
+The
 map to tools is many-to-many by design — a property abstracts over the tools that enforce it; some tools
 serve two properties (a data clump is both a missing object and a duplication). Tools are **vendored**
 (pinned third-party binaries) or **ours** — small AST/graph analyzers shipped as source under `devtools/`
@@ -70,24 +79,26 @@ and unit-tested in `tests/unit/`, so a broken check can't pass silently.
 
 | Property | Predicate — what it asserts | Fix | Tools | R |
 |---|---|---|---|---|
-| **Correctness** | no line does the wrong thing, swallows an error, or is unreachable-as-a-bug | *repair* | ruff `F/B/BLE/S` · vulture · `shape_contracts` (ML) | R1 |
+| **Correctness** | no construct is provably broken (bad reference, swallowed error, wrong shape); every logic module carries a test, exercised to a coverage floor | *repair / test* | ruff `F/B/BLE` · `shape_contracts` (ML) · test-mirror (`graph.py`) · coverage | R1, R3 |
 | **Consistency** | one convention, no drift — formatting, import order, naming | *conform* | ruff `format`/`I`/`N`/`RUF` | R1 |
-| **Minimality** | nothing dead, nothing duplicated — each fact in exactly one home | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` · deptry (unused/undeclared deps) | R1–R3 |
-| **Simplicity** | each unit small + low-branching enough to hold in the head | *split / flatten* | ruff `C901/PLR09xx` · god-file (`graph.py`) | R1–R2 |
-| **Cohesion** | a unit is one idea — no hidden missing abstraction | *extract an object* | `lcom` · `state_candidates` · `data_clumps` · ast-grep shape | R2 |
-| **Structure** | the module graph is well-formed: acyclic, directional, bounded coupling, tests mirror source | *redirect / break edges* | `graph.py --assert` · import-linter · `archmap` (viz) | R3 |
-| **Completeness** | behaviour is exercised to a stated floor | *add tests* | coverage | ⟂ |
+| **Minimality** | nothing that shouldn't exist — no dead code, no duplication (each fact one home) | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` · deptry (unused/undeclared) | R1, R3 |
+| **Structure** | code is well-SHAPED at every radius — units right-sized + low-branching (not god-files), cohesive (one idea, no missing object), and the graph acyclic / directional / bounded-coupling / test-mirrored | *split / extract / redirect / flatten* | ruff `C901/PLR09xx` · god-file · `lcom` · `state_candidates` · `data_clumps` · ast-grep shape · `graph.py --assert` · import-linter · `archmap` (viz) | R1–R3 |
+| **Security** (orthogonal) | no unsafe construct, no known-CVE dependency | *patch / pin* | ruff `S` · pip-audit | ⟂ |
 
-Seven predicates, seven distinct fixes — *repair, conform, delete, split, extract, redirect, test*. The
-vocabulary is a deliberate **bridge** between formal-methods terms (Correctness — Hoare; Completeness &
-Consistency — logic; Minimality — Occam / DRY; Simplicity — McCabe / Kolmogorov) and the empirical
-design lineage (Cohesion — Constantine, LCOM; Structure — Parnas, Martin). It doesn't claim a linter proves
+Four structural properties, fixed by *repair/test, conform, delete/dedupe, split/extract/redirect*. The
+vocabulary is a deliberate **bridge** between formal-methods terms (Correctness — Hoare; Consistency —
+logic; Minimality — Occam / DRY) and the empirical design lineage (Structure — McCabe / Kolmogorov for
+per-unit complexity, Constantine / LCOM for cohesion, Parnas / Martin for the graph). **Completeness** (the math sense: every required subcase
+proven) is deliberately ABSENT — it needs a requirements spec this scaffold has no access to; coverage
+enforces test *presence* + a floor (a Correctness verification layer), NOT requirement-completeness, and we
+do not overclaim it. **Security** (unsafe construct + known-CVE dep) is orthogonal to the four structural
+axes — same bucket as pip-audit's supply-chain scan. It doesn't claim a linter proves
 theorems; it claims these are the *named properties* the checks defend. Each is **blocking** where the
 threshold is objective (cycles, god-files, undefined names) and **advisory** where it's a judgment call
 (cohesion ranking, duplication, literal frequency, format); advisory checks graduate to blocking once clean.
-One property axis is **domain-gated**: an `ml` project also ships `shape_contracts` (a public array/tensor
-boundary must carry a **jaxtyping** shape — a checked contract, not a silent assumption; make it live at a
-call with a `@shapecheck` decorator) — meaningless off a tensor codebase, so a domain-neutral scaffold omits it.
+One property axis is **domain-gated**: an `ml` project also ships `shape_contracts` (an array/tensor
+boundary on any function must carry a **jaxtyping** shape — a checked contract, not a silent assumption; make
+it live at a call with a `@shapecheck` decorator) — meaningless off a tensor codebase, so a domain-neutral scaffold omits it.
 
 **Prior art — and the moat.** Most axes here have mature equivalents, and the honest pitch says so: LCOM
 cohesion ([`cohesion`](https://pypi.org/project/cohesion/), [ArchUnitPython](https://pypi.org/project/archunit/)),
