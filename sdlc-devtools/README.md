@@ -11,7 +11,7 @@ bump (`devtools_ref`), not a re-vendored source diff:
 
 ```toml
 # pyproject.toml (rendered by copier)
-devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@v1.13.2#subdirectory=sdlc-devtools
+devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@v1.14.0#subdirectory=sdlc-devtools
 ```
 
 The import name stays `devtools`, so every gate invocation is unchanged.
@@ -40,10 +40,12 @@ The import name stays `devtools`, so every gate invocation is unchanged.
   (drift-prone implicit record → dataclass/TypedDict). **ADVISORY** — a ranked report, always exit 0. There
   is no honest universal ceiling (0 too strict, N arbitrary), so it surfaces candidates and the reviewer
   decides; a repo that wants to enforce a budget adds a legislated config knob at that point.
-- **shape_contracts.py** — the ML-domain shape gate: a public array/tensor boundary (`np.ndarray`/`Tensor`
-  or a `[tool.shape_contracts] array_aliases` name) must carry a **jaxtyping** shape
-  (`Float[Tensor, "b c h w"]`). `python -m devtools.shape_contracts <packages> --assert` — ENFORCED (a
-  clean binary rule: typed-or-not, not a threshold seeded from current). Wired ML-only by the scaffold.
+- **shape_contracts.py** — the ML-domain shape gate: any array/tensor slot (`np.ndarray`/`Tensor` or a
+  `[tool.shape_contracts] array_aliases` name) on ANY function — class methods public AND private, plus
+  module-level functions (bd drn) — must carry a **jaxtyping** shape (`Float[Tensor, "b c h w"]`). Shapes
+  are visibility-independent; only array slots flag, so scalar-only signatures are untouched.
+  `python -m devtools.shape_contracts <packages> --assert` — ENFORCED (a clean binary rule: typed-or-not,
+  not a threshold seeded from current). Wired ML-only by the scaffold.
 - **complexity.py** — cyclomatic complexity on **radon**'s CC (McCabe), ranked report + current max.
   **ADVISORY** (exit 0). The FIXED complexity gate is ruff `C901`/`PLR09xx` (CC>10, legislated); this just
   surfaces the ranking as reviewer signal.

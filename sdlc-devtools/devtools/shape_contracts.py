@@ -1,18 +1,21 @@
-"""Shape-contract coverage gate (ML domain): a public boundary function whose parameter or return is an
-ARRAY/TENSOR type must carry a jaxtyping annotation, so the shape is a CHECKED contract and not a silent
-assumption. The mechanical ratchet behind a codebase-wide shape rollout — it SURFACES bare-array
-boundaries and the author fixes each by giving it a jaxtyping type (a dtype-only `"..."` is the honest
-answer for a shape-agnostic reduction).
+"""Shape-contract coverage gate (ML domain): any function whose parameter or return is an ARRAY/TENSOR
+type must carry a jaxtyping annotation, so the shape is a CHECKED contract and not a silent assumption.
+The mechanical ratchet behind a codebase-wide shape rollout — it SURFACES bare-array boundaries and the
+author fixes each by giving it a jaxtyping type (a dtype-only `"..."` is the honest answer for a
+shape-agnostic reduction).
 
 What counts as an array annotation: `np.ndarray` / `numpy.ndarray`, `torch.Tensor` / `Tensor`, or a
 repo's array aliases (`[tool.shape_contracts] array_aliases` — e.g. `Volume`/`Mask`/`Image`). What
 SATISFIES the contract: a jaxtyping subscript (`Float`/`Int`/`Integer`/`Bool`/`Shaped`/… `[array, "…"]`).
-A bare array annotation (or an array alias) on a public method is flagged.
+A bare array annotation (or an array alias) is flagged.
 
-Scope: only PUBLIC methods (name not underscore-prefixed) — the boundaries. Private helpers, dunders, and
-CLI `add_args`/`run` handlers are exempt (interior / framework signatures). Ships ADVISORY (report-only,
-exit 0). A repo opts into the blocking ratchet with `--assert` once its tree is clean — a new bare-array
-boundary then fails the merge.
+Scope: EVERY function — class methods (public AND private) AND module-level functions (bd drn). Shapes are
+unrelated to visibility: a bare tensor on a private helper is as unchecked as on a public boundary, so
+public/private is not a shape axis. Only array/tensor slots are ever flagged, so a scalar-only signature
+(a private int helper) is untouched — the backlog stays bounded to real array surfaces. Exempt: CLI
+`add_args`/`run` dispatcher handlers (framework signatures — `args` is a Namespace). Ships ADVISORY
+(report-only, exit 0). A repo opts into the blocking ratchet with `--assert` once its tree is clean — a
+new bare-array boundary then fails the merge.
 
     python -m devtools.shape_contracts <packages>            # advisory report
     python -m devtools.shape_contracts <packages> --assert   # blocking (exit 1 on any bare boundary)
@@ -36,7 +39,8 @@ _EXEMPT = {"add_args", "run"}  # CLI dispatcher handlers (framework signature, a
 
 
 class ShapeContracts:
-    """Flag public array/tensor boundaries lacking a jaxtyping shape across the scanned packages."""
+    """Flag array/tensor boundaries lacking a jaxtyping shape across the scanned packages — every function,
+    methods and module-level alike, public and private (shapes are visibility-independent)."""
 
     def __init__(self, packages: list[str]) -> None:
         self.packages = packages
@@ -93,20 +97,28 @@ class ShapeContracts:
         ]
 
     @staticmethod
-    def _public(fn: ast.FunctionDef) -> bool:
-        return not fn.name.startswith("_") and fn.name not in _EXEMPT
+    def _functions(tree: ast.Module) -> list[tuple[str, ast.FunctionDef]]:
+        """(qualname, fn) for every function shapes are enforced on: class methods (`Class.method`, public
+        AND private) plus module-level functions (bd drn). CLI dispatcher handlers are the sole exemption."""
+        out: list[tuple[str, ast.FunctionDef]] = []
+        for cls in ast.walk(tree):
+            if isinstance(cls, ast.ClassDef):
+                out += [
+                    (f"{cls.name}.{m.name}", m)
+                    for m in cls.body
+                    if isinstance(m, ast.FunctionDef) and m.name not in _EXEMPT
+                ]
+        out += [(f.name, f) for f in tree.body if isinstance(f, ast.FunctionDef) and f.name not in _EXEMPT]
+        return out
 
     @staticmethod
     def _analyze(tree: ast.Module, names: set[str]) -> list[tuple[int, str, list[str]]]:
-        """(lineno, qualname, bare-slots) for every public method in a tree with a bare-array boundary."""
+        """(lineno, qualname, bare-slots) for every function in a tree with a bare-array boundary."""
         out = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                for m in node.body:
-                    if isinstance(m, ast.FunctionDef) and ShapeContracts._public(m):
-                        slots = ShapeContracts._bare_array_slots(m, names)
-                        if slots:
-                            out.append((m.lineno, f"{node.name}.{m.name}", slots))
+        for qual, fn in ShapeContracts._functions(tree):
+            slots = ShapeContracts._bare_array_slots(fn, names)
+            if slots:
+                out.append((fn.lineno, qual, slots))
         return out
 
     def scan(self, names: set[str] | None = None) -> list[tuple[str, int, str, list[str]]]:

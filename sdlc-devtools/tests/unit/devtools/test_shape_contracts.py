@@ -29,12 +29,26 @@ def test_shape_contracts_jaxtyping_satisfies(make_cls):
     assert ShapeContracts._bare_array_slots(_fn(make_cls, src), names) == [], "jaxtyping boundaries satisfy"
 
 
-def test_shape_contracts_private_and_scalar_exempt(make_cls):
+def test_shape_contracts_private_scanned_scalar_exempt(make_cls):
     names = {"ndarray", "Tensor"}
+    # bd drn: shapes are visibility-independent — a bare tensor on a PRIVATE helper is flagged like a public one
     private = _fn(make_cls, "class C:\n    def _h(self, x: np.ndarray): ...\n")
+    assert ShapeContracts._bare_array_slots(private, names) == ["x"], "private array slots are unchecked too"
     scalar = _fn(make_cls, "class C:\n    def go(self, n: int) -> float: ...\n")
-    assert ShapeContracts._public(private) is False, "underscore-prefixed methods are interior, not boundaries"
     assert ShapeContracts._bare_array_slots(scalar, names) == [], "a non-array signature is not a boundary"
+
+
+def test_shape_contracts_analyze_covers_private_and_module_level(make_cls):
+    names = {"ndarray", "Tensor"}
+    # a private method, a module-level function, and an exempt CLI handler in one tree
+    tree = ast.parse(
+        "class C:\n"
+        "    def _h(self, x: np.ndarray): ...\n"
+        "    def run(self, a: Tensor): ...\n"  # _EXEMPT dispatcher handler -> skipped
+        "def top(y: Tensor) -> np.ndarray: ...\n"  # module-level -> scanned
+    )
+    found = {name for _, name, _ in ShapeContracts._analyze(tree, names)}
+    assert found == {"C._h", "top"}, "private method + module-level func flagged; the exempt run() handler is not"
 
 
 def test_shape_contracts_alias_config_from_pyproject(make_cls, tmp_path):
