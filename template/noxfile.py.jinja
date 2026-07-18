@@ -140,6 +140,9 @@ def lint(session: nox.Session) -> None:
 {% endif %}    # ENFORCED dependency hygiene — deptry: undeclared (DEP001) / unused (DEP002) / transitive (DEP003)
     # imports. `--with` adds deptry to the run so it reads installed dist metadata; config in [tool.deptry].
     session.run("uv", "run", "--with", "deptry=={{ deptry_version }}", "deptry", ".", external=True)
+    # ENFORCED static type gate — pyrefly strict: every def annotated + the annotations check. `--with` adds
+    # pyrefly to the synced run so it reads installed dep stubs (pydantic/numpy); scope=lint_paths (LINT_LAYERS).
+    session.run("uv", "run", "--with", "pyrefly=={{ pyrefly_version }}", "pyrefly", "check", *LINT_LAYERS, external=True)
 
 
 @nox.session(venv_backend="none")

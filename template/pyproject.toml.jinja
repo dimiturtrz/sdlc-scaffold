@@ -83,6 +83,32 @@ ignore-names = [{% if enable_ml %}"X*", "Y*", "B", "C", "H", "W", "F"{% endif %}
 # that must never raise). Add lines here; copier update won't overwrite this region.
 # <<< LOCAL-SLOT: per-file-ignores
 
+# Static type gate (pyrefly, ENFORCED): every def carries annotations (a bare param fails
+# implicit-any-parameter) AND the annotations must CHECK (a mismatch fails bad-return / bad-argument-type)
+# — the R1 type-grade Correctness leg ruff's lint codes can't reach. `preset = "strict"` bundles
+# strict-callable-subtyping + implicit-any + missing-override + unused-ignore. Runs env-aware
+# (`uv run --with pyrefly`) so it reads installed dep stubs (pydantic/numpy ship py.typed). A fresh gen's
+# seed is fully typed (0 errors), so it BLOCKS from day one as a regression guard — no advisory ratchet.
+[tool.pyrefly]
+preset = "strict"
+check-unannotated-defs = true
+search-path = ["."]
+# Untyped third-party imports ERROR by default (stricter than mypy's silent Any). A dep that ships no
+# py.typed / stubs goes here to be treated as Any — a per-repo FACT vocab, parallel to the deptry/vulture
+# slots.{% if enable_ml %} jaxtyping shape strings (`Float[Array, "b n"]`) are a runtime-checked DSL
+# pyrefly's front-end models only partially; if one surfaces a type error, add its module here or suppress
+# at the line with `# pyrefly: ignore[<code>]`.{% endif %}
+# >>> LOCAL-SLOT: pyrefly-ignore-imports — this repo's untyped-dependency modules (treated as Any)
+ignore-missing-imports = []
+# <<< LOCAL-SLOT: pyrefly-ignore-imports
+
+# Tests inject unannotated fixture params (pytest fills them) — mirror the ruff `tests/**` carve-out so the
+# strict annotation requirement doesn't force a type onto every fixture signature. Scope is packages
+# (`lint_paths`) anyway, but this keeps a bare `pyrefly check` clean too.
+[[tool.pyrefly.sub-config]]
+matches = "**/tests/**"
+check-unannotated-defs = false
+
 [tool.vulture]
 min_confidence = 60
 ignore_decorators = ["@model_validator", "@field_validator", "@field_serializer", "@model_serializer", "@computed_field"]

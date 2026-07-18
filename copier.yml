@@ -193,6 +193,11 @@ precommit_version:
   default: "4.6.0"
   when: false
 
+pyrefly_version:
+  type: str
+  default: "1.1.1"
+  when: false
+
 # The devtools ANALYZERS ship as an installed package (sdlc-devtools), pinned by this scaffold TAG in the
 # generated pyproject's `devtools` extra (`sdlc-devtools @ git+…@{{ devtools_ref }}#subdirectory=sdlc-devtools`).
 # Bumping this = the engine-update mechanism: a new scaffold release retags, `copier update` re-renders the
@@ -200,5 +205,5 @@ precommit_version:
 # sdlc-devtools/ was published at. `when: false` (never asked, always the release value).
 devtools_ref:
   type: str
-  default: "v1.14.0"
+  default: "v1.15.0"
   when: false

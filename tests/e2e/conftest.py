@@ -26,6 +26,7 @@ PRECOMMIT = f"pre-commit@{copier_default('precommit_version')}"
 # deptry runs env-aware via `uv run --with` (PEP508 pin, not the uvx `@` form) so it reads installed metadata.
 DEPTRY = f"deptry=={copier_default('deptry_version')}"
 PIP_AUDIT = f"pip-audit=={copier_default('pip_audit_version')}"
+PYREFLY = f"pyrefly=={copier_default('pyrefly_version')}"
 # Curated-narrow select — single-sourced from copier.yml's `ruff_select` (must match the template).
 SELECT = copier_default("ruff_select")
 
