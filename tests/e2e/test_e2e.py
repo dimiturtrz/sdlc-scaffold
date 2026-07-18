@@ -17,6 +17,7 @@ from conftest import (
     NOX,
     PIP_AUDIT,
     PRECOMMIT,
+    PYREFLY,
     RUFF,
     SELECT,
     VULTURE,
@@ -161,6 +162,14 @@ def test_select_and_ci_wiring(project):
     assert "pytest tests/unit" in precommit_text, "the pre-push hook runs the fast unit suite (cma)"
     nox_text = (path / "noxfile.py").read_text()
     assert "def archmap(" in nox_text, "the manual archmap regen session ships in noxfile (2vt.4)"
+    # i5q: the pyrefly strict type gate — [tool.pyrefly] config + wired into all three runners, ENFORCED.
+    # The R1 type-grade Correctness leg; env-aware (`uv run --with pyrefly`) so it reads installed dep stubs.
+    assert "[tool.pyrefly]" in pyproject_text, "the pyrefly strict type config ships (i5q)"
+    assert 'preset = "strict"' in pyproject_text, "pyrefly runs the strict preset (i5q)"
+    assert "check-unannotated-defs = true" in pyproject_text, "strict requires annotations everywhere (i5q)"
+    assert "pyrefly check" in ci_text, "the pyrefly type gate is wired into CI (i5q)"
+    assert "pyrefly check" in precommit_text, "the pyrefly type gate ships as a pre-commit hook (i5q)"
+    assert '"pyrefly", "check"' in nox_text, "the pyrefly type gate runs in nox lint (i5q)"
     assert f"check {pkg} --select" in ci_text, "ruff enforced scans lint_paths (= packages by default)"
     # skr GAP1: an explicit --select BYPASSES pyproject [tool.ruff.lint] ignore, so the enforced-lint CLI
     # repeats the ml F722 waiver (jaxtyping dim strings) — else a fresh ml gen red-CIs on its own config.
@@ -443,6 +452,14 @@ def test_deptry_enforced_runs_clean(project):
     run(["uv", "run", "--with", DEPTRY, "deptry", "."], path)
 
 
+def test_pyrefly_enforced_runs_clean(project):
+    name, path = project
+    # ENFORCED static type gate (i5q). The seed (MathOps/Pipeline) is fully annotated + type-correct, so a
+    # fresh gen passes with 0 errors — it blocks from day one as a regression guard (no advisory ratchet).
+    # Env-aware (`uv run --with pyrefly`) so it resolves the installed dep stubs (pydantic/numpy py.typed).
+    run(["uv", "run", "--with", PYREFLY, "pyrefly", "check", *layers(name)], path)
+
+
 def test_shape_contracts_enforced_runs_clean(project):
     name, path = project
     if COMBOS[name]["domain"] != "ml":
@@ -594,6 +611,20 @@ def test_deptry_catches_undeclared_import(full_project):
         full_project,
         ["uv", "run", "--with", DEPTRY, "deptry", "."],
         lambda p: _append(p / "full_pkg" / "math_ops.py", "\n\nimport requests  # undeclared\n"),
+    )
+
+
+def test_pyrefly_catches_type_error(full_project):
+    # the type gate bites (i5q): a return that doesn't match the declared type is bad-return — a defect ruff's
+    # lint codes can't see (it needs cross-annotation type inference). Strict also forces annotations, so a
+    # bare param would fail implicit-any-parameter; a bad return is the cleaner single-signal injection.
+    assert_bites(
+        full_project,
+        ["uv", "run", "--with", PYREFLY, "pyrefly", "check", "full_pkg"],
+        lambda p: _append(
+            p / "full_pkg" / "math_ops.py",
+            "\n\nclass TypeBug:\n    @staticmethod\n    def bad(x: int) -> str:\n        return x + 1\n",
+        ),
     )
 
 

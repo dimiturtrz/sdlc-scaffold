@@ -49,7 +49,7 @@ blast-radius — a magic number is a local nit; an import cycle is architectural
  module │  Structure  — LCOM cohesion · latent shared state    │
         ├────────────────────────────────────────────────────┤
   R1    │  WITHIN A LINE / FUNCTION   (one construct)         │
-  unit  │  Correctness — real-bug lints · shapes              │
+  unit  │  Correctness — real-bug lints · types · shapes      │
         │  Structure   — cyclomatic complexity                │
         │  Minimality  — magic values                         │
         │  Consistency — style / naming                       │
@@ -79,7 +79,7 @@ and unit-tested in `tests/unit/`, so a broken check can't pass silently.
 
 | Property | Predicate — what it asserts | Fix | Tools | R |
 |---|---|---|---|---|
-| **Correctness** | no construct is provably broken (bad reference, swallowed error, wrong shape); every logic module carries a test, exercised to a coverage floor | *repair / test* | ruff `F/B/BLE` · `shape_contracts` (ML) · test-mirror (`graph.py`) · coverage | R1, R3 |
+| **Correctness** | no construct is provably broken (bad reference, swallowed error, wrong shape); every logic module carries a test, exercised to a coverage floor | *repair / test* | ruff `F/B/BLE` · `pyrefly` (strict types) · `shape_contracts` (ML) · test-mirror (`graph.py`) · coverage | R1, R3 |
 | **Consistency** | one convention, no drift — formatting, import order, naming | *conform* | ruff `format`/`I`/`N`/`RUF` | R1 |
 | **Minimality** | nothing that shouldn't exist — no dead code, no duplication (each fact one home) | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` · deptry (unused/undeclared) | R1, R3 |
 | **Structure** | code is well-SHAPED at every radius — units right-sized + low-branching (not god-files), cohesive (one idea, no missing object), and the graph acyclic / directional / bounded-coupling / test-mirrored | *split / extract / redirect / flatten* | ruff `C901/PLR09xx` · god-file · `lcom` · `state_candidates` · `data_clumps` · ast-grep shape · `graph.py --assert` · import-linter · `archmap` (viz) | R1–R3 |
