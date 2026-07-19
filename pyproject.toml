@@ -12,7 +12,10 @@ requires-python = ">=3.11"
 # (sdlc-devtools/, tested there), so the scaffold's own suite needs only pytest. The dogfood e2e shells
 # into the package's `uv run` for its gates.
 [dependency-groups]
-dev = ["pytest>=8"]
+# jinja2: the unit suite RENDERS template/*.py.jinja and format-checks the result (bd y52), so a template
+# whose OUTPUT drifts from ruff is caught in milliseconds instead of ~90s later in the e2e. copier itself
+# runs via `uvx` in the e2e (an isolated tool env), so its jinja2 is not importable here — this is ours.
+dev = ["pytest>=8", "jinja2>=3"]
 
 # uv workspace: the repo is two products in one tree — the scaffold (this project) + the analyzer package
 # (sdlc-devtools/). Declaring it a member gives one shared lock + in-place editable dev, and makes eventual

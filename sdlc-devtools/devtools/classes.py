@@ -9,7 +9,10 @@ A class is a SATELLITE when it is:
   - an ERROR — its name or a base ends in `Error`/`Exception`. Name-matching is reliable HERE because the
     shipped ruff select carries pep8-naming `N818`, which forces every exception name to end in `Error`;
     one gate makes the other's heuristic sound.
-  - a DATACLASS or an ENUM — a value/config object, not behaviour.
+  - a DECLARED DATA CONTAINER or an ENUM — a value/config object, not behaviour. "Declared" is the test,
+    not any single library: `@dataclass`, attrs (`@define`/`@frozen`), pydantic `BaseModel`, `NamedTuple`
+    and `TypedDict` are one concept behind different syntax. Naming vocabularies (`*Cfg`, `*Config`) are
+    deliberately NOT used — see `_is_data_container`.
   - a SUBCLASS OF A SAME-FILE CLASS — a local specialisation, not an independent peer.
 Everything else is a PRIMARY. Two primaries in one file = two subjects = the split gate fires; zero is
 fine (a pure error/config module has no subject of its own).
@@ -33,7 +36,12 @@ PRIMARY = "primary"
 SATELLITE = "satellite"
 _ERROR_SUFFIXES = ("Error", "Exception")  # N818 guarantees the convention this leans on
 _ENUM_BASES = {"Enum", "StrEnum", "IntEnum", "Flag", "IntFlag", "ReprEnum"}
-_DATACLASS_DECORATORS = {"dataclass"}
+# A data container is DECLARED, and the declaration is what identifies it — not any one library's spelling.
+# `dataclass` covers the stdlib and pydantic.dataclasses; define/frozen/mutable/attrs are the attrs API.
+# attrs' legacy `@attr.s` is deliberately absent: it reduces to the trailing name `s`, and admitting that
+# would match any `@x.s` — a worse rule than the gap. The modern define/frozen/mutable API is covered.
+_DATA_DECORATORS = {"dataclass", "define", "frozen", "mutable", "attrs"}
+_DATA_BASES = {"BaseModel", "NamedTuple", "TypedDict"}
 
 
 class ClassIndex:
@@ -49,8 +57,20 @@ class ClassIndex:
         return any(n.endswith(_ERROR_SUFFIXES) for n in names)
 
     @staticmethod
-    def _is_dataclass(cls: ast.ClassDef) -> bool:
-        return any(Names.decorator(d) in _DATACLASS_DECORATORS for d in cls.decorator_list)
+    def _is_data_container(cls: ast.ClassDef) -> bool:
+        """A record DECLARED rather than implemented — fields plus generated behaviour, no subject of its own.
+
+        Deliberately mechanism-plural. Testing `@dataclass` alone tested one MECHANISM rather than the
+        concept, so a pydantic model scored as PRIMARY — and pydantic is both the config idiom in every
+        consumer repo and a dependency this very template ships (bd az9).
+
+        Excludes the *Cfg / *Config / *Settings NAMING vocabulary on purpose: a name heuristic is only as
+        sound as the gate that enforces the name. The `Error` suffix is safe precisely because ruff's N818
+        forces it; nothing forces *Cfg, so keying on it would be fitting the rule to the shape of the repos
+        we happen to have rather than to anything true.
+        """
+        declared = any(Names.decorator(d) in _DATA_DECORATORS for d in cls.decorator_list)
+        return declared or bool(Names.bases(cls) & _DATA_BASES)
 
     @staticmethod
     def _is_enum(cls: ast.ClassDef) -> bool:
@@ -65,7 +85,7 @@ class ClassIndex:
         """
         subordinate = (
             ClassIndex._is_error(cls)
-            or ClassIndex._is_dataclass(cls)
+            or ClassIndex._is_data_container(cls)
             or ClassIndex._is_enum(cls)
             or bool(Names.bases(cls) & siblings)
         )

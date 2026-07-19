@@ -95,8 +95,29 @@ def run(cmd, cwd, *, check=True, env=None):
     return result
 
 
+def _npx():
+    """The npx spelling `subprocess` can actually launch on this platform.
+
+    On Windows, node ships BOTH an extensionless POSIX `npx` script and `npx.cmd`. `shutil.which("npx")`
+    finds the former, which subprocess cannot exec -- so a which()-based guard reported "available" and the
+    jscpd tests then died on FileNotFoundError. Resolving the real spelling makes them RUN rather than
+    merely fail honestly; skipping would have been the smaller half of the fix.
+    """
+    for candidate in (["npx.cmd", "npx"] if sys.platform == "win32" else ["npx"]):
+        try:
+            subprocess.run([candidate, "--version"], capture_output=True, check=True, text=True)  # noqa: S603
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        return candidate
+    return None
+
+
+NPX = _npx()
+
+
 def has_node():
-    return shutil.which("node") is not None and shutil.which("npx") is not None
+    """Whether the jscpd gates can run here at all — i.e. whether some npx spelling is launchable."""
+    return NPX is not None
 
 
 def assert_bites(project, cmd, mutate):

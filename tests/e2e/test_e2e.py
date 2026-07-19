@@ -15,6 +15,7 @@ from conftest import (
     COPIER,
     DEPTRY,
     NOX,
+    NPX,
     PIP_AUDIT,
     PRECOMMIT,
     PYREFLY,
@@ -355,7 +356,7 @@ def test_jscpd(project):
     name, path = project
     if not has_node():
         pytest.skip("node/npx not available")
-    run(["npx", "--yes", "jscpd", *layers(name), "--config", config_path(path, "jscpd")], path)
+    run([NPX, "--yes", "jscpd", *layers(name), "--config", config_path(path, "jscpd")], path)
 
 
 def test_class_shape_smells(project):
@@ -787,7 +788,7 @@ def test_jscpd_catches_duplication(full_project):
     pkg.write_text(pkg_orig + block)
     try:
         result = run(
-            ["npx", "--yes", "jscpd", "full_pkg", "--config", config_path(full_project, "jscpd")],
+            [NPX, "--yes", "jscpd", "full_pkg", "--config", config_path(full_project, "jscpd")],
             full_project,
             check=False,
         )

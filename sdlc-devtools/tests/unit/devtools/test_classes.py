@@ -2,6 +2,8 @@
 
 import ast
 
+import pytest
+
 from devtools.classes import PRIMARY, SATELLITE, ClassIndex
 
 
@@ -32,6 +34,40 @@ def test_dotted_dataclass_decorator_is_a_satellite():
 def test_dataclass_called_with_arguments_is_a_satellite():
     """`@dataclass(frozen=True)` is an ast.Call, not a Name — the factory form must not read as a peer."""
     assert _roles("@dataclass(frozen=True)\nclass Config: ...") == {"Config": SATELLITE}
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "class Cfg(BaseModel): ...",
+        "class Cfg(pydantic.BaseModel): ...",
+        "class Cfg(NamedTuple): ...",
+        "class Cfg(TypedDict): ...",
+        "@define\nclass Cfg: ...",
+        "@frozen\nclass Cfg: ...",
+    ],
+)
+def test_every_declared_data_container_is_a_satellite(src):
+    """A data container is identified by being DECLARED, not by which library declares it. Keying on
+    @dataclass alone tested one mechanism and scored pydantic models — the config idiom in all three
+    consumer repos, and a dependency this template ships — as PRIMARY (bd az9)."""
+    assert _roles(src) == {"Cfg": SATELLITE}
+
+
+def test_legacy_attr_s_is_a_known_gap_not_a_silent_one():
+    """`@attr.s` (attrs' pre-2020 API) reduces to the trailing name `s`, and admitting a bare `s` to the
+    decorator set would match ANY `@x.s` — a worse rule than the gap it closes. The modern
+    `@define`/`@frozen`/`@mutable` API is covered; this records the boundary so it is a decision rather
+    than an oversight. A repo on the legacy API declares its own escape."""
+    assert _roles("@attr.s\nclass Cfg: ...") == {"Cfg": PRIMARY}
+
+
+def test_a_config_NAME_alone_does_not_make_a_satellite():
+    """The counterpart guarantee: role follows the DECLARATION, never the name. A naming vocabulary is only
+    as sound as the gate enforcing it — `Error` is safe because N818 forces it, `*Cfg` has no such backing,
+    and keying on it would fit the rule to our own repos rather than to anything true."""
+    assert _roles("class Config: ...") == {"Config": PRIMARY}
+    assert _roles("class Settings: ...") == {"Settings": PRIMARY}
 
 
 def test_enum_is_a_satellite():
