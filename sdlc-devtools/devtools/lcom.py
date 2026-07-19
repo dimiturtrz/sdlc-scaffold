@@ -25,7 +25,7 @@ import argparse
 import ast
 import logging
 
-from devtools._common import Trees
+from devtools.trees import Trees
 
 log = logging.getLogger("devtools.lcom")
 

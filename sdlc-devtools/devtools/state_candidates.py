@@ -18,7 +18,7 @@ import ast
 import logging
 from collections import Counter
 
-from devtools._common import Trees
+from devtools.trees import Trees
 from devtools.omit import Omit
 
 log = logging.getLogger("devtools.state_candidates")

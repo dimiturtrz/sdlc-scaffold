@@ -27,7 +27,8 @@ import argparse
 import ast
 import logging
 
-from devtools._common import Pyproject, Trees
+from devtools.pyproject import Pyproject
+from devtools.trees import Trees
 
 log = logging.getLogger("devtools.shape_contracts")
 
