@@ -50,7 +50,7 @@ class UseContracts:
     @staticmethod
     def load_contracts(pyproject: str = "pyproject.toml") -> list[dict[str, object]]:
         """The `[[tool.arch.forbidden]]` contracts, or [] when none are configured."""
-        return list(Pyproject.tool_section("arch", pyproject).get("forbidden", []))
+        return Pyproject.rows(Pyproject.tool_section("arch", pyproject).get("forbidden", []))
 
     @staticmethod
     def malformed(contracts: list[dict[str, object]]) -> list[str]:
@@ -69,7 +69,7 @@ class UseContracts:
                 for required in ("source", "forbidden")
                 if not contract.get(required)
             )
-            if unknown := sorted(set(contract.get("kinds", [])) - _KINDS):
+            if unknown := sorted(set(Pyproject.str_list(contract.get("kinds"))) - _KINDS):
                 out.append(f"{name}: unknown kind(s) {unknown} — expected any of {sorted(_KINDS)}")
         return out
 
@@ -90,9 +90,9 @@ class UseContracts:
         out = []
         for contract in self.contracts:
             name = contract.get("name", "unnamed contract")
-            source = contract.get("source", "")
-            targets = contract.get("forbidden", [])
-            kinds = set(contract.get("kinds", []))
+            source = Pyproject.str_of(contract.get("source"))
+            targets = Pyproject.str_list(contract.get("forbidden"))
+            kinds = set(Pyproject.str_list(contract.get("kinds")))
             for src, dst, kind in edges:
                 if kinds and kind not in kinds:
                     continue

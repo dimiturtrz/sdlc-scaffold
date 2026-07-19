@@ -49,7 +49,7 @@ class ShapeContracts:
     @staticmethod
     def array_names(pyproject: str = "pyproject.toml") -> set[str]:
         """The array-type names to flag: the builtin `ndarray`/`Tensor` plus the repo's `array_aliases` slot."""
-        aliases = Pyproject.tool_section("shape_contracts", pyproject).get("array_aliases", [])
+        aliases = Pyproject.str_list(Pyproject.tool_section("shape_contracts", pyproject).get("array_aliases"))
         return _ARRAY_NAMES | set(aliases)
 
     @staticmethod

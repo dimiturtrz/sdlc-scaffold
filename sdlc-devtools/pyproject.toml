@@ -39,11 +39,21 @@ addopts = "-p no:cacheprovider -ra"
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.Any" = { msg = "Any opts out of the type system. Name the real type, or a TypedDict/Protocol at a JSON boundary." }
 
+# The house width. ABSENT until now, so `ruff format` silently used its own default (88) while the rest of
+# the repo is 120 — and devtools' select omitted E501, so no gate ever noticed the disagreement. Wiring
+# `ruff format --check` (bd iv5) without this would have enforced the WRONG width, which is worse than the
+# absent gate it replaced: it produces churn that looks like compliance.
+[tool.ruff]
+line-length = 120
+
 [tool.pyrefly]
 preset = "strict"
 check-unannotated-defs = true
 search-path = ["."]
 python-version = "3.12"  # MUST equal requires-python above — pyrefly does not infer it (bd 166)
+# radon ships no py.typed/stubs. A declared FACT at a dependency boundary, not a defect — the
+# same slot the template gives consumers for their untyped deps.
+ignore-missing-imports = ["radon.complexity"]
 
 [[tool.pyrefly.sub-config]]
 matches = "**/tests/**"

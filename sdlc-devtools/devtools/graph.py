@@ -257,8 +257,14 @@ class ImportGraph:
         return blocking, advisory
 
     @staticmethod
-    def _top(pairs: Iterable[tuple[str, float]], n: int) -> list[tuple[str, float]]:
-        """Top-n (name, score) by descending score — the shared ranking for every metric."""
+    def _top(pairs: Iterable[tuple[object, float]], n: int) -> list[tuple[object, float]]:
+        """Top-n (label, score) by descending score — the shared ranking for every metric.
+
+        The label is `object`, not `str`, because networkx's stubs hand back the
+        unparameterised `_Node` from betweenness_centrality while our own metrics yield `str`.
+        A ranking helper does not care what the label IS — only that the score sorts — so the
+        wider signature is the honest one rather than a concession.
+        """
         return sorted(pairs, key=lambda kv: -kv[1])[:n]
 
     def typed_graph(self, kinds: set[str]) -> nx.DiGraph[str]:
@@ -289,10 +295,7 @@ class ImportGraph:
         tier, or the class-level `calls` tier via `typed_graph`.
         """
         ind, outd = dict(g.in_degree()), dict(g.out_degree())
-        out = [
-            f"{label}: {g.number_of_nodes()} {unit}, {g.number_of_edges()} edges",
-            "",
-        ]
+        out = [f"{label}: {g.number_of_nodes()} {unit}, {g.number_of_edges()} edges", ""]
         for title, pairs in (
             ("fan-in (load-bearing)", ind.items()),
             ("fan-out (orchestrators)", outd.items()),
@@ -331,21 +334,12 @@ class ImportGraph:
             shown = advisory[:_ADVISORY_PREVIEW]
             extra = f"\n  … +{len(advisory) - _ADVISORY_PREVIEW} more" if len(advisory) > _ADVISORY_PREVIEW else ""
             log.warning(
-                "architecture fitness — advisory (%d, non-blocking):\n  %s",
-                len(advisory),
-                "\n  ".join(shown) + extra,
+                "architecture fitness — advisory (%d, non-blocking):\n  %s", len(advisory), "\n  ".join(shown) + extra
             )
         if blocking:
-            log.error(
-                "architecture fitness — BLOCKING (%d):\n  %s",
-                len(blocking),
-                "\n  ".join(blocking),
-            )
+            log.error("architecture fitness — BLOCKING (%d):\n  %s", len(blocking), "\n  ".join(blocking))
             return 1
-        log.info(
-            "architecture fitness: clean (0 god-modules / cycles / god-files; %d advisory)",
-            len(advisory),
-        )
+        log.info("architecture fitness: clean (0 god-modules / cycles / god-files; %d advisory)", len(advisory))
         return 0
 
 

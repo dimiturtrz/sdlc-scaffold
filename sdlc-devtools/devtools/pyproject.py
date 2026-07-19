@@ -33,6 +33,32 @@ class Pyproject:
     """Reader for a `[tool.<section>]` table from pyproject.toml — the shared config-load primitive."""
 
     @staticmethod
+    def table(value: object) -> dict[str, object]:
+        """A TOML value narrowed to a table, or {} — for chaining into a nested section."""
+        return value if isinstance(value, dict) else {}
+
+    @staticmethod
+    def str_list(value: object) -> list[str]:
+        """A TOML value narrowed to a list of strings, dropping anything else.
+
+        TOML is untyped to us, so every read hands back `object`. Narrowing HERE, once, is what stops each
+        engine assuming a shape it never checked — the same reason structure_cfg validates rather than
+        trusting the section. Silent about non-strings on purpose: unlike a threshold, a stray entry in a
+        glob/alias list cannot make a gate quietly pass at a value nobody set.
+        """
+        return [item for item in value if isinstance(item, str)] if isinstance(value, list) else []
+
+    @staticmethod
+    def str_of(value: object, default: str = "") -> str:
+        """A TOML value narrowed to a string, or `default`."""
+        return value if isinstance(value, str) else default
+
+    @staticmethod
+    def rows(value: object) -> list[dict[str, object]]:
+        """A TOML array-of-tables narrowed to a list of tables — e.g. [[tool.arch.forbidden]]."""
+        return [row for row in value if isinstance(row, dict)] if isinstance(value, list) else []
+
+    @staticmethod
     def structure_cfg(pyproject: str = "pyproject.toml") -> dict[str, int | float | str]:
         """[tool.structure], merged onto defaults, with every override VALIDATED.
 

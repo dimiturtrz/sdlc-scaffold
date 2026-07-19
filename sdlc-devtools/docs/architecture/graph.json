@@ -2148,8 +2148,40 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.rows",
+      "label": "rows",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.str_list",
+      "label": "str_list",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.str_of",
+      "label": "str_of",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.pyproject.Pyproject.structure_cfg",
       "label": "structure_cfg",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.table",
+      "label": "table",
       "level": "method",
       "parent": "devtools.pyproject.Pyproject",
       "role": null

@@ -197,10 +197,7 @@ class Archmap:
             for imp in sorted(graph.find_modules_directly_imported_by(m))
             if imp in module_set
         ]
-        return {
-            "nodes": nodes + self._class_nodes() + self._method_nodes(),
-            "edges": edges + self._typed_edges(),
-        }
+        return {"nodes": nodes + self._class_nodes() + self._method_nodes(), "edges": edges + self._typed_edges()}
 
     def _json_text(self) -> str:
         return json.dumps(self.graph_data(), indent=2, sort_keys=True) + "\n"
@@ -269,9 +266,7 @@ def main():
     )
     ap.add_argument("packages", nargs="+", help="package dirs to map (>=1 required)")
     ap.add_argument(
-        "--check",
-        action="store_true",
-        help="fail (exit 1) if the committed graph.json is out of date — do not write",
+        "--check", action="store_true", help="fail (exit 1) if the committed graph.json is out of date — do not write"
     )
     ap.add_argument(
         "--diff",

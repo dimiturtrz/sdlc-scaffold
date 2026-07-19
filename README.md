@@ -11,11 +11,13 @@ The analyzers ship as a **pinned package** (`sdlc-devtools`), not vendored sourc
 one-line pin bump on `copier update`, with no analyzer diff in consumer PRs. In use by three converged repos.
 
 **Self-gating, precisely:** the package runs the same gate set it ships — ruff, format, vulture, deptry,
-pyrefly, jscpd, ast-grep, coverage, and every analyzer — against its own source. Two of those are advisory
-*there* for the same measured reasons they are advisory anywhere (pyrefly strict is mid-cleanup; class-roles
-still fires on genuine multi-abstraction files), and they block once they reach zero. That is a ratchet with
-the work counted, not an exemption — an absent gate is the thing this project treats as a bug, because a
-gate that does not run is indistinguishable from a clean codebase.
+pyrefly strict, jscpd, ast-grep, coverage, and every analyzer — against its own source, and blocks on all of
+them but one. Class-roles is advisory *there* for the same measured reason it is advisory anywhere: it still
+fires on genuine multi-abstraction files, which is refactoring work rather than a classifier bug. It blocks
+once a real tree reaches zero, which is how pyrefly strict graduated — it opened at 52 errors on this
+package and now sits at 0. That is a ratchet with the work counted, not an exemption; an absent gate is the
+thing this project treats as a bug, because a gate that does not run is indistinguishable from a clean
+codebase.
 
 A [copier](https://copier.readthedocs.io) template that installs a codebase's **structural guardrails** —
 a set of executable checks that keep the code within stated architectural bounds as it grows, enforced

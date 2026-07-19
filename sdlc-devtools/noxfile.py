@@ -30,7 +30,7 @@ JSCPD_IGNORE = "**/archviz/**"
 SELECT = (
     "F,B,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,"
     "PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,"
-    "E402,ICN001,S603,S607,PTH123,TID251"
+    "E402,ICN001,S603,S607,PTH123,TID251,E501"
 )
 
 
@@ -44,11 +44,10 @@ def lint(session: nox.Session) -> None:
     # ENFORCED dead code — measured at 0 findings on conf80 AND conf60, so it blocks from day one.
     session.run("uvx", VULTURE, LAYER, "--min-confidence", "80", external=True)
     session.run("uvx", VULTURE, LAYER, "--min-confidence", "60", external=True, success_codes=[0, 3])
-    # ADVISORY-with-a-graduation-path: pyrefly strict had never run on the package that makes strict typing
-    # a BLOCKING house rule for consumers. First pass took it 52 -> 10. It reports without failing until it
-    # reaches 0, then the success_codes swallow comes off and it blocks like everyone else's. Wired-but-
-    # advisory is a ratchet with the work visible; ABSENT is indistinguishable from clean, which is the bug.
-    session.run("uv", "run", "--with", PYREFLY, "pyrefly", "check", LAYER, external=True, success_codes=[0, 1])
+    # ENFORCED — GRADUATED advisory -> blocking (bd dun.2). pyrefly strict had never run on the package that
+    # makes strict typing a blocking house rule for consumers; it opened at 52 errors and is now at 0, so the
+    # success_codes swallow came off. The package selling the rule is now held to it exactly like a consumer.
+    session.run("uv", "run", "--with", PYREFLY, "pyrefly", "check", LAYER, external=True)
     # ENFORCED duplication — 0.00% on python at the shipped minTokens. Note it does NOT find the 17x main()
     # plumbing (bd 0y9): jscpd is token-based and each main() carries a different argparse description, so
     # they are textually distinct despite being structurally identical. Measured, not assumed.

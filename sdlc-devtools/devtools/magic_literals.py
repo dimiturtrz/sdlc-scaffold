@@ -30,6 +30,7 @@ import ast
 import logging
 import re
 from collections import defaultdict
+from typing import TypeGuard
 
 from devtools.trees import Trees
 
@@ -51,7 +52,7 @@ class MagicLiterals:
         self.packages = packages
 
     @staticmethod
-    def _is_token(value: object) -> bool:
+    def _is_token(value: object) -> TypeGuard[str]:
         """A string worth counting: an identifier-shaped VALUE token (not prose/path/message/framework)."""
         return isinstance(value, str) and value not in _STOP and bool(_TOKEN.match(value))
 
