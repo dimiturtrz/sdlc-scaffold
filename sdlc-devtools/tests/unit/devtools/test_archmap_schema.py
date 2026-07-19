@@ -134,7 +134,7 @@ def test_the_legend_is_derived_from_the_same_table_as_the_graph(tmp_path):
     """A key that restates its colours by hand drifts from the picture the first time one is retuned. The
     swatches are generated from STYLE, so no hex or dash may appear in the markup."""
     html = _viewer(tmp_path)
-    markup = re.sub(r"<!--.*?-->", "", html[html.index("<body>"):html.index("<script>")], flags=re.S)
+    markup = re.sub(r"<!--.*?-->", "", html[html.index("<body>") : html.index("<script>")], flags=re.S)
     for restated in ("#", "solid", "dashed", "dotted"):
         assert restated not in markup, f"the markup restates {restated!r}, which STYLE already owns"
 

@@ -1332,6 +1332,22 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.classes.ClassIndex._contracts",
+      "label": "_contracts",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex._implements",
+      "label": "_implements",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.classes.ClassIndex._is_data_container",
       "label": "_is_data_container",
       "level": "method",
@@ -1350,6 +1366,14 @@
       "descendants": 0,
       "id": "devtools.classes.ClassIndex._is_error",
       "label": "_is_error",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex._method_names",
+      "label": "_method_names",
       "level": "method",
       "parent": "devtools.classes.ClassIndex",
       "role": null

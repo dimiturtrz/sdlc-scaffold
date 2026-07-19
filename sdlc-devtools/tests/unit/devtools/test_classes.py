@@ -124,3 +124,44 @@ def test_gate_bites_on_two_primaries(write_pkg, tmp_path):
 def test_gate_reports_the_offending_file(write_pkg, tmp_path):
     violations = _gate(write_pkg, tmp_path, "roles_named", "class A: ...\n\n\nclass B: ...\n")
     assert violations[0].startswith("mod.py") or "/mod.py" in violations[0]
+
+
+# ---- structural conformance (bd dun.1) ---------------------------------------------------------------
+
+_STORE = """class Store(Protocol):
+    def get(self, k): ...
+    def put(self, k, v): ...
+"""
+_MEMORY = """class Memory:
+    def get(self, k): ...
+    def put(self, k, v): ...
+"""
+_PARTIAL = """class Partial:
+    def get(self, k): ...
+"""
+
+
+def test_a_structural_implementation_of_a_same_file_protocol_is_a_satellite():
+    """The rule already treats a same-file SUBCLASS as a local specialisation. Structural conformance is the
+    same relationship without inheritance — and Protocol exists precisely so you do NOT inherit, so testing
+    inheritance under-detected exactly where the modern idiom is used (bd dun.1)."""
+    assert _roles(_STORE + "\n" + _MEMORY) == {"Store": PRIMARY, "Memory": SATELLITE}
+
+
+def test_a_protocol_does_not_implement_itself():
+    """A Protocol DECLARES the contract — it is the file's subject, not a companion. Matched against the
+    same-file contracts it would satisfy its own methods and label itself a satellite of itself."""
+    assert _roles(_STORE) == {"Store": PRIMARY}
+
+
+def test_a_partial_implementation_stays_primary():
+    """Precise but incomplete, matching the resolver's rule: only a SUPERSET of the contract counts, so a
+    half-matching class is never mislabelled a companion of something it does not implement."""
+    assert _roles(_STORE + "\n" + _PARTIAL) == {"Store": PRIMARY, "Partial": PRIMARY}
+
+
+def test_an_empty_protocol_matches_nothing():
+    """Every class satisfies a contract with no methods, so an empty Protocol must not turn a whole file
+    into satellites."""
+    src = "class Marker(Protocol): ...\n\n\nclass Real:\n    def run(self): ...\n"
+    assert _roles(src) == {"Marker": PRIMARY, "Real": PRIMARY}
