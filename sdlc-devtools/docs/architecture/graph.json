@@ -1,218 +1,2152 @@
 {
   "edges": [
     {
+      "kind": "import",
       "source": "devtools.analytics",
       "target": "devtools._common",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.archmap",
       "target": "devtools._common",
       "weight": 1
     },
     {
+      "kind": "import",
+      "source": "devtools.archmap",
+      "target": "devtools.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.archmap",
+      "target": "devtools.calls",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.archmap",
+      "target": "devtools.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.archmap",
+      "target": "devtools.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.archmap",
+      "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.arrows",
+      "target": "devtools.names",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.arrows",
+      "target": "devtools.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.arrows",
+      "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.calls",
+      "target": "devtools.names",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.calls",
+      "target": "devtools.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.calls",
+      "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
       "source": "devtools.classes",
       "target": "devtools.names",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.classes",
       "target": "devtools.trees",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.complexity",
       "target": "devtools._common",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.complexity",
       "target": "devtools.trees",
       "weight": 1
     },
     {
+      "kind": "import",
+      "source": "devtools.composition",
+      "target": "devtools.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.contracts",
+      "target": "devtools.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.contracts",
+      "target": "devtools.calls",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.contracts",
+      "target": "devtools.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
       "source": "devtools.data_clumps",
       "target": "devtools.trees",
       "weight": 1
     },
     {
+      "kind": "import",
+      "source": "devtools.demeter",
+      "target": "devtools.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.demeter",
+      "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
       "source": "devtools.graph",
       "target": "devtools._common",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.graph",
       "target": "devtools.classes",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.graph",
       "target": "devtools.names",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.graph",
       "target": "devtools.omit",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.graph",
       "target": "devtools.pyproject",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.graph",
       "target": "devtools.trees",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.lcom",
       "target": "devtools.trees",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.magic_literals",
       "target": "devtools.trees",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.omit",
       "target": "devtools.pyproject",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.pyproject",
       "target": "devtools._common",
       "weight": 1
     },
     {
+      "kind": "import",
+      "source": "devtools.resolve",
+      "target": "devtools.names",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.resolve",
+      "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
       "source": "devtools.shape_contracts",
       "target": "devtools.pyproject",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.shape_contracts",
       "target": "devtools.trees",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.state_candidates",
       "target": "devtools.omit",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.state_candidates",
       "target": "devtools.trees",
       "weight": 1
     },
     {
+      "kind": "import",
       "source": "devtools.trees",
       "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.analytics.Analytics",
+      "target": "devtools.analytics.AreaStat",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.analytics.Analytics",
+      "target": "devtools.analytics.AreaStat",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.analytics.Analytics",
+      "target": "devtools.analytics.FileStat",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.analytics.Analytics",
+      "target": "devtools.analytics.FileStat",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.analytics.AreaStat",
+      "target": "devtools.analytics.FileStat",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.archmap.Archmap",
+      "target": "devtools.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.archmap.Archmap",
+      "target": "devtools.calls.CallArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.archmap.Archmap",
+      "target": "devtools.classes.ClassIndex",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.archmap.Archmap",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.arrows.ClassArrows",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.arrows.ClassArrows",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.arrows.ClassArrows",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.arrows.ClassArrows",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.calls.CallArrows",
+      "target": "devtools.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.calls.CallArrows",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.calls.CallArrows",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.calls.CallArrows",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.calls.CallArrows",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.classes.ClassIndex",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.complexity.Complexity",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.composition.CompositionCycles",
+      "target": "devtools.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.contracts.UseContracts",
+      "target": "devtools.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.contracts.UseContracts",
+      "target": "devtools.calls.CallArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.data_clumps.DataClumps",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.demeter.Demeter",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.ImportGraph",
+      "target": "devtools.classes.ClassIndex",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.ImportGraph",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.lcom.Lcom",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.magic_literals.MagicLiterals",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.resolve.Resolver",
+      "target": "devtools.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.resolve.Resolver",
+      "target": "devtools.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.resolve.Resolver",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.shape_contracts.ShapeContracts",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.state_candidates.StateCandidates",
+      "target": "devtools.trees.Trees",
       "weight": 1
     }
   ],
   "nodes": [
     {
-      "descendants": 16,
+      "descendants": 22,
       "id": "devtools",
       "label": "devtools",
-      "parent": null
+      "level": "module",
+      "parent": null,
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools._common",
       "label": "_common",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.analytics",
       "label": "analytics",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.archmap",
       "label": "archmap",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.arrows",
+      "label": "arrows",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls",
+      "label": "calls",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.classes",
       "label": "classes",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.complexity",
       "label": "complexity",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.composition",
+      "label": "composition",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.config",
       "label": "config",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts",
+      "label": "contracts",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.data_clumps",
       "label": "data_clumps",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter",
+      "label": "demeter",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.graph",
       "label": "graph",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.lcom",
       "label": "lcom",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.magic_literals",
       "label": "magic_literals",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.names",
       "label": "names",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.omit",
       "label": "omit",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.pyproject",
       "label": "pyproject",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve",
+      "label": "resolve",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.shape_contracts",
       "label": "shape_contracts",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.state_candidates",
       "label": "state_candidates",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
     },
     {
       "descendants": 0,
       "id": "devtools.trees",
       "label": "trees",
-      "parent": "devtools"
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.Analytics",
+      "label": "Analytics",
+      "level": "class",
+      "parent": "devtools.analytics",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.AreaStat",
+      "label": "AreaStat",
+      "level": "class",
+      "parent": "devtools.analytics",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.FileStat",
+      "label": "FileStat",
+      "level": "class",
+      "parent": "devtools.analytics",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap",
+      "label": "Archmap",
+      "level": "class",
+      "parent": "devtools.archmap",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.arrows.ClassArrows",
+      "label": "ClassArrows",
+      "level": "class",
+      "parent": "devtools.arrows",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows",
+      "label": "CallArrows",
+      "level": "class",
+      "parent": "devtools.calls",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex",
+      "label": "ClassIndex",
+      "level": "class",
+      "parent": "devtools.classes",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.complexity.Complexity",
+      "label": "Complexity",
+      "level": "class",
+      "parent": "devtools.complexity",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.composition.CompositionCycles",
+      "label": "CompositionCycles",
+      "level": "class",
+      "parent": "devtools.composition",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.config.Config",
+      "label": "Config",
+      "level": "class",
+      "parent": "devtools.config",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts",
+      "label": "UseContracts",
+      "level": "class",
+      "parent": "devtools.contracts",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps",
+      "label": "DataClumps",
+      "level": "class",
+      "parent": "devtools.data_clumps",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter",
+      "label": "Demeter",
+      "level": "class",
+      "parent": "devtools.demeter",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph",
+      "label": "ImportGraph",
+      "level": "class",
+      "parent": "devtools.graph",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom",
+      "label": "Lcom",
+      "level": "class",
+      "parent": "devtools.lcom",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals",
+      "label": "MagicLiterals",
+      "level": "class",
+      "parent": "devtools.magic_literals",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.names.Names",
+      "label": "Names",
+      "level": "class",
+      "parent": "devtools.names",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.omit.Omit",
+      "label": "Omit",
+      "level": "class",
+      "parent": "devtools.omit",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject",
+      "label": "Pyproject",
+      "level": "class",
+      "parent": "devtools.pyproject",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.FileScope",
+      "label": "FileScope",
+      "level": "class",
+      "parent": "devtools.resolve",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver",
+      "label": "Resolver",
+      "level": "class",
+      "parent": "devtools.resolve",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts",
+      "label": "ShapeContracts",
+      "level": "class",
+      "parent": "devtools.shape_contracts",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates",
+      "label": "StateCandidates",
+      "level": "class",
+      "parent": "devtools.state_candidates",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.trees.Trees",
+      "label": "Trees",
+      "level": "class",
+      "parent": "devtools.trees",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.Analytics.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.Analytics._code_lines",
+      "label": "_code_lines",
+      "level": "method",
+      "parent": "devtools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.Analytics._test_lines",
+      "label": "_test_lines",
+      "level": "method",
+      "parent": "devtools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.Analytics.analyze",
+      "label": "analyze",
+      "level": "method",
+      "parent": "devtools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.Analytics.analyze_file",
+      "label": "analyze_file",
+      "level": "method",
+      "parent": "devtools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.Analytics.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.AreaStat.branches",
+      "label": "branches",
+      "level": "method",
+      "parent": "devtools.analytics.AreaStat",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.AreaStat.code_lines",
+      "label": "code_lines",
+      "level": "method",
+      "parent": "devtools.analytics.AreaStat",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.analytics.AreaStat.defs",
+      "label": "defs",
+      "level": "method",
+      "parent": "devtools.analytics.AreaStat",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap._class_nodes",
+      "label": "_class_nodes",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap._json_text",
+      "label": "_json_text",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap._method_nodes",
+      "label": "_method_nodes",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap._parent",
+      "label": "_parent",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap._signature",
+      "label": "_signature",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap._typed_edges",
+      "label": "_typed_edges",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap.check",
+      "label": "check",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap.diff",
+      "label": "diff",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap.graph",
+      "label": "graph",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap.graph_data",
+      "label": "graph_data",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap.write_json",
+      "label": "write_json",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.Archmap.write_viewer",
+      "label": "write_viewer",
+      "level": "method",
+      "parent": "devtools.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.arrows.ClassArrows.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.arrows.ClassArrows.edges",
+      "label": "edges",
+      "level": "method",
+      "parent": "devtools.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.arrows.ClassArrows.field_types",
+      "label": "field_types",
+      "level": "method",
+      "parent": "devtools.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.arrows.ClassArrows.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.arrows.ClassArrows.signature_types",
+      "label": "signature_types",
+      "level": "method",
+      "parent": "devtools.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows._edge_for_call",
+      "label": "_edge_for_call",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows._edges_for_class",
+      "label": "_edges_for_class",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows._local_types",
+      "label": "_local_types",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows._methods",
+      "label": "_methods",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows._param_types",
+      "label": "_param_types",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows._receiver_type_names",
+      "label": "_receiver_type_names",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows.edges",
+      "label": "edges",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.calls.CallArrows.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex._is_dataclass",
+      "label": "_is_dataclass",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex._is_enum",
+      "label": "_is_enum",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex._is_error",
+      "label": "_is_error",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex.by_file",
+      "label": "by_file",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex.classify",
+      "label": "classify",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex.multi_primary",
+      "label": "multi_primary",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex.role",
+      "label": "role",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.complexity.Complexity.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.complexity.Complexity._functions",
+      "label": "_functions",
+      "level": "method",
+      "parent": "devtools.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.complexity.Complexity.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.complexity.Complexity.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.composition.CompositionCycles.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.composition.CompositionCycles.cycles",
+      "label": "cycles",
+      "level": "method",
+      "parent": "devtools.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.composition.CompositionCycles.graph",
+      "label": "graph",
+      "level": "method",
+      "parent": "devtools.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.composition.CompositionCycles.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.config.Config.names",
+      "label": "names",
+      "level": "method",
+      "parent": "devtools.config.Config",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.config.Config.path",
+      "label": "path",
+      "level": "method",
+      "parent": "devtools.config.Config",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts._under",
+      "label": "_under",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts.edges",
+      "label": "edges",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts.load_contracts",
+      "label": "load_contracts",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts.malformed",
+      "label": "malformed",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps._candidates",
+      "label": "_candidates",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps._functions",
+      "label": "_functions",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps._params",
+      "label": "_params",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps._support",
+      "label": "_support",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps.clumps",
+      "label": "clumps",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter._chain",
+      "label": "_chain",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter._module_roots",
+      "label": "_module_roots",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter._root_name",
+      "label": "_root_name",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter._violations_in",
+      "label": "_violations_in",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter.load_max_depth",
+      "label": "load_max_depth",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.demeter.Demeter.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._chokepoints",
+      "label": "_chokepoints",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._cycles",
+      "label": "_cycles",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._god_modules",
+      "label": "_god_modules",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._is_abstract",
+      "label": "_is_abstract",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._missing_test",
+      "label": "_missing_test",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._module_file",
+      "label": "_module_file",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._off_main_sequence",
+      "label": "_off_main_sequence",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._oversized",
+      "label": "_oversized",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._top",
+      "label": "_top",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._undersized",
+      "label": "_undersized",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.abstractness",
+      "label": "abstractness",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.assert_fitness",
+      "label": "assert_fitness",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.build_graph",
+      "label": "build_graph",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.file_lines",
+      "label": "file_lines",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.instability",
+      "label": "instability",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.load_structure_cfg",
+      "label": "load_structure_cfg",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.main_sequence_distance",
+      "label": "main_sequence_distance",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.unmirrored",
+      "label": "unmirrored",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._base_names",
+      "label": "_base_names",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._instance_methods",
+      "label": "_instance_methods",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._is_abstract",
+      "label": "_is_abstract",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._is_impl",
+      "label": "_is_impl",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._is_sklearn_contract",
+      "label": "_is_sklearn_contract",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._is_split_candidate",
+      "label": "_is_split_candidate",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._is_static",
+      "label": "_is_static",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._is_trivial",
+      "label": "_is_trivial",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._linked",
+      "label": "_linked",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._raises_notimplemented",
+      "label": "_raises_notimplemented",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom._self_names",
+      "label": "_self_names",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom.lcom4",
+      "label": "lcom4",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.lcom.Lcom.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals._excluded_value_ids",
+      "label": "_excluded_value_ids",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals._is_token",
+      "label": "_is_token",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals._key_sets",
+      "label": "_key_sets",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals._string_literals",
+      "label": "_string_literals",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals.scan_key_sets",
+      "label": "scan_key_sets",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals.scan_strings",
+      "label": "scan_strings",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.names.Names.bases",
+      "label": "bases",
+      "level": "method",
+      "parent": "devtools.names.Names",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.names.Names.decorator",
+      "label": "decorator",
+      "level": "method",
+      "parent": "devtools.names.Names",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.names.Names.trailing",
+      "label": "trailing",
+      "level": "method",
+      "parent": "devtools.names.Names",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.omit.Omit.coverage_omit",
+      "label": "coverage_omit",
+      "level": "method",
+      "parent": "devtools.omit.Omit",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.omit.Omit.matches_omit",
+      "label": "matches_omit",
+      "level": "method",
+      "parent": "devtools.omit.Omit",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.tool_section",
+      "label": "tool_section",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver._assigned_type",
+      "label": "_assigned_type",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver._class_homes",
+      "label": "_class_homes",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.annotation_names",
+      "label": "annotation_names",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.classes_in",
+      "label": "classes_in",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.field_types",
+      "label": "field_types",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.imported_names",
+      "label": "imported_names",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.init_of",
+      "label": "init_of",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.is_self_attr",
+      "label": "is_self_attr",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.module_of",
+      "label": "module_of",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.qualified",
+      "label": "qualified",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.resolve",
+      "label": "resolve",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.resolve_all",
+      "label": "resolve_all",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.resolve.Resolver.scope_of",
+      "label": "scope_of",
+      "level": "method",
+      "parent": "devtools.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._analyze",
+      "label": "_analyze",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._annotations",
+      "label": "_annotations",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._bare_array_slots",
+      "label": "_bare_array_slots",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._functions",
+      "label": "_functions",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._is_array_anno",
+      "label": "_is_array_anno",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._is_jaxtyping_anno",
+      "label": "_is_jaxtyping_anno",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.array_names",
+      "label": "array_names",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates._analyze",
+      "label": "_analyze",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates._is_autograd_function",
+      "label": "_is_autograd_function",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates._is_command",
+      "label": "_is_command",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates._is_pydantic_config",
+      "label": "_is_pydantic_config",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates._params",
+      "label": "_params",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates._staticmethods",
+      "label": "_staticmethods",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates.shared_state",
+      "label": "shared_state",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.trees.Trees.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.trees.Trees",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.trees.Trees.files",
+      "label": "files",
+      "level": "method",
+      "parent": "devtools.trees.Trees",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.trees.Trees.walk",
+      "label": "walk",
+      "level": "method",
+      "parent": "devtools.trees.Trees",
+      "role": null
     }
   ]
 }

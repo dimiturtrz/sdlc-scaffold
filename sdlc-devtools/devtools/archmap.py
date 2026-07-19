@@ -21,6 +21,7 @@ import-linter (the layer gate). `--check` fails only if the committed graph.json
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import logging
 from pathlib import Path
@@ -28,6 +29,11 @@ from pathlib import Path
 import grimp
 
 from devtools._common import ENCODING
+from devtools.arrows import ClassArrows
+from devtools.calls import CONSTRUCT, CallArrows
+from devtools.classes import ClassIndex
+from devtools.resolve import Resolver
+from devtools.trees import Trees
 
 log = logging.getLogger("devtools.archmap")
 
@@ -62,12 +68,78 @@ class Archmap:
         p = module.rsplit(".", 1)[0] if "." in module else None
         return p if p in module_set else None
 
+    def _class_nodes(self) -> list[dict]:
+        """The CLASS tier of the containment tree (bd 433.1): every class as a node under its module,
+        carrying its ROLE — `primary` (the file's subject) or `satellite` (its error / config / local
+        specialisation). The role is what lets a view hide companions and show the real skeleton."""
+        return sorted(
+            (
+                {
+                    "id": f"{Resolver.module_of(path)}.{name}",
+                    "label": name,
+                    "parent": Resolver.module_of(path),
+                    "descendants": 0,
+                    "level": "class",
+                    "role": role,
+                }
+                for path, records in ClassIndex(self.packages).by_file().items()
+                for name, role in records
+            ),
+            key=lambda n: n["id"],
+        )
+
+    def _method_nodes(self) -> list[dict]:
+        """The METHOD tier (bd 433.4) — the deepest fold level, so a class can be opened to read its actual
+        surface instead of guessing it from the class name.
+
+        Nodes only, no method-level EDGES: the call resolver aggregates per class (bd 4bl.3), so drawing a
+        method->method arrow would mean inventing a precision the graph does not have. Method-level edges
+        arrive with the feature-envy work (bd 4bl.7), which needs that cut anyway.
+        """
+        return sorted(
+            (
+                {
+                    "id": f"{Resolver.module_of(path)}.{cls.name}.{fn.name}",
+                    "label": fn.name,
+                    "parent": f"{Resolver.module_of(path)}.{cls.name}",
+                    "descendants": 0,
+                    "level": "method",
+                    "role": None,
+                }
+                for path, tree in Trees(self.packages).walk()
+                for cls in Resolver.classes_in(tree)
+                for fn in cls.body
+                if isinstance(fn, ast.FunctionDef)
+            ),
+            key=lambda n: n["id"],
+        )
+
+    def _typed_edges(self) -> list[dict]:
+        """The finer arrows an import edge decomposes into, each tagged with its KIND. Deduped and sorted so
+        the committed diff stays minimal; `weight` is 1 because a kind between two classes is a fact, not a
+        count (the import edge keeps the statement count)."""
+        structural = [(s, d, kind) for s, d, kind in ClassArrows(self.packages).edges()]
+        behavioural = [(s, d, CONSTRUCT if via else kind) for s, d, kind, via in CallArrows(self.packages).edges()]
+        return [
+            {"source": s, "target": d, "weight": 1, "kind": kind}
+            for s, d, kind in sorted(set(structural + behavioural))
+        ]
+
     def graph_data(self) -> dict:
-        """The full graph as committed-diffable JSON — the diff-truth the viewer hydrates. Every module is a
-        node carrying its containment `parent` (compound nesting) + `descendants` count (the folded-node
-        badge); every module→module import is an edge weighted by import-statement count (the viewer sums
-        these into a counted arrow when a package folds). Deterministic order (modules + imports sorted, keys
-        sorted) so the committed diff is minimal and meaningful."""
+        """The full graph as committed-diffable JSON — the diff-truth the viewer hydrates.
+
+        THREE tiers of one containment tree. Every MODULE is a node carrying its `parent` (compound nesting) +
+        `descendants` count (the folded-node badge), and every module→module import is an edge weighted by
+        import-statement count. Beneath that, every CLASS is a node with its `role`, joined by the TYPED
+        arrows (`inherits` / `holds` / `references` / `calls` / `construct`) that the import edge is merely
+        the coarse roll-up of.
+
+        Beneath the classes sits the METHOD tier — nodes only, the deepest fold level.
+
+        Every node carries `level` and every edge a `kind`, so a view can ask for a subset rather than
+        guessing from shape. Deterministic throughout (sorted nodes, edges and keys) so the committed diff
+        stays minimal and meaningful.
+        """
         graph = self.graph()
         modules = sorted(graph.modules)
         module_set = set(modules)
@@ -77,16 +149,26 @@ class Archmap:
                 "label": m.split(".")[-1],
                 "parent": self._parent(m, module_set),
                 "descendants": sum(1 for n in modules if n.startswith(m + ".")),
+                "level": "module",
+                "role": None,
             }
             for m in modules
         ]
         edges = [
-            {"source": m, "target": imp, "weight": len(graph.get_import_details(importer=m, imported=imp))}
+            {
+                "source": m,
+                "target": imp,
+                "weight": len(graph.get_import_details(importer=m, imported=imp)),
+                "kind": "import",
+            }
             for m in modules
             for imp in sorted(graph.find_modules_directly_imported_by(m))
             if imp in module_set
         ]
-        return {"nodes": nodes, "edges": edges}
+        return {
+            "nodes": nodes + self._class_nodes() + self._method_nodes(),
+            "edges": edges + self._typed_edges(),
+        }
 
     def _json_text(self) -> str:
         return json.dumps(self.graph_data(), indent=2, sort_keys=True) + "\n"
@@ -110,6 +192,34 @@ class Archmap:
         path.write_text(html, encoding=ENCODING)
         return path
 
+    @staticmethod
+    def _signature(data: dict) -> tuple[set[tuple[str, str]], set[tuple[str, str, str]]]:
+        """(nodes, edges) as comparable tuples — the shape a diff is taken over."""
+        nodes = {(n["id"], n.get("role") or n.get("level", "module")) for n in data.get("nodes", [])}
+        edges = {(e["source"], e["target"], e.get("kind", "import")) for e in data.get("edges", [])}
+        return nodes, edges
+
+    def diff(self, baseline: Path) -> list[str]:
+        """How this tree's architecture CHANGED against a baseline graph.json — added/removed nodes and
+        typed edges, newest state first.
+
+        Takes a FILE, not a git ref: the engine stays git-free and unit-testable, and CI does the
+        `git show <base>:docs/architecture/graph.json > base.json` itself. A missing baseline is not an
+        error — a first run has nothing to compare against and simply reports no change.
+
+        Advisory by construction. The gates say what is FORBIDDEN; this says what MOVED, which is the part
+        a reviewer (or someone deciding whether to trust a change they did not write) actually reads.
+        """
+        if not baseline.exists():
+            return []
+        old_nodes, old_edges = self._signature(json.loads(baseline.read_text(encoding=ENCODING)))
+        new_nodes, new_edges = self._signature(self.graph_data())
+        out = [f"+ {kind:<10} {src} -> {dst}" for src, dst, kind in sorted(new_edges - old_edges)]
+        out += [f"- {kind:<10} {src} -> {dst}" for src, dst, kind in sorted(old_edges - new_edges)]
+        out += [f"+ {role:<10} {node}" for node, role in sorted(new_nodes - old_nodes)]
+        out += [f"- {role:<10} {node}" for node, role in sorted(old_nodes - new_nodes)]
+        return out
+
     def check(self) -> list[str]:
         """Drift between the committed graph.json and a fresh derivation (empty == in sync). The viewer shell
         is template-owned + regenerated, so only graph.json — the diff-truth — is gated for staleness."""
@@ -131,9 +241,20 @@ def main():
         action="store_true",
         help="fail (exit 1) if the committed graph.json is out of date — do not write",
     )
+    ap.add_argument(
+        "--diff",
+        metavar="BASELINE",
+        help="report how the architecture CHANGED against a baseline graph.json (a FILE, so this stays "
+        "git-free: CI does `git show <base>:docs/architecture/graph.json > base.json`). Advisory — the "
+        "gates say what is forbidden, this says what moved",
+    )
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     engine = Archmap(args.packages)
+    if args.diff:
+        changes = engine.diff(Path(args.diff))
+        log.info("architecture diff: %d change(s)\n%s", len(changes), "\n".join(changes))
+        return
     if args.check:
         drift = engine.check()
         if drift:

@@ -36,6 +36,9 @@ def lint(session: nox.Session) -> None:
     # god-module / import-cycle / god-file AND test-mirror — the FULL --assert (engines carry their mirrors).
     session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.graph", LAYER, "--assert", external=True)
     session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.demeter", LAYER, "--assert", external=True)
+    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.composition", LAYER, "--assert", external=True)
+    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.contracts", LAYER, "--assert", external=True)
+    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.envy", LAYER, "--assert", external=True)
     # class-shape: every helper is a method on its engine class, only main() top-level. Config ships in the
     # package (devtools/sgconfig.yml), so ast-grep reads it in place — no `python -m devtools.config` hop.
     session.run(

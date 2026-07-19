@@ -13,6 +13,11 @@
   .bar button:hover { background: #2c4256; }
   .hint { color: #7d8590; font-size: 11px; margin-left: 6px; }
   #cy { flex: 1; }
+  .filters { padding: 6px 12px; font: 12px system-ui, sans-serif; color: #9fb4c8; background: #080a0e; border-bottom: 1px solid #23292f; }
+  .filters label { margin-right: 10px; cursor: pointer; user-select: none; white-space: nowrap; }
+  .filters .swatch { display: inline-block; width: 20px; height: 0; vertical-align: middle; margin-right: 3px; }
+  .filters .grp { margin-right: 14px; }
+  .filters .grp > b { color: #7d8590; font-weight: 600; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -24,6 +29,29 @@
     <button id="collapseAll">collapse all</button>
     <button id="reset">reset view</button>
     <span class="hint">click a box = drill one level in · click an open package = fold it · right-click any node = focus (spotlight its deps, dims the rest) · click empty space = clear · arrow [n] = summed import count</span>
+  </div>
+  <!-- An import edge is the coarse OR of every reason one module needs another; these toggles show the
+       finer arrows it decomposes into. Line STYLE carries the split (solid = what a class KNOWS,
+       dashed = what it DOES), so the reading survives greyscale and colour-blindness. -->
+  <div class="filters">
+    <span class="grp"><b>tier</b>
+      <label><input type="checkbox" id="tier-class"> classes</label>
+      <label><input type="checkbox" id="tier-method"> methods</label>
+      <label><input type="checkbox" id="hide-satellites"> hide satellites</label>
+    </span>
+    <span class="grp"><b>arrows</b>
+      <label><input type="checkbox" id="kind-import" checked><span class="swatch" style="border-top:2px solid #5b6b7a"></span>import</label>
+      <label><input type="checkbox" id="kind-inherits"><span class="swatch" style="border-top:2px solid #6f9fd0"></span>inherits</label>
+      <label><input type="checkbox" id="kind-holds"><span class="swatch" style="border-top:2px solid #5fae7f"></span>holds</label>
+      <label><input type="checkbox" id="kind-references"><span class="swatch" style="border-top:2px dotted #7d8590"></span>references</label>
+      <label><input type="checkbox" id="kind-calls"><span class="swatch" style="border-top:2px dashed #c8873b"></span>calls</label>
+      <label><input type="checkbox" id="kind-construct"><span class="swatch" style="border-top:2px dashed #b06ec0"></span>construct</label>
+    </span>
+    <span class="grp"><b>presets</b>
+      <button id="preset-imports">imports only</button>
+      <button id="preset-structure">structure</button>
+      <button id="preset-behaviour">behaviour</button>
+    </span>
   </div>
   <div id="cy"></div>
 </div>

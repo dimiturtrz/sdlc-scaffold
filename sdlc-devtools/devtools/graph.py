@@ -29,6 +29,8 @@ import grimp
 import networkx as nx
 
 from devtools._common import ENCODING
+from devtools.arrows import ClassArrows
+from devtools.calls import CONSTRUCT, CallArrows
 from devtools.classes import ClassIndex
 from devtools.names import Names
 from devtools.omit import Omit
@@ -241,12 +243,36 @@ class ImportGraph:
         """Top-n (name, score) by descending score — the shared ranking for every metric."""
         return sorted(pairs, key=lambda kv: -kv[1])[:n]
 
+    def typed_graph(self, kinds: set[str]) -> nx.DiGraph:
+        """A CLASS-level DiGraph over one arrow subset — the same metrics, a different question.
+
+        This is what "metrics as edge-subset queries" means concretely (bd 4bl.4). The ranking functions
+        below never cared what an edge MEANT; they were simply only ever handed imports. Give them a
+        kind-filtered subset and fan-in becomes REAL usage coupling — which import fan-in only
+        approximates, because importing is not using and a type-only import counts the same as a call.
+
+        The GATES deliberately stay on the import graph: it is sound and complete, so a blocking rule
+        cannot false-positive. This is the explorer side, where an approximate answer is still useful.
+        """
+        g = nx.DiGraph()
+        for src, dst, kind in ClassArrows(self.packages).edges():
+            if kind in kinds:
+                g.add_edge(src, dst)
+        for src, dst, kind, via in CallArrows(self.packages).edges():
+            if (CONSTRUCT if via else kind) in kinds:
+                g.add_edge(src, dst)
+        return g
+
     @staticmethod
-    def report(g: nx.DiGraph, top: int) -> str:
-        """Ranked fan-in / fan-out / bottleneck / chokepoint tables + the cycle list, as one text block."""
+    def report(g: nx.DiGraph, top: int, label: str = "import graph", unit: str = "modules") -> str:
+        """Ranked fan-in / fan-out / bottleneck / chokepoint tables + the cycle list, as one text block.
+
+        Takes the graph rather than building one, so the SAME rankings serve any edge subset — the import
+        tier, or the class-level `calls` tier via `typed_graph`.
+        """
         ind, outd = dict(g.in_degree()), dict(g.out_degree())
         out = [
-            f"import graph: {g.number_of_nodes()} modules, {g.number_of_edges()} edges",
+            f"{label}: {g.number_of_nodes()} {unit}, {g.number_of_edges()} edges",
             "",
         ]
         for title, pairs in (
@@ -331,6 +357,10 @@ def main():
     if args.assert_:
         raise SystemExit(engine.run_assert(test_mirror=not args.no_test_mirror))
     log.info("\n%s", ImportGraph.report(engine.build_graph(), args.top))
+    # the SAME rankings over the `calls` subset — who is actually USED, not merely imported (bd 4bl.4)
+    usage = engine.typed_graph({"calls", CONSTRUCT})
+    if usage.number_of_edges():
+        log.info("\n%s", ImportGraph.report(usage, args.top, label="usage graph (calls)", unit="classes"))
 
 
 if __name__ == "__main__":

@@ -113,6 +113,21 @@ jobs:
       # CHECK (bad-return / bad-argument-type). Runs in the synced env (`--with` adds pyrefly) so it resolves
       # installed dep stubs (pydantic/numpy py.typed) — the R1 type-grade Correctness leg ruff can't reach.
       # Config + tests carve-out + untyped-dep slot in [tool.pyrefly]; scope=lint_paths. Blocks the merge.
+      # Object graph — ENFORCED: a `holds` cycle (A owns a B that owns an A) means neither can be built or
+      # tested alone. Catches the intra-file case the import-cycle check structurally cannot represent.
+      - name: Composition cycles — enforced (devtools/composition.py --assert)
+        run: uv run --extra devtools python -m devtools.composition {{ pkgs }} --assert
+      # Feature envy — ENFORCED: a METHOD more interested in one other class than its own object, i.e. it
+      # probably belongs on that class. Judged against a SINGLE foreign class (spreading calls across
+      # collaborators is orchestration, not envy) and never against a value object. Floor is
+      # [tool.structure] feature_envy_min.
+      - name: Feature envy — enforced (devtools/envy.py --assert)
+        run: uv run --extra devtools python -m devtools.envy {{ pkgs }} --assert
+      # Forbidden-USE contracts — ENFORCED: directional rules over the DECOMPOSED arrows, so a contract can
+      # forbid CONSTRUCTING a concrete while still permitting use — precision imports cannot express.
+      # Contracts live in [[tool.arch.forbidden]]; empty by default, so a fresh gen is green.
+      - name: Forbidden-use contracts — enforced (devtools/contracts.py --assert)
+        run: uv run --extra devtools python -m devtools.contracts {{ pkgs }} --assert
       # Law of Demeter — ENFORCED: a chain that reaches THROUGH a field into a stranger
       # (`self.store.config.name`) couples this class to a type it never declared. Ceiling is
       # [tool.structure] demeter_max_depth (2 = reach your own field, then talk to it). A fresh gen has no
@@ -146,6 +161,19 @@ jobs:
       - name: Architecture graph — advisory (archmap --check, stale graph.json)
         continue-on-error: true
         run: uv run --extra devtools python -m devtools.archmap {{ pkgs }} --check || echo "::warning::docs/architecture/graph.json is stale — run 'nox -s archmap' and commit"
+      # Architecture CHANGELOG — ADVISORY (never blocks): how this PR moved the architecture, in REAL
+      # dependency terms — which arrow KIND appeared or vanished, not just that a JSON file changed. Posted
+      # to the job summary so it is read in review. The gates say what is FORBIDDEN; this says what MOVED,
+      # which is the part someone deciding whether to trust a change actually needs. Baseline is the merge
+      # target's committed graph.json; a repo without one yet simply reports no change.
+      - name: Architecture changelog — advisory (archmap --diff vs the merge target)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          git fetch -q --depth=1 origin {% raw %}"${{ github.base_ref }}"{% endraw %}
+          git show FETCH_HEAD:docs/architecture/graph.json > /tmp/arch-base.json 2>/dev/null || echo '{}' > /tmp/arch-base.json
+          uv run --extra devtools python -m devtools.archmap {{ pkgs }} --diff /tmp/arch-base.json | tee /tmp/arch-diff.txt
+          { echo '### Architecture changes'; echo '```'; cat /tmp/arch-diff.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # >>> LOCAL-SLOT: ci-test-steps — repo-specific test/coverage/gate steps on top of the base (e.g. a
       # separate viewer-coverage floor calibrated to library logic, or a repo-only enforced check). Survives
       # copier update; empty by default (bd skr GAP3).
