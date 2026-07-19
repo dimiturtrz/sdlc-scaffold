@@ -146,8 +146,44 @@
     },
     {
       "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
       "source": "devtools.graph",
       "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph",
+      "target": "devtools.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph",
+      "target": "devtools.calls",
       "weight": 1
     },
     {
@@ -398,6 +434,66 @@
     },
     {
       "kind": "construct",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.classes.ClassIndex",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.envy.MethodSite",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.envy.MethodSite",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.envy.MethodSite",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.ImportGraph",
+      "target": "devtools.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.ImportGraph",
+      "target": "devtools.calls.CallArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
       "source": "devtools.graph.ImportGraph",
       "target": "devtools.classes.ClassIndex",
       "weight": 1
@@ -453,7 +549,7 @@
   ],
   "nodes": [
     {
-      "descendants": 22,
+      "descendants": 23,
       "id": "devtools",
       "label": "devtools",
       "level": "module",
@@ -552,6 +648,14 @@
       "descendants": 0,
       "id": "devtools.demeter",
       "label": "demeter",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy",
+      "label": "envy",
       "level": "module",
       "parent": "devtools",
       "role": null
@@ -739,6 +843,22 @@
       "level": "class",
       "parent": "devtools.demeter",
       "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy",
+      "label": "FeatureEnvy",
+      "level": "class",
+      "parent": "devtools.envy",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.MethodSite",
+      "label": "MethodSite",
+      "level": "class",
+      "parent": "devtools.envy",
+      "role": "satellite"
     },
     {
       "descendants": 0,
@@ -1454,6 +1574,86 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._is_satellite",
+      "label": "_is_satellite",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._outermost",
+      "label": "_outermost",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._satellites",
+      "label": "_satellites",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._tally",
+      "label": "_tally",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._verdict",
+      "label": "_verdict",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.load_minimum",
+      "label": "load_minimum",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.MethodSite.describe",
+      "label": "describe",
+      "level": "method",
+      "parent": "devtools.envy.MethodSite",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.graph.ImportGraph.__init__",
       "label": "__init__",
       "level": "method",
@@ -1608,6 +1808,14 @@
       "descendants": 0,
       "id": "devtools.graph.ImportGraph.run_assert",
       "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.typed_graph",
+      "label": "typed_graph",
       "level": "method",
       "parent": "devtools.graph.ImportGraph",
       "role": null
