@@ -16,6 +16,25 @@ def test_structure_cfg_merges_over_defaults(tmp_path):
     assert cfg["bottleneck_degree"] == 8, "an unspecified threshold keeps the default"
 
 
+def test_a_misspelled_threshold_raises_instead_of_being_dropped(tmp_path):
+    """A silently-ignored override is a config's worst failure mode: `bottlneck_degree = 20` would leave the
+    gate on its default and the repo would read as PASSING at a threshold nobody set. Same silent-typo shape
+    as the contracts bug `malformed()` exists to stop."""
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text("[tool.structure]\nbottlneck_degree = 20\n")
+    with pytest.raises(ValueError, match="unknown key 'bottlneck_degree'"):
+        ImportGraph.load_structure_cfg(str(pyproject))
+
+
+def test_a_wrong_typed_threshold_raises(tmp_path):
+    """The threshold reaches a gate that will compare it numerically — a string there is a crash later, or
+    worse, a silently skipped comparison."""
+    pyproject = tmp_path / "pyproject.toml"
+    pyproject.write_text('[tool.structure]\nfile_max = "750"\n')
+    with pytest.raises(ValueError, match="'file_max' must be int, got str"):
+        ImportGraph.load_structure_cfg(str(pyproject))
+
+
 def test_structure_cfg_all_defaults_when_absent(tmp_path):
     cfg = ImportGraph.load_structure_cfg(str(tmp_path / "nope.toml"))
     assert cfg == {
@@ -217,7 +236,7 @@ def test_the_same_metrics_run_over_the_subset(monkeypatch, tmp_path):
 
 def test_report_labels_whatever_subset_it_is_given(monkeypatch, tmp_path):
     engine = _usage_pkg(monkeypatch, tmp_path)
-    text = ImportGraph.report(engine.typed_graph({"calls"}), top=3, label="usage graph (calls)", unit="classes")
+    text = ImportGraph._render(engine.typed_graph({"calls"}), top=3, label="usage graph (calls)", unit="classes")
     assert text.startswith("usage graph (calls): 2 classes"), text.splitlines()[0]
     assert "fan-in (load-bearing):" in text, "the same tables, a different question"
 

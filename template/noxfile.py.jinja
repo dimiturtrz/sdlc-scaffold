@@ -21,7 +21,7 @@ JSCPD_LAYERS = [{% for p in jscpd_paths.split(" ") %}"{{ p }}"{% if not loop.las
 
 @nox.session(venv_backend="none")
 def lint(session: nox.Session) -> None:
-    """ruff check (enforced) + ruff format --check (advisory) + vulture{% if use_import_linter %} + import-linter{% endif %} + arch-fitness + ast-grep + jscpd."""
+    """ruff check + format + vulture{% if use_import_linter %} + import-linter{% endif %} + arch-fitness + ast-grep + jscpd."""
     # --select on the CLI bypasses pyproject [tool.ruff.lint] ignore, so the ml jaxtyping waiver is repeated
     # here — matching CI (bd skr GAP1/kqk). F722 = multi-token dim strings ("b c h w"); F821 = single-axis
     # ("n") which parses as an undefined forward-ref. Off domain=ml both are absent (no jaxtyping dep).

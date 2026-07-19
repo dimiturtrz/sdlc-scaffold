@@ -24,20 +24,18 @@ Run: `python -m devtools.envy [pkgs...]` (report) | `--assert` (gate).
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 from collections import Counter
 from dataclasses import dataclass
 
 from devtools.classes import SATELLITE, ClassIndex
+from devtools.cli import Cli
 from devtools.pyproject import Pyproject
-from devtools.resolve import Resolver
+from devtools.resolve import FileScope, Resolver
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.envy")
-
-_DEFAULT_MIN = 4
 
 
 @dataclass(frozen=True)
@@ -70,7 +68,7 @@ class FeatureEnvy:
     @staticmethod
     def load_minimum(pyproject: str = "pyproject.toml") -> int:
         """Foreign-access floor from `[tool.structure] feature_envy_min`, defaulted when absent."""
-        return int(Pyproject.tool_section("structure", pyproject).get("feature_envy_min", _DEFAULT_MIN))
+        return int(Pyproject.structure_cfg(pyproject)["feature_envy_min"])
 
     def _satellites(self) -> set[str]:
         """Qualified ids of the SATELLITE classes — a value object / config / enum / error family.
@@ -99,9 +97,9 @@ class FeatureEnvy:
 
     def _tally(
         self, fn: ast.FunctionDef, fields: dict[str, set[str]], scope: dict[str, set[str]]
-    ) -> tuple[int, Counter]:
+    ) -> tuple[int, Counter[str]]:
         """(accesses on own object, {foreign class: accesses}) for one method."""
-        own, foreign = 0, Counter()
+        own, foreign = 0, Counter[str]()
         for link in self._outermost(fn):
             receiver = link.value
             if Resolver.is_self_attr(receiver):  # self.field.<member> -> a use of the FIELD's type
@@ -116,7 +114,7 @@ class FeatureEnvy:
 
     def violations(self) -> list[str]:
         """Every method more interested in one other class than in its own object."""
-        out = []
+        out: list[str] = []
         for path, tree in Trees(self.packages).walk():
             scope_of_file = Resolver.scope_of(path, tree)
             for cls in Resolver.classes_in(tree):
@@ -128,7 +126,7 @@ class FeatureEnvy:
                     out += self._verdict(site, own, foreign, scope_of_file)
         return sorted(out)
 
-    def _verdict(self, site: MethodSite, own: int, foreign: Counter, scope) -> list[str]:
+    def _verdict(self, site: MethodSite, own: int, foreign: Counter[str], scope: FileScope) -> list[str]:
         """The finding for one method, if any — judged against the single most-used foreign class."""
         return [
             site.describe(target, count, own)
@@ -138,6 +136,11 @@ class FeatureEnvy:
             and count > own
             and not self._is_satellite(target)
         ]
+
+    def report(self) -> str:
+        """The findings as one text block — the explorer view, paired with run_assert's gate view."""
+        found = self.violations()
+        return "\n".join([f"feature envy (floor {self.minimum}): {len(found)}", *found])
 
     def run_assert(self) -> int:
         """The gate: log envious methods and return an exit code."""
@@ -150,16 +153,11 @@ class FeatureEnvy:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Feature envy — methods more interested in another class.")
-    parser.add_argument("packages", nargs="+", help="root packages to scan")
-    parser.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on an envious method")
-    args = parser.parse_args()
-    engine = FeatureEnvy(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert())
-    found = engine.violations()
-    log.info("feature envy (floor %d): %d\n%s", engine.minimum, len(found), "\n".join(found))
+    Cli(
+        FeatureEnvy,
+        "Feature envy — a method more interested in another class than its own.",
+        gate="exit 1 on an envious method",
+    ).run()
 
 
 if __name__ == "__main__":

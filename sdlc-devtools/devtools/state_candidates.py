@@ -13,11 +13,11 @@ counts, so a class where many methods thread many common params ranks highest. D
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 from collections import Counter
 
+from devtools.cli import Cli
 from devtools.omit import Omit
 from devtools.trees import Trees
 
@@ -111,8 +111,17 @@ class StateCandidates:
             rows.extend((sc, name, str(path), n, sh) for sc, name, n, sh in self._analyze(tree))
         return sorted(rows, reverse=True)
 
+    def report(self) -> str:
+        """The findings as one text block — the uniform explorer view every engine answers to.
+
+        `_render` formats ROWS the caller already has; this computes them, so a caller needs only
+        the engine. Two report shapes across the engines is what made a shared CLI impossible.
+        """
+        rows = self.scan()
+        return "\n".join([f"{len(rows)} promotion candidates", self._render(rows)])
+
     @staticmethod
-    def report(rows: list[tuple[int, str, str, int, dict[str, int]]]) -> str:
+    def _render(rows: list[tuple[int, str, str, int, dict[str, int]]]) -> str:
         """Ranked table: score, class, method-count, the shared params (count), file."""
         lines = [f"{'score':>5}  {'class':22} {'meth':>4}  shared-state (methods-sharing)      file"]
         for score, name, path, n, shared in rows:
@@ -122,14 +131,7 @@ class StateCandidates:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.state_candidates", description="rank namespace-classes by latent shared instance state"
-    )
-    ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rows = StateCandidates(args.packages).scan()
-    log.info("%d promotion candidates\n%s", len(rows), StateCandidates.report(rows))
+    Cli(StateCandidates, "rank namespace-classes by latent shared instance state").run()
 
 
 if __name__ == "__main__":

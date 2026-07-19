@@ -14,11 +14,11 @@ Frequent-subset counting (not connected components) — the latter over-merges v
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 from itertools import combinations
 
+from devtools.cli import Cli, Flag
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.data_clumps")
@@ -86,8 +86,17 @@ class DataClumps:
             reverse=True,
         )
 
+    def report(self, min_support: int = _MIN_SUPPORT, min_clump: int = _MIN_CLUMP) -> str:
+        """The findings as one text block — the uniform explorer view every engine answers to.
+
+        Carries the same tuning as `clumps` so the CLI passes flags to ONE method rather than computing rows
+        itself and handing them to a formatter, which is how two report shapes grew in the first place.
+        """
+        rows = self.clumps(min_support, min_clump)
+        return "\n".join([f"{len(rows)} data clumps", self._render(rows)])
+
     @staticmethod
-    def report(rows: list[tuple[int, tuple[str, ...], int, list[str]]]) -> str:
+    def _render(rows: list[tuple[int, tuple[str, ...], int, list[str]]]) -> str:
         """Ranked table: support (functions carrying the whole tuple), size, the params, example files."""
         lines = [f"{'supp':>4} {'size':>4}  {'clump (params that travel together)':45} examples"]
         for support, params, size, files in rows:
@@ -96,19 +105,14 @@ class DataClumps:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.data_clumps",
-        description="find param sets that travel together (Introduce Parameter Object)",
-    )
-    ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    ap.add_argument(
-        "--min-support", type=int, default=_MIN_SUPPORT, help="a param pair must co-occur in >= this many functions"
-    )
-    ap.add_argument("--min-clump", type=int, default=_MIN_CLUMP, help="a clump must bundle >= this many params")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rows = DataClumps(args.packages).clumps(args.min_support, args.min_clump)
-    log.info("%d data clumps\n%s", len(rows), DataClumps.report(rows))
+    Cli(
+        DataClumps,
+        "find param sets that travel together (Introduce Parameter Object)",
+        flags=(
+            Flag("--min-support", "functions that must share the params", type=int),
+            Flag("--min-clump", "smallest clump size to report", type=int),
+        ),
+    ).run()
 
 
 if __name__ == "__main__":

@@ -152,12 +152,15 @@ ruff_select:
   when: false
 
 # Extra codes surfaced by the non-blocking `ruff check . --statistics` run over the WHOLE tree (`.` vs the
-# enforced `lint_paths`) — reported, never a merge gate. Empty since E501/SLF001 graduated into the enforced
-# union (nothing is advisory-only now); the `--extend-select` is guarded off when this is blank. Kept as a
-# seam: a future code that needs whole-tree visibility before it's honest to gate rides here.
+# enforced `lint_paths`) — reported, never a merge gate. This is the seam the comment always described: a
+# code that needs whole-tree visibility BEFORE it is honest to gate rides here until a real tree is clean.
+# TID251 bans `typing.Any` (see [tool.ruff.lint.flake8-tidy-imports.banned-api]). Advisory because it was
+# MEASURED first (bd lph): 49 violations on cardiac-seg, 47 on mindscape, 0 on synthscape — and ~75% of
+# them are `dict[str, Any]` at JSON/config boundaries, which is real refactoring into a TypedDict rather
+# than a rename. It graduates into ruff_select when a real tree reaches 0, per the shape_contracts rule.
 ruff_advisory_select:
   type: str
-  default: ""
+  default: "TID251"
   when: false
 
 # Single source of truth for the pinned tool versions — rendered into ci.yml / noxfile.py /

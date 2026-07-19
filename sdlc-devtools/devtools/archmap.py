@@ -25,6 +25,7 @@ import ast
 import json
 import logging
 from pathlib import Path
+from typing import TypedDict
 
 import grimp
 
@@ -36,6 +37,37 @@ from devtools.resolve import Resolver
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.archmap")
+
+
+# graph.json's SCHEMA, typed. It is a committed artifact the viewer hydrates, so the shape is a contract,
+# not an implementation detail — and TypedDict states it per FIELD, which `dict[str, <union>]` cannot: it
+# would make every field the same widened union and force the reader to re-narrow `id` back to `str`.
+class NodeRow(TypedDict):
+    """A containment-tree node: module, class or method."""
+
+    id: str
+    label: str
+    parent: str | None
+    descendants: int
+    level: str
+    role: str | None
+
+
+class EdgeRow(TypedDict):
+    """One arrow, tagged with the kind an import decomposes into."""
+
+    source: str
+    target: str
+    weight: int
+    kind: str
+
+
+class GraphData(TypedDict):
+    """The whole committed artifact."""
+
+    nodes: list[NodeRow]
+    edges: list[EdgeRow]
+
 
 _ROOT = Path("docs/architecture")
 _JSON = _ROOT / "graph.json"
@@ -68,7 +100,7 @@ class Archmap:
         p = module.rsplit(".", 1)[0] if "." in module else None
         return p if p in module_set else None
 
-    def _class_nodes(self) -> list[dict]:
+    def _class_nodes(self) -> list[NodeRow]:
         """The CLASS tier of the containment tree (bd 433.1): every class as a node under its module,
         carrying its ROLE — `primary` (the file's subject) or `satellite` (its error / config / local
         specialisation). The role is what lets a view hide companions and show the real skeleton."""
@@ -88,7 +120,7 @@ class Archmap:
             key=lambda n: n["id"],
         )
 
-    def _method_nodes(self) -> list[dict]:
+    def _method_nodes(self) -> list[NodeRow]:
         """The METHOD tier (bd 433.4) — the deepest fold level, so a class can be opened to read its actual
         surface instead of guessing it from the class name.
 
@@ -114,7 +146,7 @@ class Archmap:
             key=lambda n: n["id"],
         )
 
-    def _typed_edges(self) -> list[dict]:
+    def _typed_edges(self) -> list[EdgeRow]:
         """The finer arrows an import edge decomposes into, each tagged with its KIND. Deduped and sorted so
         the committed diff stays minimal; `weight` is 1 because a kind between two classes is a fact, not a
         count (the import edge keeps the statement count)."""
@@ -125,7 +157,7 @@ class Archmap:
             for s, d, kind in sorted(set(structural + behavioural))
         ]
 
-    def graph_data(self) -> dict:
+    def graph_data(self) -> GraphData:
         """The full graph as committed-diffable JSON — the diff-truth the viewer hydrates.
 
         THREE tiers of one containment tree. Every MODULE is a node carrying its `parent` (compound nesting) +
@@ -165,10 +197,7 @@ class Archmap:
             for imp in sorted(graph.find_modules_directly_imported_by(m))
             if imp in module_set
         ]
-        return {
-            "nodes": nodes + self._class_nodes() + self._method_nodes(),
-            "edges": edges + self._typed_edges(),
-        }
+        return {"nodes": nodes + self._class_nodes() + self._method_nodes(), "edges": edges + self._typed_edges()}
 
     def _json_text(self) -> str:
         return json.dumps(self.graph_data(), indent=2, sort_keys=True) + "\n"
@@ -193,7 +222,7 @@ class Archmap:
         return path
 
     @staticmethod
-    def _signature(data: dict) -> tuple[set[tuple[str, str]], set[tuple[str, str, str]]]:
+    def _signature(data: GraphData) -> tuple[set[tuple[str, str]], set[tuple[str, str, str]]]:
         """(nodes, edges) as comparable tuples — the shape a diff is taken over."""
         nodes = {(n["id"], n.get("role") or n.get("level", "module")) for n in data.get("nodes", [])}
         edges = {(e["source"], e["target"], e.get("kind", "import")) for e in data.get("edges", [])}
@@ -237,9 +266,7 @@ def main():
     )
     ap.add_argument("packages", nargs="+", help="package dirs to map (>=1 required)")
     ap.add_argument(
-        "--check",
-        action="store_true",
-        help="fail (exit 1) if the committed graph.json is out of date — do not write",
+        "--check", action="store_true", help="fail (exit 1) if the committed graph.json is out of date — do not write"
     )
     ap.add_argument(
         "--diff",

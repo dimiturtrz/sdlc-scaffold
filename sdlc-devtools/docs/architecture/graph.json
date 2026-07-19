@@ -45,6 +45,12 @@
     {
       "kind": "import",
       "source": "devtools.arrows",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.arrows",
       "target": "devtools.names",
       "weight": 1
     },
@@ -63,6 +69,12 @@
     {
       "kind": "import",
       "source": "devtools.calls",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.calls",
       "target": "devtools.names",
       "weight": 1
     },
@@ -76,6 +88,12 @@
       "kind": "import",
       "source": "devtools.calls",
       "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.classes",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -99,6 +117,12 @@
     {
       "kind": "import",
       "source": "devtools.complexity",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.complexity",
       "target": "devtools.trees",
       "weight": 1
     },
@@ -106,6 +130,12 @@
       "kind": "import",
       "source": "devtools.composition",
       "target": "devtools.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.composition",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -123,7 +153,19 @@
     {
       "kind": "import",
       "source": "devtools.contracts",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.contracts",
       "target": "devtools.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.data_clumps",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -135,12 +177,48 @@
     {
       "kind": "import",
       "source": "devtools.demeter",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.demeter",
       "target": "devtools.pyproject",
       "weight": 1
     },
     {
       "kind": "import",
       "source": "devtools.demeter",
+      "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
       "target": "devtools.trees",
       "weight": 1
     },
@@ -153,7 +231,25 @@
     {
       "kind": "import",
       "source": "devtools.graph",
+      "target": "devtools.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph",
+      "target": "devtools.calls",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph",
       "target": "devtools.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -183,7 +279,19 @@
     {
       "kind": "import",
       "source": "devtools.lcom",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.lcom",
       "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.magic_literals",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -219,6 +327,12 @@
     {
       "kind": "import",
       "source": "devtools.shape_contracts",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.shape_contracts",
       "target": "devtools.pyproject",
       "weight": 1
     },
@@ -226,6 +340,12 @@
       "kind": "import",
       "source": "devtools.shape_contracts",
       "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.state_candidates",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -277,6 +397,30 @@
       "weight": 1
     },
     {
+      "kind": "references",
+      "source": "devtools.archmap.Archmap",
+      "target": "devtools.archmap.EdgeRow",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.archmap.Archmap",
+      "target": "devtools.archmap.GraphData",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.archmap.Archmap",
+      "target": "devtools.archmap.GraphData",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.archmap.Archmap",
+      "target": "devtools.archmap.NodeRow",
+      "weight": 1
+    },
+    {
       "kind": "construct",
       "source": "devtools.archmap.Archmap",
       "target": "devtools.arrows.ClassArrows",
@@ -298,6 +442,18 @@
       "kind": "construct",
       "source": "devtools.archmap.Archmap",
       "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.archmap.GraphData",
+      "target": "devtools.archmap.EdgeRow",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.archmap.GraphData",
+      "target": "devtools.archmap.NodeRow",
       "weight": 1
     },
     {
@@ -361,6 +517,18 @@
       "weight": 1
     },
     {
+      "kind": "holds",
+      "source": "devtools.cli.Cli",
+      "target": "devtools.cli.Flag",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.cli.Cli",
+      "target": "devtools.cli.Switch",
+      "weight": 1
+    },
+    {
       "kind": "construct",
       "source": "devtools.complexity.Complexity",
       "target": "devtools.trees.Trees",
@@ -398,8 +566,86 @@
     },
     {
       "kind": "construct",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.classes.ClassIndex",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.envy.MethodSite",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.envy.MethodSite",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.envy.MethodSite",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.envy.FeatureEnvy",
+      "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.ImportGraph",
+      "target": "devtools.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.ImportGraph",
+      "target": "devtools.calls.CallArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
       "source": "devtools.graph.ImportGraph",
       "target": "devtools.classes.ClassIndex",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.ImportGraph",
+      "target": "devtools.graph.StructureCfg",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.ImportGraph",
+      "target": "devtools.graph.StructureCfg",
       "weight": 1
     },
     {
@@ -453,7 +699,7 @@
   ],
   "nodes": [
     {
-      "descendants": 22,
+      "descendants": 24,
       "id": "devtools",
       "label": "devtools",
       "level": "module",
@@ -510,6 +756,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.cli",
+      "label": "cli",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.complexity",
       "label": "complexity",
       "level": "module",
@@ -552,6 +806,14 @@
       "descendants": 0,
       "id": "devtools.demeter",
       "label": "demeter",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy",
+      "label": "envy",
       "level": "module",
       "parent": "devtools",
       "role": null
@@ -670,6 +932,30 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.archmap.EdgeRow",
+      "label": "EdgeRow",
+      "level": "class",
+      "parent": "devtools.archmap",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.GraphData",
+      "label": "GraphData",
+      "level": "class",
+      "parent": "devtools.archmap",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.archmap.NodeRow",
+      "label": "NodeRow",
+      "level": "class",
+      "parent": "devtools.archmap",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
       "id": "devtools.arrows.ClassArrows",
       "label": "ClassArrows",
       "level": "class",
@@ -691,6 +977,30 @@
       "level": "class",
       "parent": "devtools.classes",
       "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli",
+      "label": "Cli",
+      "level": "class",
+      "parent": "devtools.cli",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Flag",
+      "label": "Flag",
+      "level": "class",
+      "parent": "devtools.cli",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Switch",
+      "label": "Switch",
+      "level": "class",
+      "parent": "devtools.cli",
+      "role": "satellite"
     },
     {
       "descendants": 0,
@@ -742,11 +1052,35 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy",
+      "label": "FeatureEnvy",
+      "level": "class",
+      "parent": "devtools.envy",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.MethodSite",
+      "label": "MethodSite",
+      "level": "class",
+      "parent": "devtools.envy",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
       "id": "devtools.graph.ImportGraph",
       "label": "ImportGraph",
       "level": "class",
       "parent": "devtools.graph",
       "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.StructureCfg",
+      "label": "StructureCfg",
+      "level": "class",
+      "parent": "devtools.graph",
+      "role": "satellite"
     },
     {
       "descendants": 0,
@@ -1126,8 +1460,24 @@
     },
     {
       "descendants": 0,
-      "id": "devtools.classes.ClassIndex._is_dataclass",
-      "label": "_is_dataclass",
+      "id": "devtools.classes.ClassIndex._contracts",
+      "label": "_contracts",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex._implements",
+      "label": "_implements",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex._is_data_container",
+      "label": "_is_data_container",
       "level": "method",
       "parent": "devtools.classes.ClassIndex",
       "role": null
@@ -1144,6 +1494,14 @@
       "descendants": 0,
       "id": "devtools.classes.ClassIndex._is_error",
       "label": "_is_error",
+      "level": "method",
+      "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.classes.ClassIndex._method_names",
+      "label": "_method_names",
       "level": "method",
       "parent": "devtools.classes.ClassIndex",
       "role": null
@@ -1198,6 +1556,70 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.cli.Cli.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.accepted",
+      "label": "accepted",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.parser",
+      "label": "parser",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.prog",
+      "label": "prog",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.run",
+      "label": "run",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.tool",
+      "label": "tool",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Flag.add_to",
+      "label": "add_to",
+      "level": "method",
+      "parent": "devtools.cli.Flag",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Switch.add_to",
+      "label": "add_to",
+      "level": "method",
+      "parent": "devtools.cli.Switch",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.complexity.Complexity.__init__",
       "label": "__init__",
       "level": "method",
@@ -1208,6 +1630,14 @@
       "descendants": 0,
       "id": "devtools.complexity.Complexity._functions",
       "label": "_functions",
+      "level": "method",
+      "parent": "devtools.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.complexity.Complexity._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.complexity.Complexity",
       "role": null
@@ -1238,6 +1668,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.composition.CompositionCycles._names",
+      "label": "_names",
+      "level": "method",
+      "parent": "devtools.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.composition.CompositionCycles.cycles",
       "label": "cycles",
       "level": "method",
@@ -1248,6 +1686,14 @@
       "descendants": 0,
       "id": "devtools.composition.CompositionCycles.graph",
       "label": "graph",
+      "level": "method",
+      "parent": "devtools.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.composition.CompositionCycles.report",
+      "label": "report",
       "level": "method",
       "parent": "devtools.composition.CompositionCycles",
       "role": null
@@ -1318,6 +1764,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.contracts.UseContracts.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.contracts.UseContracts.run_assert",
       "label": "run_assert",
       "level": "method",
@@ -1360,6 +1814,14 @@
       "descendants": 0,
       "id": "devtools.data_clumps.DataClumps._params",
       "label": "_params",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.data_clumps.DataClumps",
       "role": null
@@ -1438,6 +1900,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.demeter.Demeter.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.demeter.Demeter.run_assert",
       "label": "run_assert",
       "level": "method",
@@ -1450,6 +1920,94 @@
       "label": "violations",
       "level": "method",
       "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._is_satellite",
+      "label": "_is_satellite",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._outermost",
+      "label": "_outermost",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._satellites",
+      "label": "_satellites",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._tally",
+      "label": "_tally",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy._verdict",
+      "label": "_verdict",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.load_minimum",
+      "label": "load_minimum",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.MethodSite.describe",
+      "label": "describe",
+      "level": "method",
+      "parent": "devtools.envy.MethodSite",
       "role": null
     },
     {
@@ -1520,6 +2078,14 @@
       "descendants": 0,
       "id": "devtools.graph.ImportGraph._oversized",
       "label": "_oversized",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.graph.ImportGraph",
       "role": null
@@ -1608,6 +2174,14 @@
       "descendants": 0,
       "id": "devtools.graph.ImportGraph.run_assert",
       "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph.typed_graph",
+      "label": "typed_graph",
       "level": "method",
       "parent": "devtools.graph.ImportGraph",
       "role": null
@@ -1710,6 +2284,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.lcom.Lcom._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.lcom.Lcom._self_names",
       "label": "_self_names",
       "level": "method",
@@ -1768,6 +2350,14 @@
       "descendants": 0,
       "id": "devtools.magic_literals.MagicLiterals._key_sets",
       "label": "_key_sets",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.magic_literals.MagicLiterals",
       "role": null
@@ -1842,6 +2432,46 @@
       "label": "matches_omit",
       "level": "method",
       "parent": "devtools.omit.Omit",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.rows",
+      "label": "rows",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.str_list",
+      "label": "str_list",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.str_of",
+      "label": "str_of",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.structure_cfg",
+      "label": "structure_cfg",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.pyproject.Pyproject.table",
+      "label": "table",
+      "level": "method",
+      "parent": "devtools.pyproject.Pyproject",
       "role": null
     },
     {
@@ -2022,6 +2652,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.shape_contracts.ShapeContracts.array_names",
       "label": "array_names",
       "level": "method",
@@ -2032,6 +2670,14 @@
       "descendants": 0,
       "id": "devtools.shape_contracts.ShapeContracts.report",
       "label": "report",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.run_assert",
+      "label": "run_assert",
       "level": "method",
       "parent": "devtools.shape_contracts.ShapeContracts",
       "role": null
@@ -2088,6 +2734,14 @@
       "descendants": 0,
       "id": "devtools.state_candidates.StateCandidates._params",
       "label": "_params",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.state_candidates.StateCandidates",
       "role": null

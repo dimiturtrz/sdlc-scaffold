@@ -1,9 +1,23 @@
 # sdlc-scaffold
 
-**v1.2** — feature-complete guardrail set (the full property set gated), stable copier contract, fully
-**self-gating** (the analyzers pass the same in-a-class + test-mirror rules they impose), and the analyzers
-now ship as a **pinned package** (`sdlc-devtools`) rather than vendored source — an engine update is a
-one-line pin bump on `copier update`, no source churn in consumer PRs. In use by three converged repos.
+**v1.20** — the guardrails now reach **below the import graph**. An import edge is the coarse OR of every
+reason one module needs another; it decomposes into typed class-level arrows (`inherits`, `holds`,
+`references`, `calls`, `construct`) that say *what kind* of dependency it is, which is what lets a rule
+forbid one kind of coupling without forbidding the file. That graph backs new gates — Law of Demeter,
+composition-cycle, feature-envy, directional use-contracts — and an interactive
+[architecture viewer](https://dimiturtrz.github.io/sdlc-scaffold/) that folds from packages down to methods.
+
+The analyzers ship as a **pinned package** (`sdlc-devtools`), not vendored source: an engine update is a
+one-line pin bump on `copier update`, with no analyzer diff in consumer PRs. In use by three converged repos.
+
+**Self-gating, precisely:** the package runs the same gate set it ships — ruff, format, vulture, deptry,
+pyrefly strict, jscpd, ast-grep, coverage, and every analyzer — against its own source, and blocks on all of
+them but one. Class-roles is advisory *there* for the same measured reason it is advisory anywhere: it still
+fires on genuine multi-abstraction files, which is refactoring work rather than a classifier bug. It blocks
+once a real tree reaches zero, which is how pyrefly strict graduated — it opened at 52 errors on this
+package and now sits at 0. That is a ratchet with the work counted, not an exemption; an absent gate is the
+thing this project treats as a bug, because a gate that does not run is indistinguishable from a clean
+codebase.
 
 A [copier](https://copier.readthedocs.io) template that installs a codebase's **structural guardrails** —
 a set of executable checks that keep the code within stated architectural bounds as it grows, enforced
@@ -75,8 +89,8 @@ missing object, redirect a bad edge), the latter spanning intra-unit cohesion (L
 The
 map to tools is many-to-many by design — a property abstracts over the tools that enforce it; some tools
 serve two properties (a data clump is both a missing object and a duplication). Tools are **vendored**
-(pinned third-party binaries) or **ours** — small AST/graph analyzers shipped as source under `devtools/`
-and unit-tested in `tests/unit/`, so a broken check can't pass silently.
+(pinned third-party binaries) or **ours** — small AST/graph analyzers shipped as the `sdlc-devtools` package
+and unit-tested alongside it, so a broken check can't pass silently.
 
 | Property | Predicate — what it asserts | Fix | Tools | R |
 |---|---|---|---|---|

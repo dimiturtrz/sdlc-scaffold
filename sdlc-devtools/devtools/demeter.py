@@ -21,16 +21,14 @@ Run: `python -m devtools.demeter [pkgs...]` (report) | `--assert` (gate).
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 
+from devtools.cli import Cli
 from devtools.pyproject import Pyproject
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.demeter")
-
-_DEFAULT_MAX_DEPTH = 2
 
 
 class Demeter:
@@ -43,7 +41,7 @@ class Demeter:
     @staticmethod
     def load_max_depth(pyproject: str = "pyproject.toml") -> int:
         """The attribute-hop ceiling from `[tool.structure] demeter_max_depth`, defaulted when absent."""
-        return int(Pyproject.tool_section("structure", pyproject).get("demeter_max_depth", _DEFAULT_MAX_DEPTH))
+        return int(Pyproject.structure_cfg(pyproject)["demeter_max_depth"])
 
     @staticmethod
     def _module_roots(module: ast.Module) -> set[str]:
@@ -74,7 +72,8 @@ class Demeter:
     def _violations_in(self, tree: ast.Module, path: str) -> list[str]:
         """The over-deep chains in one module, outermost-first (an inner chain is the same train wreck)."""
         module_roots = self._module_roots(tree)
-        out, seen = [], set()
+        out: list[str] = []
+        seen: set[tuple[int, str]] = set()
         for node in ast.walk(tree):
             if not isinstance(node, ast.Attribute):
                 continue
@@ -95,6 +94,11 @@ class Demeter:
         """Every reach-through in the root packages."""
         return [msg for path, tree in Trees(self.packages).walk() for msg in self._violations_in(tree, path.as_posix())]
 
+    def report(self) -> str:
+        """The findings as one text block — the explorer view, paired with run_assert's gate view."""
+        found = self.violations()
+        return "\n".join([f"law of demeter (max depth {self.max_depth}): {len(found)}", *found])
+
     def run_assert(self) -> int:
         """The gate: log violations and return an exit code (1 when any chain reaches too deep)."""
         found = self.violations()
@@ -106,16 +110,7 @@ class Demeter:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Law of Demeter — reach-through chain depth.")
-    ap.add_argument("packages", nargs="+", help="root packages to scan")
-    ap.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a reach-through")
-    args = ap.parse_args()
-    engine = Demeter(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert())
-    found = engine.violations()
-    log.info("law of demeter (max depth %d): %d\n%s", engine.max_depth, len(found), "\n".join(found))
+    Cli(Demeter, "Law of Demeter — reach-through chain depth.", gate="exit 1 on a reach-through").run()
 
 
 if __name__ == "__main__":

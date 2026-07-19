@@ -15,6 +15,7 @@ from conftest import (
     COPIER,
     DEPTRY,
     NOX,
+    NPX,
     PIP_AUDIT,
     PRECOMMIT,
     PYREFLY,
@@ -23,6 +24,7 @@ from conftest import (
     VULTURE,
     assert_bites,
     config_path,
+    copier_default,
     example_pkg,
     generate,
     git_init_commit,
@@ -140,6 +142,21 @@ def test_domain_gating(project):
     assert ('"X*"' in pyproject_text) == ml, "the tensor-idiom naming allowlist is ML-only"
 
 
+def _assert_advisory_surface(ci_text: str) -> None:
+    """The advisory `--statistics` run carries `--extend-select` IFF ruff_advisory_select holds codes, and
+    carries exactly those.
+
+    Derived from copier.yml rather than pinned to a value. It used to assert the surface was EMPTY — true
+    only while E501/SLF001 had graduated out and nothing had ridden the seam since — so the first correct
+    USE of that seam read as a regression the moment TID251 took it (bd lph).
+    """
+    advisory = copier_default("ruff_advisory_select")
+    if advisory:
+        assert f"--extend-select {advisory}" in ci_text, f"advisory ruff must surface {advisory}"
+    else:
+        assert "--extend-select" not in ci_text, "no advisory codes configured, so no --extend-select"
+
+
 def test_select_and_ci_wiring(project):
     """The union ruff select, the enforced/advisory split, the base gates, and the CI step wiring."""
     name, path = project
@@ -203,9 +220,7 @@ def test_select_and_ci_wiring(project):
     # skr GAP3b: ci repo-step LOCAL-SLOTs let a consumer superset ride on slots, not a fork (both domains).
     assert "LOCAL-SLOT: ci-lint-steps" in ci_text, "the ci-lint-steps slot ships (skr GAP3)"
     assert "LOCAL-SLOT: ci-test-steps" in ci_text, "the ci-test-steps slot ships (skr GAP3)"
-    # 4c2/8ex reopened: E501+SLF001 graduated into the enforced select, so the advisory --statistics run
-    # carries NO --extend-select (ruff_advisory_select is empty). The enforced select is asserted above.
-    assert "--extend-select" not in ci_text, "advisory ruff has no --extend-select (surface empty, 4c2/8ex)"
+    _assert_advisory_surface(ci_text)
     # vip.4: shape_contracts GRADUATED advisory->blocking — a ml gen carries an ENFORCED --assert step (a
     # fresh gen has 0 boundaries so it passes); a domain-neutral gen has no shape gate at all.
     assert ("shape_contracts {} --assert".format(pkg) in ci_text) == ml, "ml ci enforces shape --assert (vip.4)"
@@ -355,7 +370,7 @@ def test_jscpd(project):
     name, path = project
     if not has_node():
         pytest.skip("node/npx not available")
-    run(["npx", "--yes", "jscpd", *layers(name), "--config", config_path(path, "jscpd")], path)
+    run([NPX, "--yes", "jscpd", *layers(name), "--config", config_path(path, "jscpd")], path)
 
 
 def test_class_shape_smells(project):
@@ -787,7 +802,7 @@ def test_jscpd_catches_duplication(full_project):
     pkg.write_text(pkg_orig + block)
     try:
         result = run(
-            ["npx", "--yes", "jscpd", "full_pkg", "--config", config_path(full_project, "jscpd")],
+            [NPX, "--yes", "jscpd", "full_pkg", "--config", config_path(full_project, "jscpd")],
             full_project,
             check=False,
         )

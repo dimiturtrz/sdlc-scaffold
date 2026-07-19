@@ -14,7 +14,7 @@ class Names:
     """Dotted-name resolution shared by the AST engines."""
 
     @staticmethod
-    def trailing(node: ast.expr) -> str | None:
+    def trailing(node: ast.AST) -> str | None:
         """The trailing name of a Name/Attribute node (`abc.ABC` -> 'ABC'), else None."""
         if isinstance(node, ast.Name):
             return node.id

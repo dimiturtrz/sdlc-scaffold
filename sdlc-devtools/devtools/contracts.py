@@ -28,11 +28,11 @@ Run: `python -m devtools.contracts [pkgs...]` (report) | `--assert` (gate).
 
 from __future__ import annotations
 
-import argparse
 import logging
 
 from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
 from devtools.calls import CALLS, CONSTRUCT, CallArrows
+from devtools.cli import Cli
 from devtools.pyproject import Pyproject
 
 log = logging.getLogger("devtools.contracts")
@@ -43,17 +43,17 @@ _KINDS = {INHERITS, HOLDS, REFERENCES, CALLS, CONSTRUCT}  # the vocabulary a con
 class UseContracts:
     """Directional forbidden-USE contracts evaluated over every arrow kind."""
 
-    def __init__(self, packages: list[str], contracts: list[dict] | None = None) -> None:
+    def __init__(self, packages: list[str], contracts: list[dict[str, object]] | None = None) -> None:
         self.packages = packages
         self.contracts = contracts if contracts is not None else self.load_contracts()
 
     @staticmethod
-    def load_contracts(pyproject: str = "pyproject.toml") -> list[dict]:
+    def load_contracts(pyproject: str = "pyproject.toml") -> list[dict[str, object]]:
         """The `[[tool.arch.forbidden]]` contracts, or [] when none are configured."""
-        return list(Pyproject.tool_section("arch", pyproject).get("forbidden", []))
+        return Pyproject.rows(Pyproject.tool_section("arch", pyproject).get("forbidden", []))
 
     @staticmethod
-    def malformed(contracts: list[dict]) -> list[str]:
+    def malformed(contracts: list[dict[str, object]]) -> list[str]:
         """Contracts that cannot fire, reported as CONFIG errors rather than silently passing.
 
         A misspelled `kinds` entry, or a missing `source`/`forbidden`, matches no arrow — so the gate goes
@@ -69,7 +69,7 @@ class UseContracts:
                 for required in ("source", "forbidden")
                 if not contract.get(required)
             )
-            if unknown := sorted(set(contract.get("kinds", [])) - _KINDS):
+            if unknown := sorted(set(Pyproject.str_list(contract.get("kinds"))) - _KINDS):
                 out.append(f"{name}: unknown kind(s) {unknown} — expected any of {sorted(_KINDS)}")
         return out
 
@@ -90,15 +90,20 @@ class UseContracts:
         out = []
         for contract in self.contracts:
             name = contract.get("name", "unnamed contract")
-            source = contract.get("source", "")
-            targets = contract.get("forbidden", [])
-            kinds = set(contract.get("kinds", []))
+            source = Pyproject.str_of(contract.get("source"))
+            targets = Pyproject.str_list(contract.get("forbidden"))
+            kinds = set(Pyproject.str_list(contract.get("kinds")))
             for src, dst, kind in edges:
                 if kinds and kind not in kinds:
                     continue
                 if self._under(src, source) and any(self._under(dst, t) for t in targets):
                     out.append(f"{name}: {src} --{kind}--> {dst}")
         return sorted(set(out))
+
+    def report(self) -> str:
+        """The findings as one text block — the explorer view, paired with run_assert's gate view."""
+        found = self.violations()
+        return "\n".join([f"forbidden-use ({len(self.contracts)} contracts): {len(found)}", *found])
 
     def run_assert(self) -> int:
         """The gate: fail on a malformed contract FIRST (it would otherwise pass by never firing), then on
@@ -115,16 +120,9 @@ class UseContracts:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Forbidden-USE contracts over the typed class arrows.")
-    parser.add_argument("packages", nargs="+", help="root packages to scan")
-    parser.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a forbidden use")
-    args = parser.parse_args()
-    engine = UseContracts(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert())
-    found = engine.violations()
-    log.info("forbidden-use (%d contracts): %d\n%s", len(engine.contracts), len(found), "\n".join(found))
+    Cli(
+        UseContracts, "Forbidden-USE contracts over the decomposed class arrows.", gate="exit 1 on a forbidden use"
+    ).run()
 
 
 if __name__ == "__main__":

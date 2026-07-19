@@ -25,12 +25,13 @@ a literal budget adds a legislated `[tool.magic_literals]` config knob at that p
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 import re
 from collections import defaultdict
+from typing import TypeGuard
 
+from devtools.cli import Cli
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.magic_literals")
@@ -51,7 +52,7 @@ class MagicLiterals:
         self.packages = packages
 
     @staticmethod
-    def _is_token(value: object) -> bool:
+    def _is_token(value: object) -> TypeGuard[str]:
         """A string worth counting: an identifier-shaped VALUE token (not prose/path/message/framework)."""
         return isinstance(value, str) and value not in _STOP and bool(_TOKEN.match(value))
 
@@ -116,8 +117,17 @@ class MagicLiterals:
         ]
         return sorted(rows, key=lambda r: -r[0])
 
+    def report(self) -> str:
+        """The findings as one text block — the uniform explorer view every engine answers to.
+
+        `_render` formats inputs the caller already computed; this computes them, so a caller needs
+        only the engine. THREE report shapes across the engines is what made a shared CLI
+        impossible: instance, static-taking-rows, and static-taking-an-artifact (bd 0y9).
+        """
+        return self._render(self.scan_strings(), self.scan_key_sets())
+
     @staticmethod
-    def report(strings: list[tuple[str, int]], key_sets: list[tuple[int, tuple[str, ...], list[str]]]) -> str:
+    def _render(strings: list[tuple[str, int]], key_sets: list[tuple[int, tuple[str, ...], list[str]]]) -> str:
         """The two ranked tables: recurring string tokens (StrEnum candidates) + repeated dict schemas."""
         lines = [f"{len(strings)} recurring string literals (>= {_STRING_THRESHOLD}x -> StrEnum/constant candidate):"]
         lines.extend(f"  {c:>3}x  {s!r}" for s, c in strings)
@@ -131,18 +141,7 @@ class MagicLiterals:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.magic_literals",
-        description="recurring string literals + repeated dict key-sets (advisory report)",
-    )
-    ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    engine = MagicLiterals(args.packages)
-    # ADVISORY: a ranked report of StrEnum/dataclass candidates, always exit 0. There is no honest universal
-    # ceiling (0 is too strict — some recurrence is legit vocab; N is arbitrary), so this reports and the
-    # reviewer decides. A repo that wants to enforce a budget adds a legislated config knob then, not now.
-    log.info("%s", MagicLiterals.report(engine.scan_strings(), engine.scan_key_sets()))
+    Cli(MagicLiterals, "recurring string literals + repeated dict key-sets (advisory report)").run()
 
 
 if __name__ == "__main__":

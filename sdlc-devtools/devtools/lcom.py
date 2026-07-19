@@ -21,10 +21,10 @@ splits into disjoint-state groups.
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 
+from devtools.cli import Cli
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.lcom")
@@ -184,8 +184,17 @@ class Lcom:
             )
         return sorted(rows, reverse=True)
 
+    def report(self) -> str:
+        """The findings as one text block — the uniform explorer view every engine answers to.
+
+        `_render` formats ROWS the caller already has; this computes them, so a caller needs only
+        the engine. Two report shapes across the engines is what made a shared CLI impossible.
+        """
+        rows = self.scan()
+        return "\n".join([f"{len(rows)} low-cohesion classes (LCOM4>=2)", self._render(rows)])
+
     @staticmethod
-    def report(rows: list[tuple[int, str, str, list[list[str]]]]) -> str:
+    def _render(rows: list[tuple[int, str, str, list[list[str]]]]) -> str:
         """Ranked table: LCOM4, class, file, then the disjoint method groups (each = an extractable object)."""
         lines = [f"{'lcom4':>5}  {'class':24} file"]
         for score, name, path, comps in rows:
@@ -195,14 +204,7 @@ class Lcom:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.lcom", description="rank classes by LCOM4 cohesion (>=2 = split candidate)"
-    )
-    ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rows = Lcom(args.packages).scan()
-    log.info("%d low-cohesion classes (LCOM4>=2)\n%s", len(rows), Lcom.report(rows))
+    Cli(Lcom, "rank classes by LCOM4 cohesion (>=2 = split candidate)").run()
 
 
 if __name__ == "__main__":

@@ -15,7 +15,8 @@ class Omit:
     @staticmethod
     def coverage_omit(pyproject: str = "pyproject.toml") -> list[str]:
         """The `[tool.coverage.run] omit` globs from pyproject (empty if the file/section is absent)."""
-        return Pyproject.tool_section("coverage", pyproject).get("run", {}).get("omit", [])
+        run = Pyproject.table(Pyproject.tool_section("coverage", pyproject).get("run"))
+        return Pyproject.str_list(run.get("omit"))
 
     @staticmethod
     def matches_omit(path: str, patterns: list[str]) -> bool:

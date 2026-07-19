@@ -20,10 +20,10 @@ Run: `python -m devtools.arrows [pkgs...]` (report).
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 
+from devtools.cli import Cli
 from devtools.names import Names
 from devtools.resolve import Resolver
 from devtools.trees import Trees
@@ -90,11 +90,7 @@ class ClassArrows:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Typed class->class arrows (inherits / holds / references).")
-    ap.add_argument("packages", nargs="+", help="root packages to scan")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    log.info("\n%s", ClassArrows(args.packages).report())
+    Cli(ClassArrows, "Typed class->class arrows (inherits / holds / references).").run()
 
 
 if __name__ == "__main__":

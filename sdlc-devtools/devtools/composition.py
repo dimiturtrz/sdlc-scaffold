@@ -14,12 +14,13 @@ Run: `python -m devtools.composition [pkgs...]` (report) | `--assert` (gate).
 
 from __future__ import annotations
 
-import argparse
 import logging
+from collections.abc import Iterable
 
 import networkx as nx
 
 from devtools.arrows import HOLDS, ClassArrows
+from devtools.cli import Cli
 
 log = logging.getLogger("devtools.composition")
 
@@ -30,22 +31,37 @@ class CompositionCycles:
     def __init__(self, packages: list[str]) -> None:
         self.packages = packages
 
-    def graph(self) -> nx.DiGraph:
+    def graph(self) -> nx.DiGraph[str]:
         """The object graph: an edge means "owns an instance of"."""
-        owns = nx.DiGraph()
+        owns: nx.DiGraph[str] = nx.DiGraph()
         for src, dst, kind in ClassArrows(self.packages).edges():
             if kind == HOLDS:
                 owns.add_edge(src, dst)
         return owns
 
+    @staticmethod
+    def _names(component: Iterable[object]) -> list[str]:
+        """An SCC's members as sorted names.
+
+        networkx's stubs return the unparameterised `_Node` from `strongly_connected_components` even for a
+        `DiGraph[str]`, so sorting them fails the comparability bound. Our nodes are dotted class NAMES by
+        construction, and this states that once instead of at each use.
+        """
+        return sorted(map(str, component))
+
     def cycles(self) -> list[str]:
         """Every mutually-composing group — each reported once, members sorted for a stable message."""
         return [
-            f"composition cycle: {' -> '.join([*sorted(component), sorted(component)[0]])} — "
+            f"composition cycle: {' -> '.join([*self._names(component), self._names(component)[0]])} — "
             f"neither can be built or tested without the other; break the loop with an interface or an owner"
             for component in nx.strongly_connected_components(self.graph())
             if len(component) > 1
         ]
+
+    def report(self) -> str:
+        """The findings as one text block — the explorer view, paired with run_assert's gate view."""
+        found = self.cycles()
+        return "\n".join([f"composition cycles: {len(found)}", *found])
 
     def run_assert(self) -> int:
         """The gate: log any composition cycle and return an exit code."""
@@ -58,16 +74,11 @@ class CompositionCycles:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Composition cycles — mutually-owning classes.")
-    parser.add_argument("packages", nargs="+", help="root packages to scan")
-    parser.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a composition cycle")
-    args = parser.parse_args()
-    engine = CompositionCycles(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert())
-    found = engine.cycles()
-    log.info("composition cycles: %d\n%s", len(found), "\n".join(found))
+    Cli(
+        CompositionCycles,
+        "Composition cycles — a `holds` loop in the object graph.",
+        gate="exit 1 on a composition cycle",
+    ).run()
 
 
 if __name__ == "__main__":
