@@ -142,6 +142,21 @@ def test_domain_gating(project):
     assert ('"X*"' in pyproject_text) == ml, "the tensor-idiom naming allowlist is ML-only"
 
 
+def _assert_advisory_surface(ci_text: str) -> None:
+    """The advisory `--statistics` run carries `--extend-select` IFF ruff_advisory_select holds codes, and
+    carries exactly those.
+
+    Derived from copier.yml rather than pinned to a value. It used to assert the surface was EMPTY — true
+    only while E501/SLF001 had graduated out and nothing had ridden the seam since — so the first correct
+    USE of that seam read as a regression the moment TID251 took it (bd lph).
+    """
+    advisory = copier_default("ruff_advisory_select")
+    if advisory:
+        assert f"--extend-select {advisory}" in ci_text, f"advisory ruff must surface {advisory}"
+    else:
+        assert "--extend-select" not in ci_text, "no advisory codes configured, so no --extend-select"
+
+
 def test_select_and_ci_wiring(project):
     """The union ruff select, the enforced/advisory split, the base gates, and the CI step wiring."""
     name, path = project
@@ -205,15 +220,7 @@ def test_select_and_ci_wiring(project):
     # skr GAP3b: ci repo-step LOCAL-SLOTs let a consumer superset ride on slots, not a fork (both domains).
     assert "LOCAL-SLOT: ci-lint-steps" in ci_text, "the ci-lint-steps slot ships (skr GAP3)"
     assert "LOCAL-SLOT: ci-test-steps" in ci_text, "the ci-test-steps slot ships (skr GAP3)"
-    # The advisory --statistics run carries --extend-select IFF ruff_advisory_select holds codes, and it
-    # carries exactly those. Derived from copier.yml rather than pinned to a value: this used to assert the
-    # surface was EMPTY (true while E501/SLF001 had graduated out and nothing had ridden the seam since),
-    # which made a correct use of the seam look like a regression the moment TID251 took it (bd lph).
-    advisory = copier_default("ruff_advisory_select")
-    if advisory:
-        assert f"--extend-select {advisory}" in ci_text, f"advisory ruff must surface {advisory}"
-    else:
-        assert "--extend-select" not in ci_text, "no advisory codes configured, so no --extend-select"
+    _assert_advisory_surface(ci_text)
     # vip.4: shape_contracts GRADUATED advisory->blocking — a ml gen carries an ENFORCED --assert step (a
     # fresh gen has 0 boundaries so it passes); a domain-neutral gen has no shape gate at all.
     assert ("shape_contracts {} --assert".format(pkg) in ci_text) == ml, "ml ci enforces shape --assert (vip.4)"

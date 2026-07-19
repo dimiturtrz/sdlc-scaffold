@@ -104,6 +104,21 @@ def test_python_templates_render_exactly_as_ruff_would_format_them(tmp_path):
     )
 
 
+def test_the_readme_headline_version_matches_the_package():
+    """The README front page names a version, and nothing watched it — it sat at v1.2 while the package
+    reached 1.20.0, an eighteen-version drift claiming a feature set that had been superseded twice over.
+    Compared at major.minor, since the README describes a release rather than a patch (bd ztw)."""
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+    package = (REPO / "sdlc-devtools" / "pyproject.toml").read_text(encoding="utf-8")
+    claimed = re.search(r"^\*\*v([0-9]+\.[0-9]+)", readme, re.M)
+    actual = re.search(r'^version = "([0-9]+\.[0-9]+)', package, re.M)
+    assert claimed and actual, "README must open with **vX.Y** and the package must declare a version"
+    assert claimed.group(1) == actual.group(1), (
+        f"README claims v{claimed.group(1)} but sdlc-devtools is {actual.group(1)} — "
+        "the front page describes the shipped release, so it cannot lag it"
+    )
+
+
 def test_every_structure_key_the_template_ships_is_known_to_the_reader():
     """[tool.structure] is validated on load — an unknown key RAISES so a typo cannot silently leave a gate
     at its default. That makes this relationship load-bearing: a key added to the template but not to
