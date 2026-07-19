@@ -287,8 +287,18 @@ class ImportGraph:
                 g.add_edge(src, dst)
         return g
 
+    def report(self, top: int = 10) -> str:
+        """The ranked tables as one text block — the import graph, then the same rankings over the
+        `calls` subset when there is one (who is actually USED, not merely imported).
+        """
+        blocks = [self._render(self.build_graph(), top)]
+        usage = self.typed_graph({"calls", CONSTRUCT})
+        if usage.number_of_edges():
+            blocks.append(self._render(usage, top, label="usage graph (calls)", unit="classes"))
+        return "\n\n".join(blocks)
+
     @staticmethod
-    def report(g: nx.DiGraph[str], top: int, label: str = "import graph", unit: str = "modules") -> str:
+    def _render(g: nx.DiGraph[str], top: int, label: str = "import graph", unit: str = "modules") -> str:
         """Ranked fan-in / fan-out / bottleneck / chokepoint tables + the cycle list, as one text block.
 
         Takes the graph rather than building one, so the SAME rankings serve any edge subset — the import
@@ -368,11 +378,11 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if args.assert_:
         raise SystemExit(engine.run_assert(test_mirror=not args.no_test_mirror))
-    log.info("\n%s", ImportGraph.report(engine.build_graph(), args.top))
+    log.info("\n%s", ImportGraph._render(engine.build_graph(), args.top))
     # the SAME rankings over the `calls` subset — who is actually USED, not merely imported (bd 4bl.4)
     usage = engine.typed_graph({"calls", CONSTRUCT})
     if usage.number_of_edges():
-        log.info("\n%s", ImportGraph.report(usage, args.top, label="usage graph (calls)", unit="classes"))
+        log.info("\n%s", ImportGraph._render(usage, args.top, label="usage graph (calls)", unit="classes"))
 
 
 if __name__ == "__main__":

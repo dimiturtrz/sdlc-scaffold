@@ -1444,6 +1444,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.complexity.Complexity._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.complexity.Complexity.report",
       "label": "report",
       "level": "method",
@@ -1486,6 +1494,14 @@
       "descendants": 0,
       "id": "devtools.composition.CompositionCycles.graph",
       "label": "graph",
+      "level": "method",
+      "parent": "devtools.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.composition.CompositionCycles.report",
+      "label": "report",
       "level": "method",
       "parent": "devtools.composition.CompositionCycles",
       "role": null
@@ -1556,6 +1572,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.contracts.UseContracts.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.contracts.UseContracts.run_assert",
       "label": "run_assert",
       "level": "method",
@@ -1598,6 +1622,14 @@
       "descendants": 0,
       "id": "devtools.data_clumps.DataClumps._params",
       "label": "_params",
+      "level": "method",
+      "parent": "devtools.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.data_clumps.DataClumps._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.data_clumps.DataClumps",
       "role": null
@@ -1676,6 +1708,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.demeter.Demeter.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.demeter.Demeter.run_assert",
       "label": "run_assert",
       "level": "method",
@@ -1742,6 +1782,14 @@
       "descendants": 0,
       "id": "devtools.envy.FeatureEnvy.load_minimum",
       "label": "load_minimum",
+      "level": "method",
+      "parent": "devtools.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.envy.FeatureEnvy.report",
+      "label": "report",
       "level": "method",
       "parent": "devtools.envy.FeatureEnvy",
       "role": null
@@ -1838,6 +1886,14 @@
       "descendants": 0,
       "id": "devtools.graph.ImportGraph._oversized",
       "label": "_oversized",
+      "level": "method",
+      "parent": "devtools.graph.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.ImportGraph._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.graph.ImportGraph",
       "role": null
@@ -2036,6 +2092,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.lcom.Lcom._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.lcom.Lcom._self_names",
       "label": "_self_names",
       "level": "method",
@@ -2094,6 +2158,14 @@
       "descendants": 0,
       "id": "devtools.magic_literals.MagicLiterals._key_sets",
       "label": "_key_sets",
+      "level": "method",
+      "parent": "devtools.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.magic_literals.MagicLiterals._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.magic_literals.MagicLiterals",
       "role": null
@@ -2388,6 +2460,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.shape_contracts.ShapeContracts.array_names",
       "label": "array_names",
       "level": "method",
@@ -2398,6 +2478,14 @@
       "descendants": 0,
       "id": "devtools.shape_contracts.ShapeContracts.report",
       "label": "report",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.run_assert",
+      "label": "run_assert",
       "level": "method",
       "parent": "devtools.shape_contracts.ShapeContracts",
       "role": null
@@ -2454,6 +2542,14 @@
       "descendants": 0,
       "id": "devtools.state_candidates.StateCandidates._params",
       "label": "_params",
+      "level": "method",
+      "parent": "devtools.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.state_candidates.StateCandidates._render",
+      "label": "_render",
       "level": "method",
       "parent": "devtools.state_candidates.StateCandidates",
       "role": null

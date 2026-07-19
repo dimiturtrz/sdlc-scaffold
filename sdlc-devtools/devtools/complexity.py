@@ -43,8 +43,17 @@ class Complexity:
                 rows.append((complexity, f"{path}:{lineno}", name))
         return sorted(rows, key=lambda r: -r[0])
 
+    def report(self) -> str:
+        """The findings as one text block — the uniform explorer view every engine answers to.
+
+        `_render` formats inputs the caller already computed; this computes them, so a caller needs
+        only the engine. THREE report shapes across the engines is what made a shared CLI
+        impossible: instance, static-taking-rows, and static-taking-an-artifact (bd 0y9).
+        """
+        return self._render(self.scan())
+
     @staticmethod
-    def report(rows: list[tuple[int, str, str]], limit: int = 15) -> str:
+    def _render(rows: list[tuple[int, str, str]], limit: int = 15) -> str:
         """The ranked table of the most cyclomatically complex functions + the current max."""
         max_cc = rows[0][0] if rows else 0
         lines = [f"{len(rows)} functions; max cyclomatic complexity {max_cc} (radon CC / McCabe):"]
@@ -63,7 +72,7 @@ def main():
     # ADVISORY: a ranked CC report, always exit 0. The FIXED complexity gate is ruff C901 (CC>10, legislated
     # in ruff_select) — this just surfaces the ranking + current max as reviewer signal. A repo that wants a
     # tighter legislated ceiling adds a config knob at that point, not speculatively.
-    log.info("%s", Complexity.report(Complexity(args.packages).scan()))
+    log.info("%s", Complexity._render(Complexity(args.packages).scan()))
 
 
 if __name__ == "__main__":

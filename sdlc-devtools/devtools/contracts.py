@@ -100,6 +100,11 @@ class UseContracts:
                     out.append(f"{name}: {src} --{kind}--> {dst}")
         return sorted(set(out))
 
+    def report(self) -> str:
+        """The findings as one text block — the explorer view, paired with run_assert's gate view."""
+        found = self.violations()
+        return "\n".join([f"forbidden-use ({len(self.contracts)} contracts): {len(found)}", *found])
+
     def run_assert(self) -> int:
         """The gate: fail on a malformed contract FIRST (it would otherwise pass by never firing), then on
         any forbidden use."""

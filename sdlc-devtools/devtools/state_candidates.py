@@ -111,8 +111,17 @@ class StateCandidates:
             rows.extend((sc, name, str(path), n, sh) for sc, name, n, sh in self._analyze(tree))
         return sorted(rows, reverse=True)
 
+    def report(self) -> str:
+        """The findings as one text block — the uniform explorer view every engine answers to.
+
+        `_render` formats ROWS the caller already has; this computes them, so a caller needs only
+        the engine. Two report shapes across the engines is what made a shared CLI impossible.
+        """
+        rows = self.scan()
+        return "\n".join([f"{len(rows)} promotion candidates", self._render(rows)])
+
     @staticmethod
-    def report(rows: list[tuple[int, str, str, int, dict[str, int]]]) -> str:
+    def _render(rows: list[tuple[int, str, str, int, dict[str, int]]]) -> str:
         """Ranked table: score, class, method-count, the shared params (count), file."""
         lines = [f"{'score':>5}  {'class':22} {'meth':>4}  shared-state (methods-sharing)      file"]
         for score, name, path, n, shared in rows:
@@ -129,7 +138,7 @@ def main():
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     rows = StateCandidates(args.packages).scan()
-    log.info("%d promotion candidates\n%s", len(rows), StateCandidates.report(rows))
+    log.info("%d promotion candidates\n%s", len(rows), StateCandidates._render(rows))
 
 
 if __name__ == "__main__":

@@ -58,6 +58,11 @@ class CompositionCycles:
             if len(component) > 1
         ]
 
+    def report(self) -> str:
+        """The findings as one text block — the explorer view, paired with run_assert's gate view."""
+        found = self.cycles()
+        return "\n".join([f"composition cycles: {len(found)}", *found])
+
     def run_assert(self) -> int:
         """The gate: log any composition cycle and return an exit code."""
         found = self.cycles()

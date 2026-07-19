@@ -137,6 +137,11 @@ class FeatureEnvy:
             and not self._is_satellite(target)
         ]
 
+    def report(self) -> str:
+        """The findings as one text block — the explorer view, paired with run_assert's gate view."""
+        found = self.violations()
+        return "\n".join([f"feature envy (floor {self.minimum}): {len(found)}", *found])
+
     def run_assert(self) -> int:
         """The gate: log envious methods and return an exit code."""
         found = self.violations()

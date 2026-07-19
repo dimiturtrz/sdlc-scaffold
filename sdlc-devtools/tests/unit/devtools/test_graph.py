@@ -236,7 +236,7 @@ def test_the_same_metrics_run_over_the_subset(monkeypatch, tmp_path):
 
 def test_report_labels_whatever_subset_it_is_given(monkeypatch, tmp_path):
     engine = _usage_pkg(monkeypatch, tmp_path)
-    text = ImportGraph.report(engine.typed_graph({"calls"}), top=3, label="usage graph (calls)", unit="classes")
+    text = ImportGraph._render(engine.typed_graph({"calls"}), top=3, label="usage graph (calls)", unit="classes")
     assert text.startswith("usage graph (calls): 2 classes"), text.splitlines()[0]
     assert "fan-in (load-bearing):" in text, "the same tables, a different question"
 

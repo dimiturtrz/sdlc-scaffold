@@ -131,8 +131,27 @@ class ShapeContracts:
             rows.extend((str(path), ln, name, slots) for ln, name, slots in self._analyze(tree, names))
         return rows
 
+    def report(self) -> str:
+        """The findings as one text block — the uniform explorer view every engine answers to.
+
+        `_render` formats ROWS the caller already has; this computes them, so a caller needs only
+        the engine. Two report shapes across the engines is what made a shared CLI impossible.
+        """
+        rows = self.scan()
+        return self._render(rows)
+
+    def run_assert(self) -> int:
+        """The gate: log the boundaries and return an exit code (1 when any bare array/tensor remains).
+
+        This engine had `--assert` but no run_assert — it gated INLINE in main(), so the one thing every
+        other gate engine exposes as a method was, here, only reachable by running the CLI (bd 0y9).
+        """
+        rows = self.scan()
+        log.info("%s", self._render(rows))
+        return 1 if rows else 0
+
     @staticmethod
-    def report(rows: list[tuple[str, int, str, list[str]]]) -> str:
+    def _render(rows: list[tuple[str, int, str, list[str]]]) -> str:
         lines = [f"{len(rows)} bare-array boundaries (array-typed param/return without a jaxtyping shape):"]
         for path, ln, name, slots in rows:
             lines.append(f"  {path}:{ln}  {name}  [{', '.join(slots)}]")
@@ -158,7 +177,7 @@ def main():
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     rows = ShapeContracts(args.packages).scan()
-    log.info("%s", ShapeContracts.report(rows))
+    log.info("%s", ShapeContracts._render(rows))
     if args.assert_clean and rows:
         raise SystemExit(1)
 

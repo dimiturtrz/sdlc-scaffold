@@ -30,7 +30,7 @@ def test_complexity_flattens_methods_skips_class_aggregate(write_pkg, tmp_path):
 
 def test_complexity_report_shows_max(write_pkg, tmp_path):
     pkg = write_pkg(tmp_path, "cx_report", "def f(x):\n    if x:\n        return 1\n    return 0\n")
-    report = Complexity.report(Complexity([pkg]).scan())
+    report = Complexity._render(Complexity([pkg]).scan())
     assert "max cyclomatic complexity 2" in report, report
     # an empty scan reports max 0 (advisory-safe, no crash on a code-less tree)
-    assert "max cyclomatic complexity 0" in Complexity.report([])
+    assert "max cyclomatic complexity 0" in Complexity._render([])

@@ -184,8 +184,17 @@ class Lcom:
             )
         return sorted(rows, reverse=True)
 
+    def report(self) -> str:
+        """The findings as one text block — the uniform explorer view every engine answers to.
+
+        `_render` formats ROWS the caller already has; this computes them, so a caller needs only
+        the engine. Two report shapes across the engines is what made a shared CLI impossible.
+        """
+        rows = self.scan()
+        return "\n".join([f"{len(rows)} low-cohesion classes (LCOM4>=2)", self._render(rows)])
+
     @staticmethod
-    def report(rows: list[tuple[int, str, str, list[list[str]]]]) -> str:
+    def _render(rows: list[tuple[int, str, str, list[list[str]]]]) -> str:
         """Ranked table: LCOM4, class, file, then the disjoint method groups (each = an extractable object)."""
         lines = [f"{'lcom4':>5}  {'class':24} file"]
         for score, name, path, comps in rows:
@@ -202,7 +211,7 @@ def main():
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     rows = Lcom(args.packages).scan()
-    log.info("%d low-cohesion classes (LCOM4>=2)\n%s", len(rows), Lcom.report(rows))
+    log.info("%d low-cohesion classes (LCOM4>=2)\n%s", len(rows), Lcom._render(rows))
 
 
 if __name__ == "__main__":

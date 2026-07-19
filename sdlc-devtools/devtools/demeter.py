@@ -94,6 +94,11 @@ class Demeter:
         """Every reach-through in the root packages."""
         return [msg for path, tree in Trees(self.packages).walk() for msg in self._violations_in(tree, path.as_posix())]
 
+    def report(self) -> str:
+        """The findings as one text block — the explorer view, paired with run_assert's gate view."""
+        found = self.violations()
+        return "\n".join([f"law of demeter (max depth {self.max_depth}): {len(found)}", *found])
+
     def run_assert(self) -> int:
         """The gate: log violations and return an exit code (1 when any chain reaches too deep)."""
         found = self.violations()
