@@ -155,6 +155,19 @@ jobs:
       - name: Architecture graph — advisory (archmap --check, stale graph.json)
         continue-on-error: true
         run: uv run --extra devtools python -m devtools.archmap {{ pkgs }} --check || echo "::warning::docs/architecture/graph.json is stale — run 'nox -s archmap' and commit"
+      # Architecture CHANGELOG — ADVISORY (never blocks): how this PR moved the architecture, in REAL
+      # dependency terms — which arrow KIND appeared or vanished, not just that a JSON file changed. Posted
+      # to the job summary so it is read in review. The gates say what is FORBIDDEN; this says what MOVED,
+      # which is the part someone deciding whether to trust a change actually needs. Baseline is the merge
+      # target's committed graph.json; a repo without one yet simply reports no change.
+      - name: Architecture changelog — advisory (archmap --diff vs the merge target)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          git fetch -q --depth=1 origin {% raw %}"${{ github.base_ref }}"{% endraw %}
+          git show FETCH_HEAD:docs/architecture/graph.json > /tmp/arch-base.json 2>/dev/null || echo '{}' > /tmp/arch-base.json
+          uv run --extra devtools python -m devtools.archmap {{ pkgs }} --diff /tmp/arch-base.json | tee /tmp/arch-diff.txt
+          { echo '### Architecture changes'; echo '```'; cat /tmp/arch-diff.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # >>> LOCAL-SLOT: ci-test-steps — repo-specific test/coverage/gate steps on top of the base (e.g. a
       # separate viewer-coverage floor calibrated to library logic, or a repo-only enforced check). Survives
       # copier update; empty by default (bd skr GAP3).

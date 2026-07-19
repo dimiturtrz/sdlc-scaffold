@@ -479,6 +479,25 @@ def test_archmap_generates_site_and_check_bites(project):
     assert_bites(path, [*archmap, "--check"], tamper)
 
 
+def test_archmap_diff_reports_what_moved(project):
+    """B5 (bd 433.5): the changelog view. The gates say what is FORBIDDEN; this says what MOVED, in REAL
+    dependency terms — a reviewer sees which arrow KIND appeared, not that a JSON file changed."""
+    name, path = project
+    pkg = example_pkg(name)
+    archmap = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.archmap", *layers(name)]
+    run(archmap, path)
+    baseline = path / "base.json"
+    graph = json.loads((path / "docs" / "architecture" / "graph.json").read_text())
+    # a baseline WITHOUT the holds arrows: the diff must then report them as added, naming the kind
+    thinned = {"nodes": graph["nodes"], "edges": [e for e in graph["edges"] if e["kind"] != "holds"]}
+    baseline.write_text(json.dumps(thinned))
+    result = run([*archmap, "--diff", str(baseline)], path)
+    text = result.stdout + result.stderr
+    assert "holds" in text and f"{pkg}.repository.Repository" in text, f"the moved arrow is named: {text}"
+    # ...and it is ADVISORY — a changelog explains, it does not block
+    assert result.returncode == 0
+
+
 def test_archviz_pages_workflow_gated(scaffold, tmp_path_factory):
     # opt-in (m5c.5): archviz_pages=true ships the Pages deploy workflow; the default (false) omits it via a
     # conditional filename that renders empty. graph.json/viewer emit regardless — only the deploy is gated.

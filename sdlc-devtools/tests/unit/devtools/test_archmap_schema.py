@@ -116,3 +116,48 @@ def test_the_default_view_is_the_module_import_tier(tmp_path):
 def test_the_viewer_stays_self_contained(tmp_path):
     """It is served as a static GitHub Pages site — an external <script src> would break offline/CSP."""
     assert "script src=" not in _viewer(tmp_path)
+
+
+# ---- the architecture CHANGELOG (bd 433.5) ----------------------------------------------------------
+
+
+def _baseline(tmp_path, data: dict):
+    path = tmp_path / "base.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path
+
+
+def test_a_missing_baseline_is_not_an_error(monkeypatch, tmp_path):
+    """A first run has nothing to compare against — report no change rather than fail."""
+    _data(monkeypatch, tmp_path)
+    assert Archmap(["schema_pkg"]).diff(tmp_path / "absent.json") == []
+
+
+def test_no_change_reports_nothing(monkeypatch, tmp_path):
+    data = _data(monkeypatch, tmp_path)
+    assert Archmap(["schema_pkg"]).diff(_baseline(tmp_path, data)) == []
+
+
+def test_an_added_edge_is_reported_with_its_kind(monkeypatch, tmp_path):
+    """The point of the whole thing: a reviewer sees WHAT KIND of dependency appeared, not just that a
+    JSON file moved."""
+    data = _data(monkeypatch, tmp_path)
+    thinned = {"nodes": data["nodes"], "edges": [e for e in data["edges"] if e["kind"] != "calls"]}
+    changes = Archmap(["schema_pkg"]).diff(_baseline(tmp_path, thinned))
+    assert changes and all(c.startswith("+") for c in changes)
+    assert any("calls" in c for c in changes), f"the added arrow names its kind: {changes}"
+
+
+def test_a_removed_edge_is_reported(monkeypatch, tmp_path):
+    data = _data(monkeypatch, tmp_path)
+    extra = dict(data)
+    extra["edges"] = [*data["edges"], {"source": "schema_pkg.a.A", "target": "schema_pkg.b.B", "kind": "holds"}]
+    changes = Archmap(["schema_pkg"]).diff(_baseline(tmp_path, extra))
+    assert any(c.startswith("-") and "holds" in c for c in changes), changes
+
+
+def test_an_added_class_is_reported_with_its_role(monkeypatch, tmp_path):
+    data = _data(monkeypatch, tmp_path)
+    thinned = {"nodes": [n for n in data["nodes"] if n["level"] != "class"], "edges": data["edges"]}
+    changes = Archmap(["schema_pkg"]).diff(_baseline(tmp_path, thinned))
+    assert any("primary" in c for c in changes), f"a new class shows its role: {changes}"

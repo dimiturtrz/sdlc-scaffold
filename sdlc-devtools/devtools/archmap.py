@@ -159,6 +159,34 @@ class Archmap:
         path.write_text(html, encoding=ENCODING)
         return path
 
+    @staticmethod
+    def _signature(data: dict) -> tuple[set[tuple[str, str]], set[tuple[str, str, str]]]:
+        """(nodes, edges) as comparable tuples — the shape a diff is taken over."""
+        nodes = {(n["id"], n.get("role") or n.get("level", "module")) for n in data.get("nodes", [])}
+        edges = {(e["source"], e["target"], e.get("kind", "import")) for e in data.get("edges", [])}
+        return nodes, edges
+
+    def diff(self, baseline: Path) -> list[str]:
+        """How this tree's architecture CHANGED against a baseline graph.json — added/removed nodes and
+        typed edges, newest state first.
+
+        Takes a FILE, not a git ref: the engine stays git-free and unit-testable, and CI does the
+        `git show <base>:docs/architecture/graph.json > base.json` itself. A missing baseline is not an
+        error — a first run has nothing to compare against and simply reports no change.
+
+        Advisory by construction. The gates say what is FORBIDDEN; this says what MOVED, which is the part
+        a reviewer (or someone deciding whether to trust a change they did not write) actually reads.
+        """
+        if not baseline.exists():
+            return []
+        old_nodes, old_edges = self._signature(json.loads(baseline.read_text(encoding=ENCODING)))
+        new_nodes, new_edges = self._signature(self.graph_data())
+        out = [f"+ {kind:<10} {src} -> {dst}" for src, dst, kind in sorted(new_edges - old_edges)]
+        out += [f"- {kind:<10} {src} -> {dst}" for src, dst, kind in sorted(old_edges - new_edges)]
+        out += [f"+ {role:<10} {node}" for node, role in sorted(new_nodes - old_nodes)]
+        out += [f"- {role:<10} {node}" for node, role in sorted(old_nodes - new_nodes)]
+        return out
+
     def check(self) -> list[str]:
         """Drift between the committed graph.json and a fresh derivation (empty == in sync). The viewer shell
         is template-owned + regenerated, so only graph.json — the diff-truth — is gated for staleness."""
@@ -180,9 +208,20 @@ def main():
         action="store_true",
         help="fail (exit 1) if the committed graph.json is out of date — do not write",
     )
+    ap.add_argument(
+        "--diff",
+        metavar="BASELINE",
+        help="report how the architecture CHANGED against a baseline graph.json (a FILE, so this stays "
+        "git-free: CI does `git show <base>:docs/architecture/graph.json > base.json`). Advisory — the "
+        "gates say what is forbidden, this says what moved",
+    )
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     engine = Archmap(args.packages)
+    if args.diff:
+        changes = engine.diff(Path(args.diff))
+        log.info("architecture diff: %d change(s)\n%s", len(changes), "\n".join(changes))
+        return
     if args.check:
         drift = engine.check()
         if drift:
