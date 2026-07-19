@@ -21,6 +21,7 @@ import-linter (the layer gate). `--check` fails only if the committed graph.json
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import logging
 from pathlib import Path
@@ -32,6 +33,7 @@ from devtools.arrows import ClassArrows
 from devtools.calls import CONSTRUCT, CallArrows
 from devtools.classes import ClassIndex
 from devtools.resolve import Resolver
+from devtools.trees import Trees
 
 log = logging.getLogger("devtools.archmap")
 
@@ -86,6 +88,32 @@ class Archmap:
             key=lambda n: n["id"],
         )
 
+    def _method_nodes(self) -> list[dict]:
+        """The METHOD tier (bd 433.4) — the deepest fold level, so a class can be opened to read its actual
+        surface instead of guessing it from the class name.
+
+        Nodes only, no method-level EDGES: the call resolver aggregates per class (bd 4bl.3), so drawing a
+        method->method arrow would mean inventing a precision the graph does not have. Method-level edges
+        arrive with the feature-envy work (bd 4bl.7), which needs that cut anyway.
+        """
+        return sorted(
+            (
+                {
+                    "id": f"{Resolver.module_of(path)}.{cls.name}.{fn.name}",
+                    "label": fn.name,
+                    "parent": f"{Resolver.module_of(path)}.{cls.name}",
+                    "descendants": 0,
+                    "level": "method",
+                    "role": None,
+                }
+                for path, tree in Trees(self.packages).walk()
+                for cls in Resolver.classes_in(tree)
+                for fn in cls.body
+                if isinstance(fn, ast.FunctionDef)
+            ),
+            key=lambda n: n["id"],
+        )
+
     def _typed_edges(self) -> list[dict]:
         """The finer arrows an import edge decomposes into, each tagged with its KIND. Deduped and sorted so
         the committed diff stays minimal; `weight` is 1 because a kind between two classes is a fact, not a
@@ -100,11 +128,13 @@ class Archmap:
     def graph_data(self) -> dict:
         """The full graph as committed-diffable JSON — the diff-truth the viewer hydrates.
 
-        Two tiers of one containment tree. Every MODULE is a node carrying its `parent` (compound nesting) +
+        THREE tiers of one containment tree. Every MODULE is a node carrying its `parent` (compound nesting) +
         `descendants` count (the folded-node badge), and every module→module import is an edge weighted by
         import-statement count. Beneath that, every CLASS is a node with its `role`, joined by the TYPED
         arrows (`inherits` / `holds` / `references` / `calls` / `construct`) that the import edge is merely
         the coarse roll-up of.
+
+        Beneath the classes sits the METHOD tier — nodes only, the deepest fold level.
 
         Every node carries `level` and every edge a `kind`, so a view can ask for a subset rather than
         guessing from shape. Deterministic throughout (sorted nodes, edges and keys) so the committed diff
@@ -135,7 +165,10 @@ class Archmap:
             for imp in sorted(graph.find_modules_directly_imported_by(m))
             if imp in module_set
         ]
-        return {"nodes": nodes + self._class_nodes(), "edges": edges + self._typed_edges()}
+        return {
+            "nodes": nodes + self._class_nodes() + self._method_nodes(),
+            "edges": edges + self._typed_edges(),
+        }
 
     def _json_text(self) -> str:
         return json.dumps(self.graph_data(), indent=2, sort_keys=True) + "\n"

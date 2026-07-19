@@ -5,8 +5,9 @@
  * you fold/expand — a cytoscape compound with all children hidden renders zero-size, so a folded node must
  * be a genuinely childless leaf box. Layout = fcose (compound-aware) with a cose fallback.
  *
- * graph.json carries TWO tiers (bd 433.1): modules joined by imports, and beneath them classes joined by
- * the typed arrows an import decomposes into. The filter bar (bd 433.2/433.3) picks the subset to draw.
+ * graph.json carries THREE tiers: modules joined by imports, beneath them classes joined by the typed
+ * arrows an import decomposes into (bd 433.1), and beneath those the methods (bd 433.4, nodes only). The
+ * filter bar (bd 433.2/433.3) picks the subset to draw.
  * Line STYLE carries the meaning split — SOLID = what a class KNOWS (import/inherits/holds), DASHED = what
  * it DOES (calls/construct) — so the reading survives greyscale and colour-blindness rather than relying on
  * hue alone. Default state = modules + imports, i.e. exactly the view before the class tier existed.
@@ -24,6 +25,7 @@
   function readFilters() {
     return {
       classes: $('tier-class').checked,
+      methods: $('tier-method').checked,
       hideSatellites: $('hide-satellites').checked,
       kinds: new Set(KINDS.filter((k) => $('kind-' + k).checked)),
     };
@@ -34,7 +36,11 @@
   function rebuild() {
     const f = readFilters();
     const nodes = RAW.nodes.filter((n) => {
-      if ((n.level || 'module') === 'module') return true;
+      const level = n.level || 'module';
+      if (level === 'module') return true;
+      // a METHOD hangs off a class, so it needs that class present — showing methods with the class tier
+      // off would orphan them. Both tiers are off by default: 165 methods in a 23-module tree is a wall.
+      if (level === 'method') return f.classes && f.methods;
       return f.classes && !(f.hideSatellites && n.role === 'satellite');
     });
     const present = new Set(nodes.map((n) => n.id));
@@ -89,6 +95,9 @@
       // specialisation) is muted so the primaries carry the skeleton
       { selector: 'node[level="class"]', style: {
         shape: 'ellipse', 'background-color': '#25506b', 'border-color': '#5fae7f', 'font-size': 10 } },
+      { selector: 'node[level="method"]', style: {
+        shape: 'round-rectangle', 'background-color': '#1e3a4d', 'border-color': '#7d8590',
+        'font-size': 9, color: '#b8c7d6', padding: 3 } },
       { selector: 'node[role="satellite"]', style: {
         'background-opacity': 0.45, 'border-style': 'dashed', color: '#9fb4c8', 'font-size': 9 } },
       { selector: 'edge', style: {
@@ -193,11 +202,12 @@
   for (const [id, preset] of Object.entries(PRESETS)) {
     $(id).onclick = () => {
       $('tier-class').checked = preset.classes;
+      $('tier-method').checked = false;
       KINDS.forEach((k) => { $('kind-' + k).checked = preset.kinds.includes(k); });
       reload();
     };
   }
-  for (const id of ['tier-class', 'hide-satellites', ...KINDS.map((k) => 'kind-' + k)]) {
+  for (const id of ['tier-class', 'tier-method', 'hide-satellites', ...KINDS.map((k) => 'kind-' + k)]) {
     $(id).addEventListener('change', reload);
   }
 

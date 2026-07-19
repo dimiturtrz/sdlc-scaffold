@@ -41,7 +41,7 @@ def _data(monkeypatch, tmp_path) -> dict:
 def test_every_node_declares_its_level(monkeypatch, tmp_path):
     """A view asks for a tier by NAME rather than guessing from shape."""
     nodes = _data(monkeypatch, tmp_path)["nodes"]
-    assert {n["level"] for n in nodes} == {"module", "class"}
+    assert {n["level"] for n in nodes} == {"module", "class", "method"}
     assert all("role" in n for n in nodes), "role is present on every node (None for a module)"
 
 
@@ -161,3 +161,29 @@ def test_an_added_class_is_reported_with_its_role(monkeypatch, tmp_path):
     thinned = {"nodes": [n for n in data["nodes"] if n["level"] != "class"], "edges": data["edges"]}
     changes = Archmap(["schema_pkg"]).diff(_baseline(tmp_path, thinned))
     assert any("primary" in c for c in changes), f"a new class shows its role: {changes}"
+
+
+# ---- the METHOD tier (bd 433.4) ----------------------------------------------------------------------
+
+
+def test_methods_are_emitted_under_their_class(monkeypatch, tmp_path):
+    methods = {n["id"]: n for n in _data(monkeypatch, tmp_path)["nodes"] if n["level"] == "method"}
+    assert "schema_pkg.store.Store.put" in methods, "a class's surface is readable, not guessed from its name"
+    assert methods["schema_pkg.store.Store.put"]["parent"] == "schema_pkg.store.Store"
+    assert methods["schema_pkg.store.Store.put"]["label"] == "put", "the label is the bare method name"
+
+
+def test_no_method_level_edges_are_invented(monkeypatch, tmp_path):
+    """The call resolver aggregates per CLASS, so a method->method arrow would be precision the graph does
+    not have. Method nodes carry containment only; the edges arrive with bd 4bl.7."""
+    data = _data(monkeypatch, tmp_path)
+    methods = {n["id"] for n in data["nodes"] if n["level"] == "method"}
+    touching = [e for e in data["edges"] if e["source"] in methods or e["target"] in methods]
+    assert touching == [], f"no edge may terminate on a method yet: {touching}"
+
+
+def test_the_method_tier_is_opt_in_in_the_viewer(tmp_path):
+    """165 methods in a 23-module tree is a wall — it must be off until asked for."""
+    html = _viewer(tmp_path)
+    assert 'id="tier-method"' in html, "the tier needs a toggle"
+    assert 'id="tier-method" checked' not in html, "and it must be OFF by default"
