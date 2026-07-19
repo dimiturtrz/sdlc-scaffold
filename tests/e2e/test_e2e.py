@@ -729,6 +729,21 @@ def test_graph_assert_catches_cycle(full_project):
     assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
+def test_graph_assert_catches_two_primary_classes(full_project):
+    # One file = one SUBJECT (bd 4bl.1): a second INDEPENDENT class in a module blocks. The idiomatic
+    # companions stay clean and the seed proves it — types.py ships a Store contract beside its StoreConfig
+    # dataclass, errors.py an error family, memory_store.py a class beside its CapacityError; all pass.
+    result = assert_bites(
+        full_project,
+        GRAPH_ASSERT,
+        lambda p: _append(
+            p / "full_pkg" / "repository.py", "\n\nclass Unrelated:\n    def go(self) -> int:\n        return 1\n"
+        ),
+    )
+    assert "class roles" in (result.stdout + result.stderr), "the roles gate names itself in the failure"
+    assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
 def test_graph_assert_catches_unmirrored(full_project):
     # a new LOGIC module with no tests/unit/full_pkg/test_<name>.py mirror must block
     def mutate(p):

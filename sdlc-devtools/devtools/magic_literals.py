@@ -31,7 +31,7 @@ import logging
 import re
 from collections import defaultdict
 
-from devtools._common import Trees
+from devtools.trees import Trees
 
 log = logging.getLogger("devtools.magic_literals")
 

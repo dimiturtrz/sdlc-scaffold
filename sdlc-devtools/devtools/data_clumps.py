@@ -19,7 +19,7 @@ import ast
 import logging
 from itertools import combinations
 
-from devtools._common import Trees
+from devtools.trees import Trees
 
 log = logging.getLogger("devtools.data_clumps")
 

@@ -28,8 +28,12 @@ from pathlib import Path
 import grimp
 import networkx as nx
 
-from devtools._common import ENCODING, Pyproject, Trees
+from devtools._common import ENCODING
+from devtools.classes import ClassIndex
+from devtools.names import Names
 from devtools.omit import Omit
+from devtools.pyproject import Pyproject
+from devtools.trees import Trees
 
 log = logging.getLogger("devtools.graph")
 
@@ -154,24 +158,15 @@ class ImportGraph:
         ]
 
     @staticmethod
-    def _dotted(node: ast.expr) -> str | None:
-        """The trailing name of a Name/Attribute node (`abc.ABC` -> 'ABC'), else None."""
-        if isinstance(node, ast.Name):
-            return node.id
-        if isinstance(node, ast.Attribute):
-            return node.attr
-        return None
-
-    @staticmethod
     def _is_abstract(cls: ast.ClassDef) -> bool:
         """A class is abstract if it subclasses ABC/Protocol, sets metaclass=ABCMeta, or has an @abstractmethod."""
-        if any(ImportGraph._dotted(b) in _ABSTRACT_BASES for b in cls.bases):
+        if Names.bases(cls) & _ABSTRACT_BASES:
             return True
-        if any(kw.arg == "metaclass" and ImportGraph._dotted(kw.value) == "ABCMeta" for kw in cls.keywords):
+        if any(kw.arg == "metaclass" and Names.trailing(kw.value) == "ABCMeta" for kw in cls.keywords):
             return True
         return any(
             isinstance(m, ast.FunctionDef | ast.AsyncFunctionDef)
-            and any(ImportGraph._dotted(d) in _ABSTRACT_DECORATORS for d in m.decorator_list)
+            and any(Names.trailing(d) in _ABSTRACT_DECORATORS for d in m.decorator_list)
             for m in cls.body
         )
 
@@ -284,6 +279,10 @@ class ImportGraph:
         blocking, advisory = self.assert_fitness(g, files, cfg)
         if test_mirror:
             blocking += [f"test mirror: {m}" for m in self.unmirrored(cfg["test_layout"])]  # module w/o a test blocks
+        # One file = one SUBJECT (bd 4bl.1): a second PRIMARY class means two subjects sharing a module.
+        # Idiomatic companions (its error family, its config dataclass/enum, a local subclass) are
+        # SATELLITES and never count — see devtools/classes.py for the role rules.
+        blocking += [f"class roles: {m}" for m in ClassIndex(self.packages).multi_primary()]
         if advisory:
             shown = advisory[:_ADVISORY_PREVIEW]
             extra = f"\n  … +{len(advisory) - _ADVISORY_PREVIEW} more" if len(advisory) > _ADVISORY_PREVIEW else ""
