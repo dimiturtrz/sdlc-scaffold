@@ -176,6 +176,58 @@ needs none.
   real-dependency terms.
 - `graph.json` extended with edge kinds + node roles, kept deterministic (don't regress the diff-truth).
 
+## Definition of done (the long goal)
+
+The epic is DONE when, on the **enriched sample project** the e2e generates:
+
+1. `graph.py` emits the **containment tree** (`package ⊃ file ⊃ class ⊃ method`) with node **roles**
+   (primary / satellite).
+2. All four gated arrow kinds (`import` · `inherits` · `holds` · `calls`, with `via=construct` sub-tag)
+   are emitted **at their native level**, carried as a per-edge `{kinds, weights}` attribute.
+3. **Roll-up property holds**: projecting every arrow to file level reproduces the grimp import set exactly
+   for cross-file pairs, and intra-file pairs collapse to self-loops that the import set legitimately drops.
+4. **Every new gate both RUNS CLEAN on the seed AND BITES on an injected violation** (`assert_bites`) —
+   the house standard: a gate that can't be shown to bite isn't a gate.
+5. archmap renders edge kinds + filters + the `--diff` changelog view; `graph.json` stays deterministic.
+6. **Every pre-existing gate stays green** on the enriched seed (ruff, pyrefly strict, vulture, ast-grep
+   in-a-class, jscpd, lcom, coverage floor, test-mirror). The seed doubles as proof the gates coexist.
+
+## The enriched sample project
+
+The current e2e seed (`MathOps` + `Pipeline`, one intra-package import edge) is **too thin** — no
+inheritance, no composition, no interfaces, so it cannot exercise a single new arrow. It must grow into a
+small-but-architecturally-rich fixture. Constraint: **the seed must itself pass every existing gate**
+(fully annotated for pyrefly strict, everything in a class, test-mirrored, dup-free, vulture-clean).
+
+Proposed shape (owned by the e2e, as today — the template still ships zero code):
+
+| file | contents | arrows it creates |
+|---|---|---|
+| `types.py` | `Store` (Protocol/ABC, **primary**) + `StoreConfig` (dataclass, **satellite**) | node roles; an **intra-file** pair (roll-up self-loop) |
+| `memory_store.py` | `MemoryStore(Store)` | `inherits` → Store |
+| `repository.py` | `Repository` with a `Store` field, calls its methods | `holds` → Store; `calls` → **interface** |
+| `service.py` | `Service` holds `Repository`, constructs `MemoryStore` | `calls` → Repository; `via=construct` → **concrete** |
+| `math_ops.py`, `pipeline.py` | existing leaf + intra-package edge | keep (regression coverage) |
+
+This yields every kind at once, plus the `call→interface` / `construct→concrete` partition, plus the
+intra-file case, plus role tagging — in ~6 small files.
+
+## e2e acceptance matrix
+
+Each row = one runs-clean test + one bites test (injection restored after, per `assert_bites`).
+
+| capability | clean on seed | BITES when injected |
+|---|---|---|
+| node roles / containment | nodes at each level, roles tagged | add a **2nd primary class** to a file → Structure gate |
+| `inherits` | `MemoryStore → Store` present | abstract with **no** concrete impl |
+| `holds` | `Repository → Store` present | **composition cycle** (make `Store` hold a `Repository`) |
+| `calls` | resolves to the **interface**, not the concrete | **forbidden-use** contract violated (domain calls infra) |
+| `via=construct` | `Service` constructs `MemoryStore` | non-factory constructs a concrete |
+| feature-envy | clean | a method calling another class more than its own |
+| roll-up invariant | file-level roll-up == grimp import set | (property test, not an injection) |
+| Demeter | clean | an `a.b.c.d()` chain |
+| viz | `graph.json` carries kinds + roles, deterministic | `--diff` shows added/removed edges |
+
 ## Parked / open
 
 - Contract-DSL syntax for edge-kind-aware rules (extend `[tool.importlinter]` vs a new `[tool.arch]`).
