@@ -150,6 +150,9 @@ def lint(session: nox.Session) -> None:
     session.run(
         "uv", "run", "--extra", "devtools", "python", "-m", "devtools.composition", *LAYERS, "--assert", external=True
     )
+    # ENFORCED feature envy — a METHOD more interested in one other class than its own object. Floor:
+    # [tool.structure] feature_envy_min (default 4); value objects are never the target (role-aware).
+    session.run("uv", "run", "--extra", "devtools", "python", "-m", "devtools.envy", *LAYERS, "--assert", external=True)
     # ENFORCED forbidden-USE contracts — directional rules over the decomposed arrows. Empty by default.
     session.run(
         "uv", "run", "--extra", "devtools", "python", "-m", "devtools.contracts", *LAYERS, "--assert", external=True

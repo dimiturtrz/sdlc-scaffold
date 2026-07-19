@@ -117,6 +117,12 @@ jobs:
       # tested alone. Catches the intra-file case the import-cycle check structurally cannot represent.
       - name: Composition cycles — enforced (devtools/composition.py --assert)
         run: uv run --extra devtools python -m devtools.composition {{ pkgs }} --assert
+      # Feature envy — ENFORCED: a METHOD more interested in one other class than its own object, i.e. it
+      # probably belongs on that class. Judged against a SINGLE foreign class (spreading calls across
+      # collaborators is orchestration, not envy) and never against a value object. Floor is
+      # [tool.structure] feature_envy_min.
+      - name: Feature envy — enforced (devtools/envy.py --assert)
+        run: uv run --extra devtools python -m devtools.envy {{ pkgs }} --assert
       # Forbidden-USE contracts — ENFORCED: directional rules over the DECOMPOSED arrows, so a contract can
       # forbid CONSTRUCTING a concrete while still permitting use — precision imports cannot express.
       # Contracts live in [[tool.arch.forbidden]]; empty by default, so a fresh gen is green.

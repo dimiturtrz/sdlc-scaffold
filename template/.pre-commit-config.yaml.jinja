@@ -97,6 +97,12 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: feature-envy
+        name: feature envy — enforced (a method that belongs on another class)
+        entry: uv run --extra devtools python -m devtools.envy {{ pkgs }} --assert
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: use-contracts
         name: forbidden-use contracts — enforced (directional rules over the typed arrows)
         entry: uv run --extra devtools python -m devtools.contracts {{ pkgs }} --assert

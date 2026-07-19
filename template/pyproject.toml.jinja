@@ -185,6 +185,10 @@ file_min = 0             # advisory line floor — 0 = OFF (no honest universal 
 betweenness_max = 0.10   # advisory chokepoint threshold
 main_sequence_max = 0.0  # advisory Martin main-sequence distance |A+I-1| ceiling — 0 = OFF (a concrete
                          # stable leaf legitimately sits at D≈1, so no honest universal floor; raise per repo)
+feature_envy_min = 4     # feature-envy floor: foreign accesses before a method is judged at all. Below
+                         # it the ratio is noise (2 vs 1 proves nothing). Raise it for repos full of
+                         # legitimate delegators (mappers / serializers / visitors) rather than weakening
+                         # the rule; value objects are already excluded by role.
 demeter_max_depth = 2    # Law of Demeter ceiling: attribute hops in one chain. 2 = "reach your own field,
                          # then talk to it" (`self.store.get(k)`); 3 reaches THROUGH it
                          # (`self.store.config.name`). Raise it for data-navigation-heavy trees (AST/JSON
