@@ -9,7 +9,7 @@
 name = "sdlc-devtools"
 version = "1.20.0"
 description = "Structural-guardrail analyzers (import-graph arch-fitness, LCOM4, data-clumps, magic-literals, shape-contracts, archmap interactive autoviz) for the sdlc-scaffold stack."
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 # graph.py builds the honest import graph on grimp + ranks it with networkx; the other engines are
 # stdlib-only (ast). So the whole package's runtime footprint is these two.
 dependencies = ["grimp", "networkx", "radon"]
@@ -33,6 +33,19 @@ addopts = "-p no:cacheprovider -ra"
 # Dependency hygiene (bd 85l.2): deptry flags imported-but-undeclared (DEP001), declared-but-unused
 # (DEP002), and transitive (DEP003). noxfile.py imports the `nox` runner (invoked via uvx, intentionally
 # undeclared) so it's excluded; test files legitimately import the dev-dep pytest (DEP004 ignored there).
+# The analyzer package holds itself to the gate set it ships (bd iv5). It cannot be a copier consumer of
+# itself, so the config is mirrored here by hand rather than rendered — which is exactly why it drifted:
+# a gate that does not run is indistinguishable from a clean codebase.
+[tool.pyrefly]
+preset = "strict"
+check-unannotated-defs = true
+search-path = ["."]
+python-version = "3.12"  # MUST equal requires-python above — pyrefly does not infer it (bd 166)
+
+[[tool.pyrefly.sub-config]]
+matches = "**/tests/**"
+check-unannotated-defs = false
+
 [tool.deptry]
 extend_exclude = ["noxfile.py"]
 

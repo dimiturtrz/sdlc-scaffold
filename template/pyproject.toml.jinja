@@ -1,7 +1,11 @@
 [project]
 name = "{{ project_name }}"
 version = "0.1.0"
-requires-python = ">=3.11"
+# 3.12 is the floor because strict typing needs `typing.override` (3.12+), and the alternatives were worse:
+# disabling missing-override-decorator weakens the type story, and typing_extensions adds a runtime dep to
+# every consumer for one decorator. No consumer needed 3.11 — synthscape already requires >=3.12 (isaacsim),
+# and the other two had merely inherited this default (bd 166).
+requires-python = ">=3.12"
 dependencies = [
 {% if enable_ml %}    "numpy",
     "jaxtyping",   # Float[Tensor,"B C H W"] shape/dtype annotations — inert at runtime without a checker (no prod cost)
@@ -93,6 +97,12 @@ ignore-names = [{% if enable_ml %}"X*", "Y*", "B", "C", "H", "W", "F"{% endif %}
 preset = "strict"
 check-unannotated-defs = true
 search-path = ["."]
+# MUST equal the `requires-python` floor above. pyrefly does NOT infer it from requires-python — left
+# unset it checks against its own default (>=3.12), so a repo declaring 3.11 would get a GREEN type check
+# for `from typing import override` and then ImportError at runtime on the version it claims to support.
+# The checker has to target the oldest interpreter the project promises, not the newest one it is run on.
+# A unit test pins these two together (bd 166).
+python-version = "3.12"
 # Untyped third-party imports ERROR by default (stricter than mypy's silent Any). A dep that ships no
 # py.typed / stubs goes here to be treated as Any — a per-repo FACT vocab, parallel to the deptry/vulture
 # slots.{% if enable_ml %} jaxtyping shape strings (`Float[Array, "b n"]`) are a runtime-checked DSL

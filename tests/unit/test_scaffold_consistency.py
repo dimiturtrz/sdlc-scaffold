@@ -103,6 +103,26 @@ def test_python_templates_render_exactly_as_ruff_would_format_them(tmp_path):
     )
 
 
+def test_the_type_checker_targets_the_python_floor_the_project_promises():
+    """`requires-python` and `[tool.pyrefly] python-version` must name the same version.
+
+    pyrefly does NOT derive its target from requires-python. Left unset it checks against its own default,
+    so a repo declaring 3.11 was type-checked as 3.12+ — `from typing import override` passed the gate and
+    would then ImportError at runtime on the version the project claims to support. A checker aimed at a
+    NEWER interpreter than you ship is worse than no checker there, because it reports confidence it does
+    not have. Verified against the pinned pyrefly: python-version 3.11 errors on that import, 3.12 does not,
+    and omitting the key reproduces neither (bd 166).
+    """
+    text = (REPO / "template" / "pyproject.toml.jinja").read_text(encoding="utf-8")
+    floor = re.search(r'^requires-python = ">=([0-9.]+)"', text, re.M)
+    target = re.search(r'^python-version = "([0-9.]+)"', text, re.M)
+    assert floor and target, "both requires-python and [tool.pyrefly] python-version must be present"
+    assert floor.group(1) == target.group(1), (
+        f"requires-python floor is {floor.group(1)} but pyrefly targets {target.group(1)} — "
+        "the type checker must aim at the OLDEST interpreter the project promises"
+    )
+
+
 _RUNNERS = {
     "ci.yml": "template/.github/workflows/ci.yml.jinja",
     "noxfile": "template/noxfile.py.jinja",
