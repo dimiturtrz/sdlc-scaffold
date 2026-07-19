@@ -113,6 +113,12 @@ jobs:
       # CHECK (bad-return / bad-argument-type). Runs in the synced env (`--with` adds pyrefly) so it resolves
       # installed dep stubs (pydantic/numpy py.typed) — the R1 type-grade Correctness leg ruff can't reach.
       # Config + tests carve-out + untyped-dep slot in [tool.pyrefly]; scope=lint_paths. Blocks the merge.
+      # Law of Demeter — ENFORCED: a chain that reaches THROUGH a field into a stranger
+      # (`self.store.config.name`) couples this class to a type it never declared. Ceiling is
+      # [tool.structure] demeter_max_depth (2 = reach your own field, then talk to it). A fresh gen has no
+      # code so it starts clean and ratchets; raise the ceiling for data-navigation-heavy trees.
+      - name: Law of Demeter — enforced (devtools/demeter.py --assert)
+        run: uv run --extra devtools python -m devtools.demeter {{ pkgs }} --assert
       - name: Types — enforced (pyrefly strict)
         run: uv run --with pyrefly=={{ pyrefly_version }} pyrefly check {{ lint_paths }}
 {% if enable_ml %}      # Shape contracts — ENFORCED (GRADUATED advisory->blocking, bd vip.4): every public array/tensor

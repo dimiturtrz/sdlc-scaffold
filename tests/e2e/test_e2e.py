@@ -365,6 +365,13 @@ def test_class_shape_smells(project):
         run(["uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{tool}", *layers(name)], path)
 
 
+def test_demeter_enforced_runs_clean(project):
+    """A5 (bd 4bl.5). The seed reaches its own fields and stops (`self._store.get(key)` = 2 hops), so the
+    gate is green from day one and ratchets — a fresh gen has no code at all."""
+    name, path = project
+    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.demeter", *layers(name), "--assert"], path)
+
+
 def test_arrows_advisory_decomposes_the_seed(project):
     """A2 (bd 4bl.2): the arrow report decomposes an import edge into WHY it exists. The fixture was built
     to carry each kind, so assert the REAL arrows appear — not merely that the explorer exits 0."""
@@ -747,6 +754,24 @@ def test_graph_assert_catches_cycle(full_project):
         ),
     )
     assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+DEMETER_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.demeter", "full_pkg", "--assert"]
+
+
+def test_demeter_catches_a_reach_through(full_project):
+    # A5 (bd 4bl.5): walking THROUGH a field into a stranger (`r._store.config.namespace`, 3 hops) couples
+    # this class to a type it never declared. Talking to your OWN field is 2 hops and stays clean.
+    result = assert_bites(
+        full_project,
+        DEMETER_ASSERT,
+        lambda p: _append(
+            p / "full_pkg" / "repository.py",
+            "\n\nclass Wreck:\n    def go(self, r: Repository) -> str:\n        return r._store.config.namespace\n",
+        ),
+    )
+    assert "reaches 3 deep" in (result.stdout + result.stderr), "the gate names the depth it found"
+    assert run(DEMETER_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
 def test_graph_assert_catches_two_primary_classes(full_project):

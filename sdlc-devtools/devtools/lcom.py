@@ -94,9 +94,10 @@ class Lcom:
         (`raise NotImplementedError(...)`)."""
         if not isinstance(node, ast.Raise):
             return False
-        if isinstance(node.exc, ast.Call) and isinstance(node.exc.func, ast.Name):
-            return node.exc.func.id == "NotImplementedError"
-        return isinstance(node.exc, ast.Name) and node.exc.id == "NotImplementedError"
+        exc = node.exc  # bind once: `node.exc.func.id` walks three deep and re-reads `exc` on every branch
+        if isinstance(exc, ast.Call) and isinstance(exc.func, ast.Name):
+            return exc.func.id == "NotImplementedError"
+        return isinstance(exc, ast.Name) and exc.id == "NotImplementedError"
 
     @staticmethod
     def _is_trivial(fn: ast.FunctionDef) -> bool:
