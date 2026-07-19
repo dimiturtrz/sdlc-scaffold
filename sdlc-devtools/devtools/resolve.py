@@ -16,6 +16,7 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TypeGuard
 
 from devtools.names import Names
 from devtools.trees import Trees
@@ -118,7 +119,12 @@ class Resolver:
         return next((n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == "__init__"), None)
 
     @staticmethod
-    def is_self_attr(node: ast.expr) -> bool:
+    def is_self_attr(node: ast.expr) -> TypeGuard[ast.Attribute]:
+        """`self.<name>` — a TypeGuard, not a bool, so callers may then read `.attr` SAFELY.
+
+        As a plain bool this told the reader an invariant the type checker could not see, and every caller
+        went on to touch `.attr` on a bare `ast.expr`. That is an AttributeError waiting for the first node
+        shape we did not anticipate, in the resolver that maps everyone else's architecture."""
         return isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "self"
 
     @staticmethod

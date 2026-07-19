@@ -23,7 +23,9 @@ from __future__ import annotations
 import argparse
 import ast
 import logging
+from collections.abc import Iterable
 from pathlib import Path
+from typing import TypedDict
 
 import grimp
 import networkx as nx
@@ -39,16 +41,19 @@ from devtools.trees import Trees
 
 log = logging.getLogger("devtools.graph")
 
-# Fitness thresholds — SPEC [tool.structure] defaults, overridable in pyproject. Chosen so the blocking
-# rules start CLEAN on a fresh project and ratchet: fan-in&out both>8, file>750 lines, any import cycle.
-_DEFAULTS = {
-    "bottleneck_degree": 8,
-    "file_max": 750,
-    "file_min": 0,
-    "betweenness_max": 0.10,
-    "main_sequence_max": 0.0,  # advisory main-sequence distance ceiling; 0 = OFF (no honest universal one)
-    "test_layout": "mirror",
-}
+
+class StructureCfg(TypedDict):
+    """The [tool.structure] key set, typed — so a threshold reaches its gate as an int/float, not as an
+    `object` the caller quietly assumes about."""
+
+    bottleneck_degree: int
+    file_max: int
+    file_min: int
+    betweenness_max: float
+    main_sequence_max: float
+    test_layout: str
+
+
 _STRUCTURAL = ("__init__.py", "__main__.py")  # package plumbing — exempt from the test-mirror rule + line floor
 _ADVISORY_PREVIEW = 15  # advisory lines shown before "… +N more" (avoid log spam)
 # Martin's stability metrics (bd x3b). Edges are importer -> imported, so in_degree = afferent coupling Ca
@@ -66,13 +71,20 @@ class ImportGraph:
         self.packages = packages
 
     @staticmethod
-    def load_structure_cfg(pyproject: str = "pyproject.toml") -> dict:
-        """Fitness thresholds from pyproject [tool.structure], merged onto SPEC defaults. One config home."""
-        cfg = dict(_DEFAULTS)
-        cfg.update(Pyproject.tool_section("structure", pyproject))
-        return cfg
+    def load_structure_cfg(pyproject: str = "pyproject.toml") -> StructureCfg:
+        """This engine's slice of [tool.structure], typed. Validation lives in Pyproject because the SECTION
+        is shared — demeter and envy read their own keys from it, so no one engine owns the schema."""
+        cfg = Pyproject.structure_cfg(pyproject)
+        return StructureCfg(
+            bottleneck_degree=int(cfg["bottleneck_degree"]),
+            file_max=int(cfg["file_max"]),
+            file_min=int(cfg["file_min"]),
+            betweenness_max=float(cfg["betweenness_max"]),
+            main_sequence_max=float(cfg["main_sequence_max"]),
+            test_layout=str(cfg["test_layout"]),
+        )
 
-    def build_graph(self) -> nx.DiGraph:
+    def build_graph(self) -> nx.DiGraph[str]:
         """The honest import DiGraph (importer -> imported) over the root packages, via grimp."""
         g = nx.DiGraph()
         for pkg in self.packages:
@@ -88,7 +100,7 @@ class ImportGraph:
         return [(str(f), f.read_text(encoding=ENCODING).count("\n") + 1) for f in Trees(self.packages).files()]
 
     @staticmethod
-    def _god_modules(g: nx.DiGraph, degree: int) -> list[str]:
+    def _god_modules(g: nx.DiGraph[str], degree: int) -> list[str]:
         ind, outd = dict(g.in_degree()), dict(g.out_degree())
         return [
             f"{n}: fan-in {ind[n]} x fan-out {outd[n]} (both > {degree}) — god-module, split by responsibility"
@@ -97,7 +109,7 @@ class ImportGraph:
         ]
 
     @staticmethod
-    def _cycles(g: nx.DiGraph) -> list[str]:
+    def _cycles(g: nx.DiGraph[str]) -> list[str]:
         return [f"import cycle (SCC>1): {sorted(c)}" for c in nx.strongly_connected_components(g) if len(c) > 1]
 
     @staticmethod
@@ -152,7 +164,7 @@ class ImportGraph:
         ]
 
     @staticmethod
-    def _chokepoints(g: nx.DiGraph, mx: float) -> list[str]:
+    def _chokepoints(g: nx.DiGraph[str], mx: float) -> list[str]:
         return [
             f"{n}: betweenness {v:.3f} > {mx} — chokepoint, consider a boundary here"
             for n, v in nx.betweenness_centrality(g).items()
@@ -193,14 +205,14 @@ class ImportGraph:
         return sum(ImportGraph._is_abstract(c) for c in classes) / len(classes)
 
     @staticmethod
-    def instability(g: nx.DiGraph) -> dict[str, float]:
+    def instability(g: nx.DiGraph[str]) -> dict[str, float]:
         """Martin's I = Ce/(Ce+Ca): 0 = maximally STABLE (only depended-on), 1 = maximally UNSTABLE (only
         depends on others). Isolated nodes (no coupling) are skipped — I is undefined there."""
         ind, outd = dict(g.in_degree()), dict(g.out_degree())
         return {n: outd[n] / (outd[n] + ind[n]) for n in g if outd[n] + ind[n] > 0}
 
     @staticmethod
-    def main_sequence_distance(g: nx.DiGraph) -> dict[str, float]:
+    def main_sequence_distance(g: nx.DiGraph[str]) -> dict[str, float]:
         """D = |A + I - 1|: distance from the main sequence. High D = the zone of PAIN (stable + concrete, hard
         to extend) or the zone of USELESSNESS (abstract + unstable). Only modules with classes (A defined)."""
         out = {}
@@ -211,7 +223,7 @@ class ImportGraph:
         return out
 
     @staticmethod
-    def _off_main_sequence(g: nx.DiGraph, mx: float) -> list[str]:
+    def _off_main_sequence(g: nx.DiGraph[str], mx: float) -> list[str]:
         """Advisory. OFF at mx<=0 (the default): a concrete stable leaf legitimately sits at D≈1, so there is no
         honest universal threshold — a repo opts in by setting `main_sequence_max`, then flags modules past it."""
         if mx <= 0:
@@ -223,7 +235,9 @@ class ImportGraph:
         ]
 
     @staticmethod
-    def assert_fitness(g: nx.DiGraph, files: list[tuple[str, int]], cfg: dict) -> tuple[list[str], list[str]]:
+    def assert_fitness(
+        g: nx.DiGraph[str], files: list[tuple[str, int]], cfg: StructureCfg
+    ) -> tuple[list[str], list[str]]:
         """(blocking, advisory) fitness violations. BLOCKING = god-module, import cycle, god-file (clean on a
         fresh project, so they ratchet); ADVISORY = line-floor (off by default) + chokepoint (never blocks)."""
         blocking = (
@@ -239,11 +253,11 @@ class ImportGraph:
         return blocking, advisory
 
     @staticmethod
-    def _top(pairs, n: int):
+    def _top(pairs: Iterable[tuple[str, float]], n: int) -> list[tuple[str, float]]:
         """Top-n (name, score) by descending score — the shared ranking for every metric."""
         return sorted(pairs, key=lambda kv: -kv[1])[:n]
 
-    def typed_graph(self, kinds: set[str]) -> nx.DiGraph:
+    def typed_graph(self, kinds: set[str]) -> nx.DiGraph[str]:
         """A CLASS-level DiGraph over one arrow subset — the same metrics, a different question.
 
         This is what "metrics as edge-subset queries" means concretely (bd 4bl.4). The ranking functions
@@ -264,7 +278,7 @@ class ImportGraph:
         return g
 
     @staticmethod
-    def report(g: nx.DiGraph, top: int, label: str = "import graph", unit: str = "modules") -> str:
+    def report(g: nx.DiGraph[str], top: int, label: str = "import graph", unit: str = "modules") -> str:
         """Ranked fan-in / fan-out / bottleneck / chokepoint tables + the cycle list, as one text block.
 
         Takes the graph rather than building one, so the SAME rankings serve any edge subset — the import

@@ -68,7 +68,7 @@ class Archmap:
         p = module.rsplit(".", 1)[0] if "." in module else None
         return p if p in module_set else None
 
-    def _class_nodes(self) -> list[dict]:
+    def _class_nodes(self) -> list[dict[str, object]]:
         """The CLASS tier of the containment tree (bd 433.1): every class as a node under its module,
         carrying its ROLE — `primary` (the file's subject) or `satellite` (its error / config / local
         specialisation). The role is what lets a view hide companions and show the real skeleton."""
@@ -88,7 +88,7 @@ class Archmap:
             key=lambda n: n["id"],
         )
 
-    def _method_nodes(self) -> list[dict]:
+    def _method_nodes(self) -> list[dict[str, object]]:
         """The METHOD tier (bd 433.4) — the deepest fold level, so a class can be opened to read its actual
         surface instead of guessing it from the class name.
 
@@ -114,7 +114,7 @@ class Archmap:
             key=lambda n: n["id"],
         )
 
-    def _typed_edges(self) -> list[dict]:
+    def _typed_edges(self) -> list[dict[str, object]]:
         """The finer arrows an import edge decomposes into, each tagged with its KIND. Deduped and sorted so
         the committed diff stays minimal; `weight` is 1 because a kind between two classes is a fact, not a
         count (the import edge keeps the statement count)."""
@@ -125,7 +125,7 @@ class Archmap:
             for s, d, kind in sorted(set(structural + behavioural))
         ]
 
-    def graph_data(self) -> dict:
+    def graph_data(self) -> dict[str, list[dict[str, object]]]:
         """The full graph as committed-diffable JSON — the diff-truth the viewer hydrates.
 
         THREE tiers of one containment tree. Every MODULE is a node carrying its `parent` (compound nesting) +
@@ -193,7 +193,7 @@ class Archmap:
         return path
 
     @staticmethod
-    def _signature(data: dict) -> tuple[set[tuple[str, str]], set[tuple[str, str, str]]]:
+    def _signature(data: dict[str, list[dict[str, object]]]) -> tuple[set[tuple[str, str]], set[tuple[str, str, str]]]:
         """(nodes, edges) as comparable tuples — the shape a diff is taken over."""
         nodes = {(n["id"], n.get("role") or n.get("level", "module")) for n in data.get("nodes", [])}
         edges = {(e["source"], e["target"], e.get("kind", "import")) for e in data.get("edges", [])}

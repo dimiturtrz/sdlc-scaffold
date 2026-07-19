@@ -43,17 +43,17 @@ _KINDS = {INHERITS, HOLDS, REFERENCES, CALLS, CONSTRUCT}  # the vocabulary a con
 class UseContracts:
     """Directional forbidden-USE contracts evaluated over every arrow kind."""
 
-    def __init__(self, packages: list[str], contracts: list[dict] | None = None) -> None:
+    def __init__(self, packages: list[str], contracts: list[dict[str, object]] | None = None) -> None:
         self.packages = packages
         self.contracts = contracts if contracts is not None else self.load_contracts()
 
     @staticmethod
-    def load_contracts(pyproject: str = "pyproject.toml") -> list[dict]:
+    def load_contracts(pyproject: str = "pyproject.toml") -> list[dict[str, object]]:
         """The `[[tool.arch.forbidden]]` contracts, or [] when none are configured."""
         return list(Pyproject.tool_section("arch", pyproject).get("forbidden", []))
 
     @staticmethod
-    def malformed(contracts: list[dict]) -> list[str]:
+    def malformed(contracts: list[dict[str, object]]) -> list[str]:
         """Contracts that cannot fire, reported as CONFIG errors rather than silently passing.
 
         A misspelled `kinds` entry, or a missing `source`/`forbidden`, matches no arrow — so the gate goes

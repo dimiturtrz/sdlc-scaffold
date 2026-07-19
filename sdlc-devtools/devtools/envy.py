@@ -37,8 +37,6 @@ from devtools.trees import Trees
 
 log = logging.getLogger("devtools.envy")
 
-_DEFAULT_MIN = 4
-
 
 @dataclass(frozen=True)
 class MethodSite:
@@ -70,7 +68,7 @@ class FeatureEnvy:
     @staticmethod
     def load_minimum(pyproject: str = "pyproject.toml") -> int:
         """Foreign-access floor from `[tool.structure] feature_envy_min`, defaulted when absent."""
-        return int(Pyproject.tool_section("structure", pyproject).get("feature_envy_min", _DEFAULT_MIN))
+        return int(Pyproject.structure_cfg(pyproject)["feature_envy_min"])
 
     def _satellites(self) -> set[str]:
         """Qualified ids of the SATELLITE classes — a value object / config / enum / error family.

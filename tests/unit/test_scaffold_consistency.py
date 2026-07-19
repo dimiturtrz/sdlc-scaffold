@@ -20,6 +20,7 @@ from _meta import copier_default  # noqa: E402  (shared copier.yml reader, one h
 # output is pinned to exactly what a consumer receives.
 _PINNED_VERSIONS = ("ruff_version", "vulture_version", "deptry_version", "pyrefly_version", "pip_audit_version")
 _CAPTURE = {"capture_output": True, "text": True, "cwd": REPO, "check": False}
+_TEMPLATE_PYPROJECT = (REPO / "template" / "pyproject.toml.jinja").read_text(encoding="utf-8")
 
 
 def test_pre_commit_hooks_versions_match_single_source():
@@ -103,6 +104,23 @@ def test_python_templates_render_exactly_as_ruff_would_format_them(tmp_path):
     )
 
 
+def test_every_structure_key_the_template_ships_is_known_to_the_reader():
+    """[tool.structure] is validated on load — an unknown key RAISES so a typo cannot silently leave a gate
+    at its default. That makes this relationship load-bearing: a key added to the template but not to
+    Pyproject.STRUCTURE_DEFAULTS would raise on every consumer's next run, turning a new setting into a
+    crash. The section is read by graph, demeter AND envy, so no single engine owns the schema — which is
+    exactly how the first version of that validator rejected demeter's and envy's keys as typos.
+    """
+    sys.path.insert(0, str(REPO / "sdlc-devtools"))
+    from devtools.pyproject import STRUCTURE_DEFAULTS  # noqa: PLC0415 (the package is a sibling, not a dep)
+
+    section = re.search(r"^\[tool\.structure\]\n(.*?)(?=^\[)", _TEMPLATE_PYPROJECT, re.S | re.M)
+    assert section, "the template no longer ships a [tool.structure] section"
+    shipped = set(re.findall(r"^([a-z_]+) *=", section.group(1), re.M))
+    unknown = shipped - set(STRUCTURE_DEFAULTS)
+    assert not unknown, f"template ships [tool.structure] keys the reader rejects: {sorted(unknown)}"
+
+
 def test_the_type_checker_targets_the_python_floor_the_project_promises():
     """`requires-python` and `[tool.pyrefly] python-version` must name the same version.
 
@@ -113,7 +131,7 @@ def test_the_type_checker_targets_the_python_floor_the_project_promises():
     not have. Verified against the pinned pyrefly: python-version 3.11 errors on that import, 3.12 does not,
     and omitting the key reproduces neither (bd 166).
     """
-    text = (REPO / "template" / "pyproject.toml.jinja").read_text(encoding="utf-8")
+    text = _TEMPLATE_PYPROJECT
     floor = re.search(r'^requires-python = ">=([0-9.]+)"', text, re.M)
     target = re.search(r'^python-version = "([0-9.]+)"', text, re.M)
     assert floor and target, "both requires-python and [tool.pyrefly] python-version must be present"

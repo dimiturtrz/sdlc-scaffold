@@ -30,7 +30,7 @@ class CompositionCycles:
     def __init__(self, packages: list[str]) -> None:
         self.packages = packages
 
-    def graph(self) -> nx.DiGraph:
+    def graph(self) -> nx.DiGraph[str]:
         """The object graph: an edge means "owns an instance of"."""
         owns = nx.DiGraph()
         for src, dst, kind in ClassArrows(self.packages).edges():

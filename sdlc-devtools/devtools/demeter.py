@@ -30,8 +30,6 @@ from devtools.trees import Trees
 
 log = logging.getLogger("devtools.demeter")
 
-_DEFAULT_MAX_DEPTH = 2
-
 
 class Demeter:
     """Reach-through (Law of Demeter) violations over the root packages."""
@@ -43,7 +41,7 @@ class Demeter:
     @staticmethod
     def load_max_depth(pyproject: str = "pyproject.toml") -> int:
         """The attribute-hop ceiling from `[tool.structure] demeter_max_depth`, defaulted when absent."""
-        return int(Pyproject.tool_section("structure", pyproject).get("demeter_max_depth", _DEFAULT_MAX_DEPTH))
+        return int(Pyproject.structure_cfg(pyproject)["demeter_max_depth"])
 
     @staticmethod
     def _module_roots(module: ast.Module) -> set[str]:
