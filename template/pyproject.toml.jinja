@@ -93,6 +93,15 @@ ignore-names = [{% if enable_ml %}"X*", "Y*", "B", "C", "H", "W", "F"{% endif %}
 # strict-callable-subtyping + implicit-any + missing-override + unused-ignore. Runs env-aware
 # (`uv run --with pyrefly`) so it reads installed dep stubs (pydantic/numpy ship py.typed). A fresh gen's
 # seed is fully typed (0 errors), so it BLOCKS from day one as a regression guard — no advisory ratchet.
+# `Any` is an annotation that opts OUT of annotation, in a repo where typing is a blocking rule. Banning the
+# IMPORT is what makes this complete: `dict[str, Any]` is caught by no use-site rule (not even ANN401), yet
+# it cannot exist once the name cannot be imported. The unnamed escape hatch — a bare `dict`, an empty
+# container, an unannotated param — is already closed by pyrefly strict's implicit-any family, so the two
+# compose into one rule with no hole. At a genuine JSON boundary, name the shape with a TypedDict/Protocol.
+# ADVISORY for now: it rides ruff_advisory_select until a real tree is clean (bd lph).
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.Any" = { msg = "Any opts out of the type system. Name the real type, or a TypedDict/Protocol at a JSON boundary." }
+
 [tool.pyrefly]
 preset = "strict"
 check-unannotated-defs = true

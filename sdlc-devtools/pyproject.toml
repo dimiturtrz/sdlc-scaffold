@@ -36,6 +36,9 @@ addopts = "-p no:cacheprovider -ra"
 # The analyzer package holds itself to the gate set it ships (bd iv5). It cannot be a copier consumer of
 # itself, so the config is mirrored here by hand rather than rendered — which is exactly why it drifted:
 # a gate that does not run is indistinguishable from a clean codebase.
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.Any" = { msg = "Any opts out of the type system. Name the real type, or a TypedDict/Protocol at a JSON boundary." }
+
 [tool.pyrefly]
 preset = "strict"
 check-unannotated-defs = true

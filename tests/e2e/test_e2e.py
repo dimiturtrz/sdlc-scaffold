@@ -24,6 +24,7 @@ from conftest import (
     VULTURE,
     assert_bites,
     config_path,
+    copier_default,
     example_pkg,
     generate,
     git_init_commit,
@@ -204,9 +205,15 @@ def test_select_and_ci_wiring(project):
     # skr GAP3b: ci repo-step LOCAL-SLOTs let a consumer superset ride on slots, not a fork (both domains).
     assert "LOCAL-SLOT: ci-lint-steps" in ci_text, "the ci-lint-steps slot ships (skr GAP3)"
     assert "LOCAL-SLOT: ci-test-steps" in ci_text, "the ci-test-steps slot ships (skr GAP3)"
-    # 4c2/8ex reopened: E501+SLF001 graduated into the enforced select, so the advisory --statistics run
-    # carries NO --extend-select (ruff_advisory_select is empty). The enforced select is asserted above.
-    assert "--extend-select" not in ci_text, "advisory ruff has no --extend-select (surface empty, 4c2/8ex)"
+    # The advisory --statistics run carries --extend-select IFF ruff_advisory_select holds codes, and it
+    # carries exactly those. Derived from copier.yml rather than pinned to a value: this used to assert the
+    # surface was EMPTY (true while E501/SLF001 had graduated out and nothing had ridden the seam since),
+    # which made a correct use of the seam look like a regression the moment TID251 took it (bd lph).
+    advisory = copier_default("ruff_advisory_select")
+    if advisory:
+        assert f"--extend-select {advisory}" in ci_text, f"advisory ruff must surface {advisory}"
+    else:
+        assert "--extend-select" not in ci_text, "no advisory codes configured, so no --extend-select"
     # vip.4: shape_contracts GRADUATED advisory->blocking — a ml gen carries an ENFORCED --assert step (a
     # fresh gen has 0 boundaries so it passes); a domain-neutral gen has no shape gate at all.
     assert ("shape_contracts {} --assert".format(pkg) in ci_text) == ml, "ml ci enforces shape --assert (vip.4)"
