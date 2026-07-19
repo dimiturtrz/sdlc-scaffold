@@ -76,3 +76,43 @@ def test_the_emission_is_deterministic(monkeypatch, tmp_path):
     assert classes == sorted(classes), "class nodes sorted"
     typed = [(e["source"], e["target"], e["kind"]) for e in data["edges"] if e["kind"] != "import"]
     assert typed == sorted(typed), "typed edges sorted"
+
+
+# ---- the viewer contract that consumes the schema (bd 433.2 / 433.3) ---------------------------------
+
+
+def _viewer(tmp_path) -> str:
+    return Archmap(["core"]).write_viewer(tmp_path / "index.html", project="demo").read_text(encoding="utf-8")
+
+
+def test_the_viewer_exposes_a_toggle_for_every_edge_kind(tmp_path):
+    """Every kind the emitter can produce must be reachable in the UI, or that tier of the graph is data
+    nobody can see."""
+    html = _viewer(tmp_path)
+    for kind in ("import", "inherits", "holds", "references", "calls", "construct"):
+        assert f'id="kind-{kind}"' in html, f"no toggle for {kind}"
+    assert 'id="tier-class"' in html, "the class tier needs a toggle"
+    assert 'id="hide-satellites"' in html, "roles are filterable, not just decorative"
+
+
+def test_line_style_carries_the_split_not_colour_alone(tmp_path):
+    """SOLID = what a class knows, DASHED = what it does. Encoding that in style (not hue) keeps the graph
+    readable in greyscale and for colour-blind viewers."""
+    html = _viewer(tmp_path)
+    assert "'line-style': 'dashed'" in html or '"line-style": "dashed"' in html or "dashed" in html
+    for kind in ("inherits", "holds", "references", "calls", "construct"):
+        assert f'edge[kind="{kind}"]' in html, f"{kind} has no distinct style rule"
+
+
+def test_the_default_view_is_the_module_import_tier(tmp_path):
+    """Adding a class tier must not change what a consumer already renders — only `import` starts checked."""
+    html = _viewer(tmp_path)
+    assert 'id="kind-import" checked' in html, "imports on by default"
+    for kind in ("inherits", "holds", "references", "calls", "construct"):
+        assert f'id="kind-{kind}" checked' not in html, f"{kind} must be OFF by default"
+    assert 'id="tier-class" checked' not in html, "the class tier is opt-in"
+
+
+def test_the_viewer_stays_self_contained(tmp_path):
+    """It is served as a static GitHub Pages site — an external <script src> would break offline/CSP."""
+    assert "script src=" not in _viewer(tmp_path)

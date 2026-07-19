@@ -98,6 +98,30 @@
     },
     {
       "kind": "import",
+      "source": "devtools.composition",
+      "target": "devtools.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.contracts",
+      "target": "devtools.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.contracts",
+      "target": "devtools.calls",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.contracts",
+      "target": "devtools.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
       "source": "devtools.data_clumps",
       "target": "devtools.trees",
       "weight": 1
@@ -332,6 +356,24 @@
     },
     {
       "kind": "construct",
+      "source": "devtools.composition.CompositionCycles",
+      "target": "devtools.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.contracts.UseContracts",
+      "target": "devtools.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.contracts.UseContracts",
+      "target": "devtools.calls.CallArrows",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
       "source": "devtools.data_clumps.DataClumps",
       "target": "devtools.trees.Trees",
       "weight": 1
@@ -399,7 +441,7 @@
   ],
   "nodes": [
     {
-      "descendants": 20,
+      "descendants": 22,
       "id": "devtools",
       "label": "devtools",
       "level": "module",
@@ -464,8 +506,24 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.composition",
+      "label": "composition",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.config",
       "label": "config",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts",
+      "label": "contracts",
       "level": "module",
       "parent": "devtools",
       "role": null
@@ -632,10 +690,26 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.composition.CompositionCycles",
+      "label": "CompositionCycles",
+      "level": "class",
+      "parent": "devtools.composition",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
       "id": "devtools.config.Config",
       "label": "Config",
       "level": "class",
       "parent": "devtools.config",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.contracts.UseContracts",
+      "label": "UseContracts",
+      "level": "class",
+      "parent": "devtools.contracts",
       "role": "primary"
     },
     {
