@@ -125,11 +125,13 @@ The networkx engine is edge-agnostic. Every metric becomes a query over an edge-
 |---|---|---|
 | cycles / layering / build-order | `import` (or `import`-reasons) | yes (sound) |
 | real fan-in/out, usage-instability | `calls` | yes (sound under our constraints) |
-| **dead import** | `import` minus `calls` | yes (reliable under full resolution) |
 | **feature-envy** | `calls`, own-class vs foreign ratio | yes, with a resolution-confidence guard |
 | **forbidden-use contracts** | `import` ∪ `calls` — "domain must not *use* infra" | yes |
 | composition cycles | `holds` (A has B, B has A) | yes |
 | interface-segregation / LSP / "abstract with no impl" | `inherits` / `implements` | yes |
+
+**dead-import is NOT a graph gate** — ruff `F401` + vulture already enforce it soundly at the syntactic
+level. Don't reimplement it here.
 
 **Demeter** stays *outside* the graph — it's chain-depth *inside* a method body (`a.b.c.d`), pure
 AST-local, a standalone check (or ast-grep rule). Don't force it into an edge.
