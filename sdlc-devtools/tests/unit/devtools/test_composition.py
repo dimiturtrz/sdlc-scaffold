@@ -4,11 +4,11 @@ from devtools.composition import CompositionCycles
 
 
 def _cycles(monkeypatch, tmp_path, name: str, files: dict[str, str]) -> list[str]:
-    pkg = tmp_path / name
-    pkg.mkdir()
-    (pkg / "__init__.py").write_text("")
+    package = tmp_path / name
+    package.mkdir()
+    (package / "__init__.py").write_text("")
     for filename, src in files.items():
-        (pkg / filename).write_text(src)
+        (package / filename).write_text(src)
     monkeypatch.chdir(tmp_path)
     return CompositionCycles([name]).cycles()
 

@@ -115,10 +115,10 @@ class UseContracts:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Forbidden-USE contracts over the typed class arrows.")
-    ap.add_argument("packages", nargs="+", help="root packages to scan")
-    ap.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a forbidden use")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description="Forbidden-USE contracts over the typed class arrows.")
+    parser.add_argument("packages", nargs="+", help="root packages to scan")
+    parser.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a forbidden use")
+    args = parser.parse_args()
     engine = UseContracts(args.packages)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if args.assert_:

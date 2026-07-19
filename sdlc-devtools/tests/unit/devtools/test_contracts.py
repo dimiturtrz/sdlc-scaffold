@@ -17,11 +17,11 @@ _FILES = {
 
 
 def _violations(monkeypatch, tmp_path, contracts: list[dict]) -> list[str]:
-    pkg = tmp_path / "app"
-    pkg.mkdir()
-    (pkg / "__init__.py").write_text("")
+    package = tmp_path / "app"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
     for name, src in _FILES.items():
-        (pkg / name).write_text(src)
+        (package / name).write_text(src)
     monkeypatch.chdir(tmp_path)
     return UseContracts(["app"], contracts=contracts).violations()
 

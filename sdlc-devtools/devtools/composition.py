@@ -32,11 +32,11 @@ class CompositionCycles:
 
     def graph(self) -> nx.DiGraph:
         """The object graph: an edge means "owns an instance of"."""
-        g = nx.DiGraph()
+        owns = nx.DiGraph()
         for src, dst, kind in ClassArrows(self.packages).edges():
             if kind == HOLDS:
-                g.add_edge(src, dst)
-        return g
+                owns.add_edge(src, dst)
+        return owns
 
     def cycles(self) -> list[str]:
         """Every mutually-composing group — each reported once, members sorted for a stable message."""
@@ -58,10 +58,10 @@ class CompositionCycles:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Composition cycles — mutually-owning classes.")
-    ap.add_argument("packages", nargs="+", help="root packages to scan")
-    ap.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a composition cycle")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description="Composition cycles — mutually-owning classes.")
+    parser.add_argument("packages", nargs="+", help="root packages to scan")
+    parser.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a composition cycle")
+    args = parser.parse_args()
     engine = CompositionCycles(args.packages)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if args.assert_:
