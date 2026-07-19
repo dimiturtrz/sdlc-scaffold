@@ -137,7 +137,8 @@ def test_real_grimp_build(tmp_path, monkeypatch):
         (tmp_path / pkg).mkdir()
         (tmp_path / pkg / "__init__.py").write_text(src, encoding="utf-8")
     data = Archmap(["app", "lib"]).graph_data()
-    assert {"source": "app", "target": "lib", "weight": 1} in data["edges"], data
+    # edges now declare their KIND (bd 433.1); the module tier is the `import` subset
+    assert {"source": "app", "target": "lib", "weight": 1, "kind": "import"} in data["edges"], data
 
 
 def test_main_requires_packages(monkeypatch):

@@ -28,6 +28,10 @@ from pathlib import Path
 import grimp
 
 from devtools._common import ENCODING
+from devtools.arrows import ClassArrows
+from devtools.calls import CONSTRUCT, CallArrows
+from devtools.classes import ClassIndex
+from devtools.resolve import Resolver
 
 log = logging.getLogger("devtools.archmap")
 
@@ -62,12 +66,50 @@ class Archmap:
         p = module.rsplit(".", 1)[0] if "." in module else None
         return p if p in module_set else None
 
+    def _class_nodes(self) -> list[dict]:
+        """The CLASS tier of the containment tree (bd 433.1): every class as a node under its module,
+        carrying its ROLE — `primary` (the file's subject) or `satellite` (its error / config / local
+        specialisation). The role is what lets a view hide companions and show the real skeleton."""
+        return sorted(
+            (
+                {
+                    "id": f"{Resolver.module_of(path)}.{name}",
+                    "label": name,
+                    "parent": Resolver.module_of(path),
+                    "descendants": 0,
+                    "level": "class",
+                    "role": role,
+                }
+                for path, records in ClassIndex(self.packages).by_file().items()
+                for name, role in records
+            ),
+            key=lambda n: n["id"],
+        )
+
+    def _typed_edges(self) -> list[dict]:
+        """The finer arrows an import edge decomposes into, each tagged with its KIND. Deduped and sorted so
+        the committed diff stays minimal; `weight` is 1 because a kind between two classes is a fact, not a
+        count (the import edge keeps the statement count)."""
+        structural = [(s, d, kind) for s, d, kind in ClassArrows(self.packages).edges()]
+        behavioural = [(s, d, CONSTRUCT if via else kind) for s, d, kind, via in CallArrows(self.packages).edges()]
+        return [
+            {"source": s, "target": d, "weight": 1, "kind": kind}
+            for s, d, kind in sorted(set(structural + behavioural))
+        ]
+
     def graph_data(self) -> dict:
-        """The full graph as committed-diffable JSON — the diff-truth the viewer hydrates. Every module is a
-        node carrying its containment `parent` (compound nesting) + `descendants` count (the folded-node
-        badge); every module→module import is an edge weighted by import-statement count (the viewer sums
-        these into a counted arrow when a package folds). Deterministic order (modules + imports sorted, keys
-        sorted) so the committed diff is minimal and meaningful."""
+        """The full graph as committed-diffable JSON — the diff-truth the viewer hydrates.
+
+        Two tiers of one containment tree. Every MODULE is a node carrying its `parent` (compound nesting) +
+        `descendants` count (the folded-node badge), and every module→module import is an edge weighted by
+        import-statement count. Beneath that, every CLASS is a node with its `role`, joined by the TYPED
+        arrows (`inherits` / `holds` / `references` / `calls` / `construct`) that the import edge is merely
+        the coarse roll-up of.
+
+        Every node carries `level` and every edge a `kind`, so a view can ask for a subset rather than
+        guessing from shape. Deterministic throughout (sorted nodes, edges and keys) so the committed diff
+        stays minimal and meaningful.
+        """
         graph = self.graph()
         modules = sorted(graph.modules)
         module_set = set(modules)
@@ -77,16 +119,23 @@ class Archmap:
                 "label": m.split(".")[-1],
                 "parent": self._parent(m, module_set),
                 "descendants": sum(1 for n in modules if n.startswith(m + ".")),
+                "level": "module",
+                "role": None,
             }
             for m in modules
         ]
         edges = [
-            {"source": m, "target": imp, "weight": len(graph.get_import_details(importer=m, imported=imp))}
+            {
+                "source": m,
+                "target": imp,
+                "weight": len(graph.get_import_details(importer=m, imported=imp)),
+                "kind": "import",
+            }
             for m in modules
             for imp in sorted(graph.find_modules_directly_imported_by(m))
             if imp in module_set
         ]
-        return {"nodes": nodes, "edges": edges}
+        return {"nodes": nodes + self._class_nodes(), "edges": edges + self._typed_edges()}
 
     def _json_text(self) -> str:
         return json.dumps(self.graph_data(), indent=2, sort_keys=True) + "\n"

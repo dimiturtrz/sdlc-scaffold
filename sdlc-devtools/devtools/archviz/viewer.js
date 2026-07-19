@@ -10,7 +10,15 @@
   const FCOSE = { name: 'fcose', quality: 'proof', animate: false, randomize: true, packComponents: true,
     nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.1, gravity: 0.25, numIter: 2500, tile: true };
 
-  const GRAPH = await (await fetch('./graph.json')).json();
+  // graph.json carries TWO tiers now (bd 433.1): modules joined by imports, and beneath them classes joined
+  // by the typed arrows an import decomposes into. This view renders the module/import tier it was built
+  // for; the kind + role filters that surface the finer tier land with bd 433.3. Defaults keep an older
+  // graph.json (no `level`/`kind`) working unchanged.
+  const RAW = await (await fetch('./graph.json')).json();
+  const GRAPH = {
+    nodes: RAW.nodes.filter((n) => (n.level || 'module') === 'module'),
+    edges: RAW.edges.filter((e) => (e.kind || 'import') === 'import'),
+  };
   const PARENT = {}, KIDS = {}, DESC = {};
   for (const n of GRAPH.nodes) { PARENT[n.id] = n.parent; (KIDS[n.parent] = KIDS[n.parent] || []).push(n.id); DESC[n.id] = n.descendants; }
 
