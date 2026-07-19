@@ -58,10 +58,25 @@ drills down. archmap's containment (parent/descendants) already IS this tree.
 
 ### One edge, many reasons
 
-Between A and B several arrows co-exist (`inherits` + `holds` + `calls`×3). Represent as a **DiGraph with a
-per-edge `{kinds: set, weights}` attribute**, not a MultiDiGraph: coupling metrics want one edge per pair
-(A and B are coupled, once) with strength as weight; per-kind gates read the count off the attribute. The
-import edge = every edge with a non-empty kind-set, rolled up to file level.
+Between A and B several arrows co-exist (`inherits` + `holds` + `calls`×3).
+
+**As BUILT (differs from the original plan — recording what exists, not what was sketched):** `graph.json`
+emits **one row per `(source, target, kind)`**. On the devtools tree that is 75 rows over 68 distinct pairs,
+5 pairs carrying two kinds. The plan here said "a DiGraph with a per-edge `{kinds: set}` attribute, *not* a
+MultiDiGraph" — the built shape is the one that was ruled out.
+
+Why it went that way, honestly assessed after the fact rather than defended:
+- the **viewer needs per-kind edges anyway**, because each kind is drawn with its own colour and line style,
+  and it aggregates per `(source, target, kind)` when folding so a `calls` never merges into an `import`;
+- **metrics never see the multi-kind form**: `typed_graph(kinds)` filters to a subset and builds a plain
+  `DiGraph`, so within any one query there IS exactly one edge per pair — which is what the original
+  reasoning ("coupling metrics want one edge per pair") actually required.
+
+What is **lost**: asking "which pairs are joined by BOTH `holds` and `calls`" needs a group-by rather than
+reading one attribute. Nothing needs that yet; if a gate does, the kinds-set attribute is the fix and the
+emission is a small change.
+
+The import edge = every pair with at least one kind, rolled up to file level.
 
 ### Why `calls ⊆ import` here (the key result)
 
