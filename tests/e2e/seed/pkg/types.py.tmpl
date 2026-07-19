@@ -1,0 +1,26 @@
+"""Storage contract + its configuration — the interface layer the rest of the package codes against."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Protocol
+
+
+@dataclass(frozen=True)
+class StoreConfig:
+    """Tuning knobs for a store — a SATELLITE of `Store` (its configuration, not a peer class)."""
+
+    capacity: int
+    namespace: str
+
+
+class Store(Protocol):
+    """What a repository needs from a backing store — the contract, never an implementation."""
+
+    def get(self, key: str) -> float | None:
+        """Value for `key`, or None when absent."""
+        ...
+
+    def put(self, key: str, value: float) -> None:
+        """Store `value` under `key`, evicting if the configured capacity is reached."""
+        ...

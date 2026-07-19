@@ -1,0 +1,11 @@
+"""Storage error hierarchy — the base plus the miss case (an INTRA-file `inherits` pair)."""
+
+from __future__ import annotations
+
+
+class StoreError(Exception):
+    """Base for every storage failure — one place to catch the whole family."""
+
+
+class KeyMissingError(StoreError):
+    """Raised when a key has no stored value."""

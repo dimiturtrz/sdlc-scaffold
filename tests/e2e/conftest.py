@@ -55,47 +55,26 @@ def example_pkg(combo_name):
 
 
 # The template ships ZERO code (bd r2w) — the e2e OWNS this demo and seeds it into a generated project so
-# there is something for the gates to lint/test/graph. An astgrep-compliant leaf class + an intra-package
-# edge + strict-mirror tests (so coverage floor + test-mirror pass).
-_SEED = {
-    "{pkg}/__init__.py": "",
-    "{pkg}/math_ops.py": (
-        "class MathOps:\n"
-        "    @staticmethod\n"
-        "    def mean(values: list[float]) -> float:\n"
-        "        if not values:\n"
-        '            msg = "mean() requires at least one value"\n'
-        "            raise ValueError(msg)\n"
-        "        return sum(values) / len(values)\n"
-    ),
-    "{pkg}/pipeline.py": (
-        "from {pkg}.math_ops import MathOps\n\n\n"
-        "class Pipeline:\n"
-        "    @staticmethod\n"
-        "    def doubled_mean(values: list[float]) -> float:\n"
-        "        return MathOps.mean(values) * 2\n"
-    ),
-    "tests/unit/{pkg}/test_math_ops.py": (
-        "import pytest\n\nfrom {pkg}.math_ops import MathOps\n\n\n"
-        "def test_mean():\n    assert MathOps.mean([1.0, 3.0]) == 2.0\n\n\n"
-        "def test_mean_empty():\n"
-        '    with pytest.raises(ValueError, match="at least one value"):\n'
-        "        MathOps.mean([])\n"
-    ),
-    "tests/unit/{pkg}/test_pipeline.py": (
-        "from {pkg}.pipeline import Pipeline\n\n\n"
-        "def test_doubled_mean():\n"
-        "    assert Pipeline.doubled_mean([1.0, 3.0]) == 4.0\n"
-    ),
-}
+# there is something for the gates to lint/test/graph. The fixture lives as REAL FILES under `seed/` (named
+# `.py.tmpl` so the scaffold's own ruff/pyrefly skip them — they carry a package-name token, not valid
+# imports) and is architecturally RICH on purpose: it must exercise every arrow the class-graph gates read
+# (bd 4bl) — `inherits` both INTRA-file (KeyMissingError -> StoreError) and CROSS-file (CapacityError ->
+# StoreError); `holds` (Repository -> the Store contract, MemoryStore -> StoreConfig); `calls` resolving to
+# the INTERFACE (Repository -> Store, satisfied structurally so no subclassing is needed); and `constructs`
+# reaching the CONCRETE (Service wires a MemoryStore). It also ships green through every EXISTING gate —
+# pyrefly strict (targeting the 3.11 floor, so no 3.12-only `typing.override`), ruff, vulture, ast-grep
+# in-a-class, test-mirror, 100% covered — so the fixture doubles as proof the gates coexist.
+_SEED_ROOT = Path(__file__).parent / "seed"
+_PKG_TOKEN = "__PKG__"  # a token, not str.format: the fixture is real code, full of f-string braces
 
 
 def seed_example(path, pkg):
     """Drop the demo package + its strict-mirror tests into a generated (code-less) project."""
-    for rel, body in _SEED.items():
-        target = path / rel.format(pkg=pkg)
+    for src in sorted(_SEED_ROOT.rglob("*.py.tmpl")):
+        name = src.name.removesuffix(".tmpl")
+        target = (path / pkg / name) if src.parent.name == "pkg" else (path / "tests" / "unit" / pkg / name)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(body.format(pkg=pkg), encoding="utf-8")
+        target.write_text(src.read_text(encoding="utf-8").replace(_PKG_TOKEN, pkg), encoding="utf-8")
 
 
 def run(cmd, cwd, *, check=True, env=None):

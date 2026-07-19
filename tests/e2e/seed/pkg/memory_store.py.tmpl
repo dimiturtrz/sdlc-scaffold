@@ -1,0 +1,43 @@
+"""An in-memory `Store` implementation — the CONCRETE a service wires in (never held by name).
+
+Satisfies `Store` STRUCTURALLY (a Protocol needs no subclassing), so a repository can hold the
+contract while only this module knows the implementation.
+"""
+
+from __future__ import annotations
+
+from __PKG__.errors import StoreError
+from __PKG__.types import StoreConfig
+
+
+class CapacityError(StoreError):
+    """Raised when a store is configured with a non-positive capacity (a CROSS-file `inherits`)."""
+
+
+class MemoryStore:
+    """Dict-backed store honouring the capacity + namespace from its config.
+
+    Raises:
+        CapacityError: when the configured capacity is not positive.
+    """
+
+    def __init__(self, config: StoreConfig) -> None:
+        if config.capacity < 1:
+            msg = f"capacity must be positive, got {config.capacity}"
+            raise CapacityError(msg)
+        self._config = config
+        self._items: dict[str, float] = {}
+
+    def _scoped(self, key: str) -> str:
+        return f"{self._config.namespace}:{key}"
+
+    def get(self, key: str) -> float | None:
+        """Value for `key` within the configured namespace, or None when absent."""
+        return self._items.get(self._scoped(key))
+
+    def put(self, key: str, value: float) -> None:
+        """Store `value`, dropping the oldest entry once capacity is reached."""
+        if len(self._items) >= self._config.capacity:
+            oldest = next(iter(self._items))
+            del self._items[oldest]
+        self._items[self._scoped(key)] = value

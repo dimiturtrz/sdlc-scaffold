@@ -1,0 +1,7 @@
+from __PKG__.math_ops import MathOps
+
+
+class Pipeline:
+    @staticmethod
+    def doubled_mean(values: list[float]) -> float:
+        return MathOps.mean(values) * 2

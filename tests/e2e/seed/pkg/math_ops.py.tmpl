@@ -1,0 +1,7 @@
+class MathOps:
+    @staticmethod
+    def mean(values: list[float]) -> float:
+        if not values:
+            msg = "mean() requires at least one value"
+            raise ValueError(msg)
+        return sum(values) / len(values)

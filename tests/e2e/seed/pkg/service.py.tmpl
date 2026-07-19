@@ -1,0 +1,27 @@
+"""Wires a concrete store into a repository — the ONLY place a concrete implementation is constructed."""
+
+from __future__ import annotations
+
+from __PKG__.memory_store import MemoryStore
+from __PKG__.repository import Repository
+from __PKG__.types import StoreConfig
+
+
+class Service:
+    """Application entry point: owns the wiring, then delegates to the repository."""
+
+    def __init__(self, capacity: int, namespace: str) -> None:
+        config = StoreConfig(capacity=capacity, namespace=namespace)
+        self._repository = Repository(MemoryStore(config))
+
+    def record(self, key: str, value: float) -> None:
+        """Delegate a write to the repository."""
+        self._repository.save(key, value)
+
+    def fetch(self, key: str) -> float:
+        """Delegate a read to the repository.
+
+        Raises:
+            KeyError: when nothing was recorded under `key`.
+        """
+        return self._repository.load(key)

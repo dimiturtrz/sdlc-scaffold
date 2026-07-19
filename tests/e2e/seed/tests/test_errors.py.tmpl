@@ -1,0 +1,15 @@
+from __PKG__.errors import KeyMissingError, StoreError
+from __PKG__.memory_store import CapacityError
+
+
+def test_key_missing_is_a_store_error():
+    assert issubclass(KeyMissingError, StoreError)
+
+
+def test_capacity_error_is_a_store_error():
+    assert issubclass(CapacityError, StoreError)
+
+
+def test_the_base_catches_the_whole_family():
+    for error in (KeyMissingError("k"), CapacityError("c")):
+        assert isinstance(error, StoreError)

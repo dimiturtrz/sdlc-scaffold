@@ -1,0 +1,12 @@
+import pytest
+
+from __PKG__.math_ops import MathOps
+
+
+def test_mean():
+    assert MathOps.mean([1.0, 3.0]) == 2.0
+
+
+def test_mean_empty():
+    with pytest.raises(ValueError, match="at least one value"):
+        MathOps.mean([])
