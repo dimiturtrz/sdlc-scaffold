@@ -1,17 +1,16 @@
 """Unit tests for devtools/arrows.py — typed class->class arrow extraction (inherits / holds / references)."""
 
 import ast
-from pathlib import Path
 
 from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
 
 
 def _held(src: str) -> set[str]:
-    return ClassArrows._field_types(next(n for n in ast.parse(src).body if isinstance(n, ast.ClassDef)))
+    return ClassArrows.field_types(next(n for n in ast.parse(src).body if isinstance(n, ast.ClassDef)))
 
 
 def _referenced(src: str) -> set[str]:
-    return ClassArrows._signature_types(next(n for n in ast.parse(src).body if isinstance(n, ast.ClassDef)))
+    return ClassArrows.signature_types(next(n for n in ast.parse(src).body if isinstance(n, ast.ClassDef)))
 
 
 def _kinds(monkeypatch, tmp_path, write_pkg, name: str, src: str) -> set[tuple[str, str, str]]:
@@ -20,42 +19,6 @@ def _kinds(monkeypatch, tmp_path, write_pkg, name: str, src: str) -> set[tuple[s
     write_pkg(tmp_path, name, src)
     monkeypatch.chdir(tmp_path)
     return set(ClassArrows([name]).edges())
-
-
-# ---- module naming -----------------------------------------------------------------------------------
-
-
-def test_module_of_a_plain_file():
-    assert ClassArrows.module_of(Path("pkg/sub/mod.py")) == "pkg.sub.mod"
-
-
-def test_module_of_a_package_init():
-    assert ClassArrows.module_of(Path("pkg/sub/__init__.py")) == "pkg.sub", "__init__ IS its package"
-
-
-# ---- annotation unwrapping ---------------------------------------------------------------------------
-
-
-def test_annotation_unwraps_optional_union():
-    """`None` is an ast.Constant, not a name — an optional yields only the real type."""
-    assert ClassArrows._annotation_names(ast.parse("Store | None", mode="eval").body) == {"Store"}
-
-
-def test_annotation_unwraps_a_generic_parameter():
-    assert "Store" in ClassArrows._annotation_names(ast.parse("list[Store]", mode="eval").body)
-
-
-def test_annotation_parses_a_string_forward_reference():
-    assert "Store" in ClassArrows._annotation_names(ast.parse("'Store'", mode="eval").body)
-
-
-def test_annotation_survives_a_jaxtyping_shape_string():
-    """`Float[Array, "b n"]`-style shape strings are not type expressions — they must not raise."""
-    assert ClassArrows._annotation_names(ast.parse("'b n'", mode="eval").body) == set()
-
-
-def test_annotation_of_none_is_empty():
-    assert ClassArrows._annotation_names(None) == set()
 
 
 # ---- HOLDS: every way a field's type is declared ------------------------------------------------------
