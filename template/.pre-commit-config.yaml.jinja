@@ -91,6 +91,12 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: arrows
+        name: class arrows — advisory (inherits / holds / references; the import edge decomposed by WHY)
+        entry: uv run --extra devtools python -m devtools.arrows {{ pkgs }}
+        language: system
+        pass_filenames: false
+        always_run: true
       # Architecture graph — REGEN at PRE-PUSH (c80): rewrites docs/architecture/{graph.json,index.html} from
       # the current import graph, then keeps the committed graph.json current so the /architecture/ page it
       # feeds is fresh on the next deploy — with no manual `nox -s archmap`. Pre-push, not per-commit: commits
