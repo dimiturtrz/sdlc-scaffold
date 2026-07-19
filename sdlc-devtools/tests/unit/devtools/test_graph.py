@@ -163,3 +163,67 @@ def test_graph_main_requires_packages(monkeypatch):
 
         graph.main()
     assert exc.value.code == 2, "no-arg invocation must be an argparse usage error"
+
+
+# ---- metrics as EDGE-SUBSET queries (bd 4bl.4) -------------------------------------------------------
+
+
+_USAGE_SRC = {
+    "dep.py": "class Dep:\n    def go(self) -> None: ...\n",
+    "user.py": (
+        "from usage_pkg.dep import Dep\n\n\n"
+        "class User:\n"
+        "    def __init__(self, dep: Dep):\n        self._dep = dep\n\n"
+        "    def run(self) -> None:\n        self._dep.go()\n"
+    ),
+}
+
+
+def _usage_pkg(monkeypatch, tmp_path):
+    package = tmp_path / "usage_pkg"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    for name, src in _USAGE_SRC.items():
+        (package / name).write_text(src)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.syspath_prepend(str(tmp_path))
+    return ImportGraph(["usage_pkg"])
+
+
+def test_typed_graph_answers_at_class_level_not_module_level(monkeypatch, tmp_path):
+    """The metric functions never cared what an edge MEANT — they were only ever handed imports. Given a
+    kind-filtered subset they answer a different question over the same code."""
+    engine = _usage_pkg(monkeypatch, tmp_path)
+    usage = engine.typed_graph({"calls"})
+    assert "usage_pkg.user.User" in usage and "usage_pkg.dep.Dep" in usage, "nodes are CLASSES here"
+    assert usage.has_edge("usage_pkg.user.User", "usage_pkg.dep.Dep")
+
+
+def test_a_kind_subset_selects_only_that_kind(monkeypatch, tmp_path):
+    engine = _usage_pkg(monkeypatch, tmp_path)
+    holds_only = engine.typed_graph({"holds"})
+    assert holds_only.has_edge("usage_pkg.user.User", "usage_pkg.dep.Dep"), "User HOLDS a Dep"
+    assert engine.typed_graph({"inherits"}).number_of_edges() == 0, "nothing inherits here"
+
+
+def test_the_same_metrics_run_over_the_subset(monkeypatch, tmp_path):
+    """Reusing the ranking code is the point: fan-in over `calls` is REAL usage coupling, which import
+    fan-in only approximates (importing is not using)."""
+    engine = _usage_pkg(monkeypatch, tmp_path)
+    usage = engine.typed_graph({"calls"})
+    assert dict(usage.in_degree())["usage_pkg.dep.Dep"] == 1
+    assert ImportGraph.instability(usage)["usage_pkg.user.User"] == 1.0, "a pure consumer is maximally unstable"
+
+
+def test_report_labels_whatever_subset_it_is_given(monkeypatch, tmp_path):
+    engine = _usage_pkg(monkeypatch, tmp_path)
+    text = ImportGraph.report(engine.typed_graph({"calls"}), top=3, label="usage graph (calls)", unit="classes")
+    assert text.startswith("usage graph (calls): 2 classes"), text.splitlines()[0]
+    assert "fan-in (load-bearing):" in text, "the same tables, a different question"
+
+
+def test_the_gates_still_run_on_the_import_graph(monkeypatch, tmp_path):
+    """Deliberate: the import graph is sound + complete, so blocking rules cannot false-positive. The
+    typed subsets are the EXPLORER side, where an approximate answer is still useful."""
+    engine = _usage_pkg(monkeypatch, tmp_path)
+    assert engine.run_assert(test_mirror=False) == 0, "gates unchanged by the new query surface"
