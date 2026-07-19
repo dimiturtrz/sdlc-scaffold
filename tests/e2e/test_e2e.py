@@ -365,6 +365,29 @@ def test_class_shape_smells(project):
         run(["uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{tool}", *layers(name)], path)
 
 
+def test_composition_and_contracts_enforced_run_clean(project):
+    """A4 (bd 4bl.4). The seed's object graph is acyclic, and a fresh gen configures no contracts — both
+    gates start green and ratchet."""
+    name, path = project
+    for engine in ("composition", "contracts"):
+        run(["uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{engine}", *layers(name), "--assert"], path)
+
+
+def test_a_use_contract_can_forbid_construction_alone(full_project):
+    """A4: the precision an IMPORT rule cannot express. The seed's Service both CONSTRUCTS a concrete
+    MemoryStore and uses the Store contract; a `kinds = ["construct"]` contract must catch the former
+    while an equivalent import-level rule could only say "service imports memory_store"."""
+    contract = (
+        '\n[[tool.arch.forbidden]]\nname = "only wiring may construct a concrete store"\n'
+        'source = "full_pkg.service"\nforbidden = ["full_pkg.memory_store"]\nkinds = ["construct"]\n'
+    )
+    cmd = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.contracts", "full_pkg", "--assert"]
+    result = assert_bites(full_project, cmd, lambda p: _append(p / "pyproject.toml", contract))
+    text = result.stdout + result.stderr
+    assert "--construct-->" in text, "the finding names the arrow KIND, not just a dependency"
+    assert run(cmd, full_project).returncode == 0, "green again once the contract is removed"
+
+
 def test_demeter_enforced_runs_clean(project):
     """A5 (bd 4bl.5). The seed reaches its own fields and stops (`self._store.get(key)` = 2 hops), so the
     gate is green from day one and ratchets — a fresh gen has no code at all."""

@@ -161,6 +161,20 @@ forbidden_modules = [{% for p in packages.split(",")[1:] %}"{{ p | trim }}"{% if
 # <<< LOCAL-SLOT: import-contracts
 {% endif %}
 
+# Forbidden-USE contracts (devtools/contracts.py) — directional rules over the DECOMPOSED arrows
+# (inherits / holds / references / calls / construct), not just imports. import-linter can only say "must
+# not IMPORT"; this says "must not USE", and can target ONE kind — e.g. "nothing outside the composition
+# root may CONSTRUCT a concrete", which an import rule cannot express at all. Empty by default: no
+# contracts means nothing to check, so a fresh project starts green and ratchets. The GATE is universal;
+# the LAYERS are a per-repo FACT, hence the slot.
+# >>> LOCAL-SLOT: arch-contracts — this repo's directional use rules (uncomment + edit)
+# [[tool.arch.forbidden]]
+# name = "domain must not use infra"
+# source = "{{ packages.split(',')[0] | trim }}.domain"
+# forbidden = ["{{ packages.split(',')[0] | trim }}.infra"]
+# kinds = ["calls", "holds", "construct"]   # omit `kinds` to forbid EVERY arrow kind
+# <<< LOCAL-SLOT: arch-contracts
+
 # Architecture fitness thresholds read by devtools/graph.py --assert.
 [tool.structure]
 # >>> LOCAL-SLOT: arch-thresholds — tune per repo; the template ships defaults and won't churn these,

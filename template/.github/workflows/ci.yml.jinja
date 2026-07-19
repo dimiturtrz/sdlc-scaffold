@@ -113,6 +113,15 @@ jobs:
       # CHECK (bad-return / bad-argument-type). Runs in the synced env (`--with` adds pyrefly) so it resolves
       # installed dep stubs (pydantic/numpy py.typed) — the R1 type-grade Correctness leg ruff can't reach.
       # Config + tests carve-out + untyped-dep slot in [tool.pyrefly]; scope=lint_paths. Blocks the merge.
+      # Object graph — ENFORCED: a `holds` cycle (A owns a B that owns an A) means neither can be built or
+      # tested alone. Catches the intra-file case the import-cycle check structurally cannot represent.
+      - name: Composition cycles — enforced (devtools/composition.py --assert)
+        run: uv run --extra devtools python -m devtools.composition {{ pkgs }} --assert
+      # Forbidden-USE contracts — ENFORCED: directional rules over the DECOMPOSED arrows, so a contract can
+      # forbid CONSTRUCTING a concrete while still permitting use — precision imports cannot express.
+      # Contracts live in [[tool.arch.forbidden]]; empty by default, so a fresh gen is green.
+      - name: Forbidden-use contracts — enforced (devtools/contracts.py --assert)
+        run: uv run --extra devtools python -m devtools.contracts {{ pkgs }} --assert
       # Law of Demeter — ENFORCED: a chain that reaches THROUGH a field into a stranger
       # (`self.store.config.name`) couples this class to a type it never declared. Ceiling is
       # [tool.structure] demeter_max_depth (2 = reach your own field, then talk to it). A fresh gen has no

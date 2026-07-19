@@ -41,3 +41,39 @@ def test_python_template_lines_fit_the_line_limit():
     assert not offenders, "jinja-free template lines must render within the ruff line limit:\n  " + "\n  ".join(
         offenders
     )
+
+
+_RUNNERS = {
+    "ci.yml": "template/.github/workflows/ci.yml.jinja",
+    "noxfile": "template/noxfile.py.jinja",
+    "pre-commit": "template/.pre-commit-config.yaml.jinja",
+}
+
+
+def _enforced_gates(text: str) -> set[str]:
+    """The devtools engines this runner invokes as a GATE (`--assert`), by module name.
+
+    Windowed rather than line-based on purpose: ci.yml puts the module and `--assert` on one line, while a
+    formatted nox `session.run(...)` spreads them over several.
+    """
+    return {
+        match.group(1)
+        for match in re.finditer(r"devtools\.(\w+)", text)
+        if "--assert" in text[match.start() : match.start() + 250]
+    }
+
+
+def test_every_enforced_gate_is_wired_into_all_three_runners():
+    """A gate wired into only SOME runners is INVISIBLE: a missing gate cannot fail, so the e2e — which
+    proves gates BITE — stays green while that gate silently never runs there.
+
+    This is not hypothetical: the demeter nox step was lost to a stray `git checkout` of the template
+    noxfile and would have shipped wired into ci + pre-commit but not nox, with every test still passing.
+    The expected set is derived from the files themselves, so it cannot drift out of date.
+    """
+    found = {label: _enforced_gates(Path(path).read_text(encoding="utf-8")) for label, path in _RUNNERS.items()}
+    everywhere = set.intersection(*found.values())
+    missing = {label: sorted(gates - everywhere) for label, gates in found.items() if gates - everywhere}
+    assert not missing, "enforced gates must run in EVERY runner; these are wired in only some:\n  " + "\n  ".join(
+        f"{label}: only there -> {gates}" for label, gates in missing.items()
+    )
