@@ -171,6 +171,10 @@ file_min = 0             # advisory line floor — 0 = OFF (no honest universal 
 betweenness_max = 0.10   # advisory chokepoint threshold
 main_sequence_max = 0.0  # advisory Martin main-sequence distance |A+I-1| ceiling — 0 = OFF (a concrete
                          # stable leaf legitimately sits at D≈1, so no honest universal floor; raise per repo)
+demeter_max_depth = 2    # Law of Demeter ceiling: attribute hops in one chain. 2 = "reach your own field,
+                         # then talk to it" (`self.store.get(k)`); 3 reaches THROUGH it
+                         # (`self.store.config.name`). Raise it for data-navigation-heavy trees (AST/JSON
+                         # walking), where a deep chain is reading a structure, not coupling to a stranger.
 test_layout = "mirror"   # every logic module needs a unit test: "mirror" = tests/unit/<pkg>/<path>/test_<name>.py
                          # (strict, one home); "flat" = test_<name>.py anywhere under tests/; "off" = no check
 # <<< LOCAL-SLOT: arch-thresholds

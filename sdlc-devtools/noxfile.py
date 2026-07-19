@@ -35,6 +35,7 @@ def lint(session: nox.Session) -> None:
     session.run("uvx", RUFF, "check", LAYER, "--select", SELECT, "--ignore", "F722,F821", external=True)
     # god-module / import-cycle / god-file AND test-mirror — the FULL --assert (engines carry their mirrors).
     session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.graph", LAYER, "--assert", external=True)
+    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.demeter", LAYER, "--assert", external=True)
     # class-shape: every helper is a method on its engine class, only main() top-level. Config ships in the
     # package (devtools/sgconfig.yml), so ast-grep reads it in place — no `python -m devtools.config` hop.
     session.run(
@@ -51,8 +52,17 @@ def lint(session: nox.Session) -> None:
     # stale committed docs/architecture/graph.json. Regenerate with `python -m devtools.archmap devtools`.
     # success_codes swallows the exit-1-on-drift so it reports without blocking (doc-gen, not a gate).
     session.run(
-        "uv", "run", "--group", "dev", "python", "-m", "devtools.archmap", LAYER, "--check",
-        external=True, success_codes=[0, 1],
+        "uv",
+        "run",
+        "--group",
+        "dev",
+        "python",
+        "-m",
+        "devtools.archmap",
+        LAYER,
+        "--check",
+        external=True,
+        success_codes=[0, 1],
     )
 
 

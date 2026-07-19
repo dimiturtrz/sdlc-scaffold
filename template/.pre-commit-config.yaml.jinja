@@ -91,6 +91,12 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: demeter
+        name: law of demeter — enforced (no reaching through a field into a stranger)
+        entry: uv run --extra devtools python -m devtools.demeter {{ pkgs }} --assert
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: arrows
         name: class arrows — advisory (inherits / holds / references; the import edge decomposed by WHY)
         entry: uv run --extra devtools python -m devtools.arrows {{ pkgs }}
