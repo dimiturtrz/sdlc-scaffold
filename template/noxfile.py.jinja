@@ -143,6 +143,11 @@ def lint(session: nox.Session) -> None:
     # ENFORCED static type gate — pyrefly strict: every def annotated + the annotations check. `--with` adds
     # pyrefly to the synced run so it reads installed dep stubs (pydantic/numpy); scope=lint_paths (LINT_LAYERS).
     session.run("uv", "run", "--with", "pyrefly=={{ pyrefly_version }}", "pyrefly", "check", *LINT_LAYERS, external=True)
+    # ENFORCED Law of Demeter — a chain reaching THROUGH a field into a stranger couples this class to a
+    # type it never declared. Ceiling: [tool.structure] demeter_max_depth (default 2).
+    session.run(
+        "uv", "run", "--extra", "devtools", "python", "-m", "devtools.demeter", *LAYERS, "--assert", external=True
+    )
 
 
 @nox.session(venv_backend="none")
