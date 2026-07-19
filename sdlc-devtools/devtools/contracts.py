@@ -31,11 +31,13 @@ from __future__ import annotations
 import argparse
 import logging
 
-from devtools.arrows import ClassArrows
-from devtools.calls import CONSTRUCT, CallArrows
+from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
+from devtools.calls import CALLS, CONSTRUCT, CallArrows
 from devtools.pyproject import Pyproject
 
 log = logging.getLogger("devtools.contracts")
+
+_KINDS = {INHERITS, HOLDS, REFERENCES, CALLS, CONSTRUCT}  # the vocabulary a contract's `kinds` may name
 
 
 class UseContracts:
@@ -49,6 +51,27 @@ class UseContracts:
     def load_contracts(pyproject: str = "pyproject.toml") -> list[dict]:
         """The `[[tool.arch.forbidden]]` contracts, or [] when none are configured."""
         return list(Pyproject.tool_section("arch", pyproject).get("forbidden", []))
+
+    @staticmethod
+    def malformed(contracts: list[dict]) -> list[str]:
+        """Contracts that cannot fire, reported as CONFIG errors rather than silently passing.
+
+        A misspelled `kinds` entry, or a missing `source`/`forbidden`, matches no arrow — so the gate goes
+        green and the rule it was meant to enforce is quietly off. That is the same failure mode as a gate
+        wired into only some runners: something that cannot fire looks identical to something clean. So an
+        unusable contract is an ERROR here, not a silent no-op.
+        """
+        out = []
+        for contract in contracts:
+            name = contract.get("name", "unnamed contract")
+            out.extend(
+                f"{name}: missing `{required}` — the contract can never fire"
+                for required in ("source", "forbidden")
+                if not contract.get(required)
+            )
+            if unknown := sorted(set(contract.get("kinds", [])) - _KINDS):
+                out.append(f"{name}: unknown kind(s) {unknown} — expected any of {sorted(_KINDS)}")
+        return out
 
     def edges(self) -> list[tuple[str, str, str]]:
         """Every arrow, structural and behavioural, as (source, target, kind) with `construct` split out."""
@@ -78,7 +101,11 @@ class UseContracts:
         return sorted(set(out))
 
     def run_assert(self) -> int:
-        """The gate: log any forbidden use and return an exit code."""
+        """The gate: fail on a malformed contract FIRST (it would otherwise pass by never firing), then on
+        any forbidden use."""
+        if broken := self.malformed(self.contracts):
+            log.error("forbidden-use contracts — MALFORMED (%d):\n  %s", len(broken), "\n  ".join(broken))
+            return 1
         found = self.violations()
         if found:
             log.error("forbidden-use contracts — BLOCKING (%d):\n  %s", len(found), "\n  ".join(found))

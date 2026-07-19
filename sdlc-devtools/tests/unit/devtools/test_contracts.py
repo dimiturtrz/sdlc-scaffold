@@ -72,3 +72,29 @@ def test_findings_are_deduped(monkeypatch, tmp_path):
     contract = {"name": "dupe check", "source": "app.service", "forbidden": ["app.store"], "kinds": ["calls"]}
     found = _violations(monkeypatch, tmp_path, [contract])
     assert len(found) == len(set(found))
+
+
+# ---- a contract that CANNOT fire is a config error, not a pass ---------------------------------------
+
+
+def test_an_unknown_kind_is_reported_not_silently_ignored():
+    """`kinds = ["constrct"]` matches no arrow, so the gate would go green with the rule quietly off —
+    the same failure mode as a gate wired into only some runners. It must be an error instead."""
+    broken = UseContracts.malformed([{"name": "typo", "source": "a", "forbidden": ["b"], "kinds": ["constrct"]}])
+    assert len(broken) == 1
+    assert "unknown kind" in broken[0] and "constrct" in broken[0]
+
+
+def test_a_missing_source_or_forbidden_is_reported():
+    assert UseContracts.malformed([{"name": "no source", "forbidden": ["b"]}])
+    assert UseContracts.malformed([{"name": "no targets", "source": "a"}])
+
+
+def test_every_real_kind_is_accepted():
+    """The vocabulary a contract may name — kept in sync with what the two engines actually emit."""
+    kinds = ["inherits", "holds", "references", "calls", "construct"]
+    assert UseContracts.malformed([{"name": "ok", "source": "a", "forbidden": ["b"], "kinds": kinds}]) == []
+
+
+def test_a_well_formed_contract_is_not_flagged():
+    assert UseContracts.malformed([{"name": "ok", "source": "a", "forbidden": ["b"]}]) == []
