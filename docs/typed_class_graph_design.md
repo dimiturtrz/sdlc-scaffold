@@ -18,34 +18,50 @@ The house invariants make this tractable where generic Python can't: **everythin
 
 Every class→class relationship, UML-grounded:
 
-| arrow | meaning | source | soundness |
-|---|---|---|---|
-| `import` | module knows module | grimp | sound (syntactic) |
-| `inherits` | is-a (subclass / ABC / Protocol) | ast bases | sound |
-| `holds` | **has-a** — field of type B (`self.repo: UserRepo`) | ast field annotations | sound |
-| `constructs` | creates B (`B()`) | ast Call to a classname | sound |
-| `references` | API depends-on (param / return type) | ast signature annotations | sound |
-| `calls` | uses behavior (`b.foo()`) | ast Call + declared receiver type | sound *modulo reflection* |
+| arrow | endpoints | native level | source | notes |
+|---|---|---|---|---|
+| `import` | file → file | **file** | grimp | the roll-up projection (below); sound |
+| `inherits` | class → class | **class** | ast bases | is-a (subclass / ABC / Protocol) |
+| `holds` | class → class | **class** | ast field annotations | has-a (`self.repo: UserRepo`) — composition + resolver fuel |
+| `calls` | method → method | **method** | ast Call + declared receiver | uses behavior; `via=construct` sub-tag = `B()` creation |
+| `references` | method → class | **method** | ast signature annotations | API-surface dep; **kept as attribute, ungated** (rarely pure, low signal) |
 
-`raises` / `catches` / `decorates` exist but are low-value — deferred until a gate needs them.
+Sound *modulo reflection* (the `calls` residual, below). **Folded:** `constructs` → a `via=construct`
+sub-tag on `calls` (mechanically a call to `__init__`; still queried separately for the concrete-wiring
+partition). **Demoted:** `references` computed but ungated until a real need. `raises`/`catches`/`decorates`
+— deferred. So **four gated kinds**: `import` · `inherits` · `holds` · `calls`.
 
-## The hierarchy — import is the superset
+## Levels and roll-up — import is the coarsest projection
 
-Under our constraints, **every arrow is a typed reason for an import**:
+Everything is a node in one **fractal containment tree** — `package ⊃ file ⊃ class ⊃ method` — and each
+arrow is emitted at its **native level**: `import` @ file, `inherits`/`holds` @ class, `calls`/`references`
+@ method.
 
 ```
-import   ("knows about B" — the coarse OR of all reasons)
- ├── inherits    (knows because is-a B)
- ├── holds       (knows because has-a B)      ← composition / the object graph
- ├── constructs  (knows because creates B)
- ├── references  (knows because API mentions B)
- └── calls       (knows because uses B's behavior)
+package ⊃ file ⊃ class ⊃ method          (containment tree — every container is a node)
+   import@file   inherits/holds@class   calls/references@method
 ```
 
-`import = ⋃(inherits, holds, constructs, references, calls)`. The finer arrows **decompose** the import
-edge by *why*. This is exactly why "imports are noisy" — import flattens all reasons into one line. The
-decomposition un-collapses it, and the diagnostic falls out: an import with only *structural* reasons and
-**no** `calls` = "you depend on the type but never use it" = a noisy / dead-ish import.
+Any arrow **rolls up** by projecting its endpoints to a containing node. **`import` is just the file-level
+roll-up of the finer arrows, minus self-loops** — roll a method→method `call` up to its owner classes, up
+to their files, and you land on the import edge. The finer arrows **decompose** import by *why*, which is
+why "imports are noisy": import is the coarsest fold, flattening every reason into one line. The diagnostic
+falls out — an import whose roll-up carries only *structural* reasons and **no** `calls` = "you depend on
+the type but never use it" = a noisy / dead-ish import.
+
+**Two classes in the same file** roll up to a file **self-loop** → dropped → which is exactly why the module
+import graph can't see intra-file relationships. So the class graph is strictly richer: cross-file, its
+roll-up ↔ the grimp import set (every cross-file arrow needs an import); intra-file, it adds edges import
+*structurally cannot represent* (the dropped self-loops). **Don't stop at files** — feature-envy lives @
+method, composition @ class. The *data* goes to method level; the *view* defaults to file (folded) and
+drills down. archmap's containment (parent/descendants) already IS this tree.
+
+### One edge, many reasons
+
+Between A and B several arrows co-exist (`inherits` + `holds` + `calls`×3). Represent as a **DiGraph with a
+per-edge `{kinds: set, weights}` attribute**, not a MultiDiGraph: coupling metrics want one edge per pair
+(A and B are coupled, once) with strength as weight; per-kind gates read the count off the attribute. The
+import edge = every edge with a non-empty kind-set, rolled up to file level.
 
 ### Why `calls ⊆ import` here (the key result)
 
@@ -125,8 +141,10 @@ can be retired (absorbed into the graph's contract engine).
 ## Build batches (sequencing falls out of the hierarchy)
 
 **Batch 1 — decompose import into reasons** (structural, cheap, one AST pass):
-`inherits` + `holds` + `constructs` + `references`, node re-key to class + roles, tag current edges
-`kind=import`, self-check structural ⊆ import (validate vs grimp). Kills import-noise. Value without calls.
+`inherits` + `holds` (+ `references` as ungated attribute) @ class level, node re-key to the containment
+tree + roles, tag edges with their `kinds` set. Self-check: **cross-file** structural arrows roll up to a
+grimp import; **intra-file** arrows are file self-loops with no import (expected, not a bug). Kills
+import-noise. Value without calls.
 
 **Batch 2 — call layer** (the resolver): annotation/declared-type attribution, `call→interface` /
 `construct→concrete` partition, return-chain extension, reflection escape. Fuel = Batch 1's `holds` edges.
