@@ -365,6 +365,21 @@ def test_class_shape_smells(project):
         run(["uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{tool}", *layers(name)], path)
 
 
+def test_arrows_advisory_decomposes_the_seed(project):
+    """A2 (bd 4bl.2): the arrow report decomposes an import edge into WHY it exists. The fixture was built
+    to carry each kind, so assert the REAL arrows appear — not merely that the explorer exits 0."""
+    name, path = project
+    pkg = example_pkg(name)
+    result = run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.arrows", *layers(name)], path)
+    text = result.stdout + result.stderr
+    assert f"{pkg}.errors.KeyMissingError -> {pkg}.errors.StoreError" in text, "intra-file inherits"
+    assert f"{pkg}.memory_store.CapacityError -> {pkg}.errors.StoreError" in text, "cross-file inherits"
+    # the architectural fact an import edge cannot express: the repository holds the CONTRACT, not a concrete
+    assert f"{pkg}.repository.Repository -> {pkg}.types.Store" in text, "holds the Store contract"
+    assert f"{pkg}.memory_store.MemoryStore -> {pkg}.types.StoreConfig" in text, "holds its config"
+    assert f"{pkg}.service.Service -> {pkg}.repository.Repository" in text, "holds a constructed field"
+
+
 def test_magic_literals_advisory_runs_clean(project):
     name, path = project
     # ADVISORY explorer (0sx) — ranked report, always exit 0, no config, no gate.
@@ -706,13 +721,18 @@ def test_jscpd_catches_duplication(full_project):
     mod_orig, pkg_orig = mod.read_text(), pkg.read_text()
     mod.write_text(mod_orig + block)
     pkg.write_text(pkg_orig + block)
-    result = run(
-        ["npx", "--yes", "jscpd", "full_pkg", "--config", config_path(full_project, "jscpd")],
-        full_project,
-        check=False,
-    )
-    mod.write_text(mod_orig)
-    pkg.write_text(pkg_orig)
+    try:
+        result = run(
+            ["npx", "--yes", "jscpd", "full_pkg", "--config", config_path(full_project, "jscpd")],
+            full_project,
+            check=False,
+        )
+    finally:
+        # RESTORE IN finally: `full_project` is module-scoped, so if the runner raises (e.g. npx is on PATH
+        # but not executable) an un-restored injection leaks into every later test — a duplicated class left
+        # in math_ops.py reads as a second PRIMARY and fails the roles gate, three tests downstream.
+        mod.write_text(mod_orig)
+        pkg.write_text(pkg_orig)
     assert result.returncode != 0, "jscpd must FAIL on an injected duplicated block"
 
 
