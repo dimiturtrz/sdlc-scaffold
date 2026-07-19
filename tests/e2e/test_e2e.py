@@ -387,6 +387,21 @@ def test_arrows_advisory_decomposes_the_seed(project):
     assert f"{pkg}.service.Service -> {pkg}.repository.Repository" in text, "holds a constructed field"
 
 
+def test_calls_advisory_splits_contract_from_concrete(project):
+    """A3 (bd 4bl.3): the partition the design rests on. A behavioural call resolves to the DECLARED type
+    (the contract), while the CONCRETE shows up only where it is constructed — at the wiring site."""
+    name, path = project
+    pkg = example_pkg(name)
+    result = run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.calls", *layers(name)], path)
+    text = result.stdout + result.stderr
+    contract, concrete = text.split("construct -> the concrete")
+    # the repository calls the Store CONTRACT — never the MemoryStore that actually runs
+    assert f"{pkg}.repository.Repository -> {pkg}.types.Store" in contract, "call lands on the interface"
+    assert f"{pkg}.memory_store.MemoryStore" not in contract, "a call never reaches the concrete impl"
+    # ...and the concrete is reached exactly once, by the class that wires it
+    assert f"{pkg}.service.Service -> {pkg}.memory_store.MemoryStore" in concrete, "construct -> concrete"
+
+
 def test_magic_literals_advisory_runs_clean(project):
     name, path = project
     # ADVISORY explorer (0sx) — ranked report, always exit 0, no config, no gate.
