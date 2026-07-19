@@ -32,7 +32,7 @@ from dataclasses import dataclass
 
 from devtools.classes import SATELLITE, ClassIndex
 from devtools.pyproject import Pyproject
-from devtools.resolve import Resolver
+from devtools.resolve import FileScope, Resolver
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.envy")
@@ -97,9 +97,9 @@ class FeatureEnvy:
 
     def _tally(
         self, fn: ast.FunctionDef, fields: dict[str, set[str]], scope: dict[str, set[str]]
-    ) -> tuple[int, Counter]:
+    ) -> tuple[int, Counter[str]]:
         """(accesses on own object, {foreign class: accesses}) for one method."""
-        own, foreign = 0, Counter()
+        own, foreign = 0, Counter[str]()
         for link in self._outermost(fn):
             receiver = link.value
             if Resolver.is_self_attr(receiver):  # self.field.<member> -> a use of the FIELD's type
@@ -114,7 +114,7 @@ class FeatureEnvy:
 
     def violations(self) -> list[str]:
         """Every method more interested in one other class than in its own object."""
-        out = []
+        out: list[str] = []
         for path, tree in Trees(self.packages).walk():
             scope_of_file = Resolver.scope_of(path, tree)
             for cls in Resolver.classes_in(tree):
@@ -126,7 +126,7 @@ class FeatureEnvy:
                     out += self._verdict(site, own, foreign, scope_of_file)
         return sorted(out)
 
-    def _verdict(self, site: MethodSite, own: int, foreign: Counter, scope) -> list[str]:
+    def _verdict(self, site: MethodSite, own: int, foreign: Counter[str], scope: FileScope) -> list[str]:
         """The finding for one method, if any — judged against the single most-used foreign class."""
         return [
             site.describe(target, count, own)

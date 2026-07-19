@@ -86,7 +86,7 @@ class ImportGraph:
 
     def build_graph(self) -> nx.DiGraph[str]:
         """The honest import DiGraph (importer -> imported) over the root packages, via grimp."""
-        g = nx.DiGraph()
+        g: nx.DiGraph[str] = nx.DiGraph()
         for pkg in self.packages:
             mods = grimp.build_graph(pkg)
             for m in mods.modules:
@@ -110,7 +110,11 @@ class ImportGraph:
 
     @staticmethod
     def _cycles(g: nx.DiGraph[str]) -> list[str]:
-        return [f"import cycle (SCC>1): {sorted(c)}" for c in nx.strongly_connected_components(g) if len(c) > 1]
+        # networkx's stubs return the unparameterised _Node from strongly_connected_components even for a
+        # DiGraph[str], so the comparability bound fails; our nodes are dotted NAMES by construction.
+        return [
+            f"import cycle (SCC>1): {sorted(map(str, c))}" for c in nx.strongly_connected_components(g) if len(c) > 1
+        ]
 
     @staticmethod
     def _oversized(files: list[tuple[str, int]], mx: int) -> list[str]:
@@ -268,7 +272,7 @@ class ImportGraph:
         The GATES deliberately stay on the import graph: it is sound and complete, so a blocking rule
         cannot false-positive. This is the explorer side, where an approximate answer is still useful.
         """
-        g = nx.DiGraph()
+        g: nx.DiGraph[str] = nx.DiGraph()
         for src, dst, kind in ClassArrows(self.packages).edges():
             if kind in kinds:
                 g.add_edge(src, dst)
@@ -303,7 +307,7 @@ class ImportGraph:
                 for name, score in ImportGraph._top(pairs, top)
             ]
             out.append("")
-        cycles = [sorted(c) for c in nx.strongly_connected_components(g) if len(c) > 1]
+        cycles = [sorted(map(str, c)) for c in nx.strongly_connected_components(g) if len(c) > 1]
         out.append(f"import cycles (SCC>1): {len(cycles)}")
         out += [f"  {c}" for c in cycles]
         return "\n".join(out)

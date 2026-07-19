@@ -104,7 +104,7 @@ class ClassIndex:
 
     def multi_primary(self) -> list[str]:
         """Files defining more than one PRIMARY class — two subjects in one module, split them."""
-        out = []
+        out: list[str] = []
         for path, records in sorted(self.by_file().items()):
             primaries = [name for name, role in records if role == PRIMARY]
             if len(primaries) > 1:
@@ -115,7 +115,7 @@ class ClassIndex:
 
     def report(self) -> str:
         """Per-file class roles as one text block — the explorer view."""
-        out = []
+        out: list[str] = []
         for path, records in sorted(self.by_file().items()):
             if not records:
                 continue

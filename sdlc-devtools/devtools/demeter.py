@@ -72,7 +72,8 @@ class Demeter:
     def _violations_in(self, tree: ast.Module, path: str) -> list[str]:
         """The over-deep chains in one module, outermost-first (an inner chain is the same train wreck)."""
         module_roots = self._module_roots(tree)
-        out, seen = [], set()
+        out: list[str] = []
+        seen: set[tuple[int, str]] = set()
         for node in ast.walk(tree):
             if not isinstance(node, ast.Attribute):
                 continue

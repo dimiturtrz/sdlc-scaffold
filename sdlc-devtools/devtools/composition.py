@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from collections.abc import Iterable
 
 import networkx as nx
 
@@ -32,16 +33,26 @@ class CompositionCycles:
 
     def graph(self) -> nx.DiGraph[str]:
         """The object graph: an edge means "owns an instance of"."""
-        owns = nx.DiGraph()
+        owns: nx.DiGraph[str] = nx.DiGraph()
         for src, dst, kind in ClassArrows(self.packages).edges():
             if kind == HOLDS:
                 owns.add_edge(src, dst)
         return owns
 
+    @staticmethod
+    def _names(component: Iterable[object]) -> list[str]:
+        """An SCC's members as sorted names.
+
+        networkx's stubs return the unparameterised `_Node` from `strongly_connected_components` even for a
+        `DiGraph[str]`, so sorting them fails the comparability bound. Our nodes are dotted class NAMES by
+        construction, and this states that once instead of at each use.
+        """
+        return sorted(map(str, component))
+
     def cycles(self) -> list[str]:
         """Every mutually-composing group — each reported once, members sorted for a stable message."""
         return [
-            f"composition cycle: {' -> '.join([*sorted(component), sorted(component)[0]])} — "
+            f"composition cycle: {' -> '.join([*self._names(component), self._names(component)[0]])} — "
             f"neither can be built or tested without the other; break the loop with an interface or an owner"
             for component in nx.strongly_connected_components(self.graph())
             if len(component) > 1
