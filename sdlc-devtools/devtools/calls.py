@@ -26,10 +26,10 @@ Run: `python -m devtools.calls [pkgs...]` (report).
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 
+from devtools.cli import Cli
 from devtools.names import Names
 from devtools.resolve import FileScope, Resolver
 from devtools.trees import Trees
@@ -132,11 +132,7 @@ class CallArrows:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Behavioural class->class arrows (calls / construct).")
-    ap.add_argument("packages", nargs="+", help="root packages to scan")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    log.info("\n%s", CallArrows(args.packages).report())
+    Cli(CallArrows, "Behavioural class->class arrows (calls / construct).").run()
 
 
 if __name__ == "__main__":

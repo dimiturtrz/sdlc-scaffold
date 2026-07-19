@@ -73,7 +73,12 @@ def test_every_gate_engine_exposes_its_gate(name, module):
     Derived from the module's own source rather than a hand-kept list, so a new gate cannot be added with
     its verdict trapped inside main() the way shape_contracts' was.
     """
-    if '"--assert"' not in inspect.getsource(module):
+    source = inspect.getsource(module)
+    # Two spellings because the migration to the shared Cli is what MOVED the flag: a converted engine
+    # declares `gate="..."` and the literal "--assert" now lives in cli.py. Detecting only the literal made
+    # a converted gate look like an explorer and skip its own contract — silently, which is the failure
+    # mode this whole file exists to prevent.
+    if '"--assert"' not in source and "gate=" not in source:
         pytest.skip(f"{name} ships no --assert flag")
     engine = _engine_class(module)
     assert callable(getattr(engine, "run_assert", None)), f"{name}: ships --assert but has no run_assert()"

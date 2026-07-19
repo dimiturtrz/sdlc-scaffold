@@ -23,10 +23,10 @@ new bare-array boundary then fails the merge.
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 
+from devtools.cli import Cli
 from devtools.pyproject import Pyproject
 from devtools.trees import Trees
 
@@ -159,27 +159,11 @@ class ShapeContracts:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.shape_contracts",
-        description="flag public array/tensor boundaries lacking a jaxtyping shape",
-    )
-    ap.add_argument(
-        "packages",
-        nargs="+",
-        help="package dirs to scan (>=1 required — no-arg would scan nothing and pass --assert vacuously)",
-    )
-    ap.add_argument(
-        "--assert",
-        dest="assert_clean",
-        action="store_true",
-        help="exit 1 if any bare-array boundary remains (the blocking CI gate)",
-    )
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rows = ShapeContracts(args.packages).scan()
-    log.info("%s", ShapeContracts._render(rows))
-    if args.assert_clean and rows:
-        raise SystemExit(1)
+    Cli(
+        ShapeContracts,
+        "Flag public array/tensor boundaries lacking a jaxtyping shape.",
+        gate="exit 1 if any bare-array boundary remains (the blocking CI gate)",
+    ).run()
 
 
 if __name__ == "__main__":

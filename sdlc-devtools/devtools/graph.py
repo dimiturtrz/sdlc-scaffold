@@ -20,7 +20,6 @@ an advisory chokepoint warning that never blocks. Thresholds live in `pyproject
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 from collections.abc import Iterable
@@ -34,6 +33,7 @@ from devtools._common import ENCODING
 from devtools.arrows import ClassArrows
 from devtools.calls import CONSTRUCT, CallArrows
 from devtools.classes import ClassIndex
+from devtools.cli import Cli, Flag, Switch
 from devtools.names import Names
 from devtools.omit import Omit
 from devtools.pyproject import Pyproject
@@ -354,35 +354,15 @@ class ImportGraph:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Import-graph architecture diagnostic + fitness gate.")
-    ap.add_argument(
-        "packages",
-        nargs="+",
-        help="root packages to graph (>=1 required — no 'src' fallback, so a mis-invocation errors "
-        "loudly instead of silently scanning a nonexistent dir and vacuously passing)",
-    )
-    ap.add_argument("--top", type=int, default=10, help="rows per ranked table")
-    ap.add_argument(
-        "--assert",
-        action="store_true",
-        dest="assert_",
-        help="fitness GATE: exit 1 on a god-module / import cycle / god-file / test-mirror gap (advisory: chokepoint)",
-    )
-    ap.add_argument(
-        "--no-test-mirror",
-        action="store_true",
-        help="skip the test-mirror check under --assert (for a legitimately test-less tree, e.g. a bag of CLI tools)",
-    )
-    args = ap.parse_args()
-    engine = ImportGraph(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert(test_mirror=not args.no_test_mirror))
-    log.info("\n%s", ImportGraph._render(engine.build_graph(), args.top))
-    # the SAME rankings over the `calls` subset — who is actually USED, not merely imported (bd 4bl.4)
-    usage = engine.typed_graph({"calls", CONSTRUCT})
-    if usage.number_of_edges():
-        log.info("\n%s", ImportGraph._render(usage, args.top, label="usage graph (calls)", unit="classes"))
+    Cli(
+        ImportGraph,
+        "Import-graph architecture diagnostic + fitness gate.",
+        gate="fitness GATE: exit 1 on a god-module / import cycle / god-file / test-mirror gap",
+        flags=(
+            Flag("--top", "rows per ranked table", type=int, default=10),
+            Switch("--no-test-mirror", "skip the test-mirror check under --assert", dest="test_mirror"),
+        ),
+    ).run()
 
 
 if __name__ == "__main__":

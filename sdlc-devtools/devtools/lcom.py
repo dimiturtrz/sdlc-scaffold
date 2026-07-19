@@ -21,10 +21,10 @@ splits into disjoint-state groups.
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 
+from devtools.cli import Cli
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.lcom")
@@ -204,14 +204,7 @@ class Lcom:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.lcom", description="rank classes by LCOM4 cohesion (>=2 = split candidate)"
-    )
-    ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rows = Lcom(args.packages).scan()
-    log.info("%d low-cohesion classes (LCOM4>=2)\n%s", len(rows), Lcom._render(rows))
+    Cli(Lcom, "rank classes by LCOM4 cohesion (>=2 = split candidate)").run()
 
 
 if __name__ == "__main__":

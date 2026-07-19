@@ -10,12 +10,12 @@ blocks. A repo that wants a tighter legislated ceiling adds a config knob at tha
 
 from __future__ import annotations
 
-import argparse
 import logging
 
 from radon.complexity import cc_visit
 
 from devtools._common import ENCODING
+from devtools.cli import Cli
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.complexity")
@@ -62,17 +62,7 @@ class Complexity:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.complexity",
-        description="cyclomatic complexity (radon CC) ranked report (advisory)",
-    )
-    ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    # ADVISORY: a ranked CC report, always exit 0. The FIXED complexity gate is ruff C901 (CC>10, legislated
-    # in ruff_select) — this just surfaces the ranking + current max as reviewer signal. A repo that wants a
-    # tighter legislated ceiling adds a config knob at that point, not speculatively.
-    log.info("%s", Complexity._render(Complexity(args.packages).scan()))
+    Cli(Complexity, "cyclomatic complexity (radon CC) ranked report (advisory)").run()
 
 
 if __name__ == "__main__":

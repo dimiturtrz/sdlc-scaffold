@@ -21,10 +21,10 @@ Run: `python -m devtools.demeter [pkgs...]` (report) | `--assert` (gate).
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 
+from devtools.cli import Cli
 from devtools.pyproject import Pyproject
 from devtools.trees import Trees
 
@@ -110,16 +110,7 @@ class Demeter:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Law of Demeter — reach-through chain depth.")
-    ap.add_argument("packages", nargs="+", help="root packages to scan")
-    ap.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a reach-through")
-    args = ap.parse_args()
-    engine = Demeter(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert())
-    found = engine.violations()
-    log.info("law of demeter (max depth %d): %d\n%s", engine.max_depth, len(found), "\n".join(found))
+    Cli(Demeter, "Law of Demeter — reach-through chain depth.", gate="exit 1 on a reach-through").run()
 
 
 if __name__ == "__main__":

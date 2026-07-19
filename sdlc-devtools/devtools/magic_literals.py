@@ -25,13 +25,13 @@ a literal budget adds a legislated `[tool.magic_literals]` config knob at that p
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 import re
 from collections import defaultdict
 from typing import TypeGuard
 
+from devtools.cli import Cli
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.magic_literals")
@@ -141,18 +141,7 @@ class MagicLiterals:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.magic_literals",
-        description="recurring string literals + repeated dict key-sets (advisory report)",
-    )
-    ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    engine = MagicLiterals(args.packages)
-    # ADVISORY: a ranked report of StrEnum/dataclass candidates, always exit 0. There is no honest universal
-    # ceiling (0 is too strict — some recurrence is legit vocab; N is arbitrary), so this reports and the
-    # reviewer decides. A repo that wants to enforce a budget adds a legislated config knob then, not now.
-    log.info("%s", MagicLiterals._render(engine.scan_strings(), engine.scan_key_sets()))
+    Cli(MagicLiterals, "recurring string literals + repeated dict key-sets (advisory report)").run()
 
 
 if __name__ == "__main__":

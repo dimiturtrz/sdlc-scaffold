@@ -14,13 +14,13 @@ Run: `python -m devtools.composition [pkgs...]` (report) | `--assert` (gate).
 
 from __future__ import annotations
 
-import argparse
 import logging
 from collections.abc import Iterable
 
 import networkx as nx
 
 from devtools.arrows import HOLDS, ClassArrows
+from devtools.cli import Cli
 
 log = logging.getLogger("devtools.composition")
 
@@ -74,16 +74,11 @@ class CompositionCycles:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Composition cycles — mutually-owning classes.")
-    parser.add_argument("packages", nargs="+", help="root packages to scan")
-    parser.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on a composition cycle")
-    args = parser.parse_args()
-    engine = CompositionCycles(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert())
-    found = engine.cycles()
-    log.info("composition cycles: %d\n%s", len(found), "\n".join(found))
+    Cli(
+        CompositionCycles,
+        "Composition cycles — a `holds` loop in the object graph.",
+        gate="exit 1 on a composition cycle",
+    ).run()
 
 
 if __name__ == "__main__":

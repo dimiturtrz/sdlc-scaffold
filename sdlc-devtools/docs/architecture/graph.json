@@ -45,6 +45,12 @@
     {
       "kind": "import",
       "source": "devtools.arrows",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.arrows",
       "target": "devtools.names",
       "weight": 1
     },
@@ -63,6 +69,12 @@
     {
       "kind": "import",
       "source": "devtools.calls",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.calls",
       "target": "devtools.names",
       "weight": 1
     },
@@ -76,6 +88,12 @@
       "kind": "import",
       "source": "devtools.calls",
       "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.classes",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -94,6 +112,12 @@
       "kind": "import",
       "source": "devtools.complexity",
       "target": "devtools._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.complexity",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -110,6 +134,12 @@
     },
     {
       "kind": "import",
+      "source": "devtools.composition",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
       "source": "devtools.contracts",
       "target": "devtools.arrows",
       "weight": 1
@@ -123,13 +153,31 @@
     {
       "kind": "import",
       "source": "devtools.contracts",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.contracts",
       "target": "devtools.pyproject",
       "weight": 1
     },
     {
       "kind": "import",
       "source": "devtools.data_clumps",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.data_clumps",
       "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.demeter",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -148,6 +196,12 @@
       "kind": "import",
       "source": "devtools.envy",
       "target": "devtools.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.envy",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -190,6 +244,12 @@
       "kind": "import",
       "source": "devtools.graph",
       "target": "devtools.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -219,7 +279,19 @@
     {
       "kind": "import",
       "source": "devtools.lcom",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.lcom",
       "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.magic_literals",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -255,6 +327,12 @@
     {
       "kind": "import",
       "source": "devtools.shape_contracts",
+      "target": "devtools.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.shape_contracts",
       "target": "devtools.pyproject",
       "weight": 1
     },
@@ -262,6 +340,12 @@
       "kind": "import",
       "source": "devtools.shape_contracts",
       "target": "devtools.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.state_candidates",
+      "target": "devtools.cli",
       "weight": 1
     },
     {
@@ -430,6 +514,18 @@
       "kind": "construct",
       "source": "devtools.classes.ClassIndex",
       "target": "devtools.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.cli.Cli",
+      "target": "devtools.cli.Flag",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.cli.Cli",
+      "target": "devtools.cli.Switch",
       "weight": 1
     },
     {
@@ -603,7 +699,7 @@
   ],
   "nodes": [
     {
-      "descendants": 23,
+      "descendants": 24,
       "id": "devtools",
       "label": "devtools",
       "level": "module",
@@ -654,6 +750,14 @@
       "descendants": 0,
       "id": "devtools.classes",
       "label": "classes",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli",
+      "label": "cli",
       "level": "module",
       "parent": "devtools",
       "role": null
@@ -873,6 +977,30 @@
       "level": "class",
       "parent": "devtools.classes",
       "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli",
+      "label": "Cli",
+      "level": "class",
+      "parent": "devtools.cli",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Flag",
+      "label": "Flag",
+      "level": "class",
+      "parent": "devtools.cli",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Switch",
+      "label": "Switch",
+      "level": "class",
+      "parent": "devtools.cli",
+      "role": "satellite"
     },
     {
       "descendants": 0,
@@ -1424,6 +1552,70 @@
       "label": "run_assert",
       "level": "method",
       "parent": "devtools.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.accepted",
+      "label": "accepted",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.parser",
+      "label": "parser",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.prog",
+      "label": "prog",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.run",
+      "label": "run",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Cli.tool",
+      "label": "tool",
+      "level": "method",
+      "parent": "devtools.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Flag.add_to",
+      "label": "add_to",
+      "level": "method",
+      "parent": "devtools.cli.Flag",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cli.Switch.add_to",
+      "label": "add_to",
+      "level": "method",
+      "parent": "devtools.cli.Switch",
       "role": null
     },
     {

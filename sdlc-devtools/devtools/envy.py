@@ -24,13 +24,13 @@ Run: `python -m devtools.envy [pkgs...]` (report) | `--assert` (gate).
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 from collections import Counter
 from dataclasses import dataclass
 
 from devtools.classes import SATELLITE, ClassIndex
+from devtools.cli import Cli
 from devtools.pyproject import Pyproject
 from devtools.resolve import FileScope, Resolver
 from devtools.trees import Trees
@@ -153,16 +153,11 @@ class FeatureEnvy:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Feature envy — methods more interested in another class.")
-    parser.add_argument("packages", nargs="+", help="root packages to scan")
-    parser.add_argument("--assert", action="store_true", dest="assert_", help="gate: exit 1 on an envious method")
-    args = parser.parse_args()
-    engine = FeatureEnvy(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert())
-    found = engine.violations()
-    log.info("feature envy (floor %d): %d\n%s", engine.minimum, len(found), "\n".join(found))
+    Cli(
+        FeatureEnvy,
+        "Feature envy — a method more interested in another class than its own.",
+        gate="exit 1 on an envious method",
+    ).run()
 
 
 if __name__ == "__main__":

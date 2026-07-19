@@ -22,11 +22,11 @@ Run: `python -m devtools.classes [pkgs...]` (report) | `--assert` (gate on multi
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 from pathlib import Path
 
+from devtools.cli import Cli
 from devtools.names import Names
 from devtools.trees import Trees
 
@@ -168,20 +168,11 @@ class ClassIndex:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Class containment + role classification (primary vs satellite).")
-    ap.add_argument("packages", nargs="+", help="root packages to scan")
-    ap.add_argument(
-        "--assert",
-        action="store_true",
-        dest="assert_",
-        help="gate: exit 1 when a file defines more than one PRIMARY class",
-    )
-    args = ap.parse_args()
-    engine = ClassIndex(args.packages)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    if args.assert_:
-        raise SystemExit(engine.run_assert())
-    log.info("\n%s", engine.report())
+    Cli(
+        ClassIndex,
+        "Class containment + role classification (primary vs satellite).",
+        gate="exit 1 when a file defines more than one PRIMARY class",
+    ).run()
 
 
 if __name__ == "__main__":

@@ -13,11 +13,11 @@ counts, so a class where many methods thread many common params ranks highest. D
 
 from __future__ import annotations
 
-import argparse
 import ast
 import logging
 from collections import Counter
 
+from devtools.cli import Cli
 from devtools.omit import Omit
 from devtools.trees import Trees
 
@@ -131,14 +131,7 @@ class StateCandidates:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        prog="python -m devtools.state_candidates", description="rank namespace-classes by latent shared instance state"
-    )
-    ap.add_argument("packages", nargs="+", help="package dirs to scan (>=1 required, no 'src' fallback)")
-    args = ap.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rows = StateCandidates(args.packages).scan()
-    log.info("%d promotion candidates\n%s", len(rows), StateCandidates._render(rows))
+    Cli(StateCandidates, "rank namespace-classes by latent shared instance state").run()
 
 
 if __name__ == "__main__":
