@@ -6,29 +6,116 @@
  * be a genuinely childless leaf box. Layout = fcose (compound-aware) with a cose fallback.
  *
  * graph.json carries THREE tiers: modules joined by imports, beneath them classes joined by the typed
- * arrows an import decomposes into (bd 433.1), and beneath those the methods (bd 433.4, nodes only). The
- * filter bar (bd 433.2/433.3) picks the subset to draw.
- * Line STYLE carries the meaning split — SOLID = what a class KNOWS (import/inherits/holds), DASHED = what
- * it DOES (calls/construct) — so the reading survives greyscale and colour-blindness rather than relying on
- * hue alone. Default state = modules + imports, i.e. exactly the view before the class tier existed.
+ * arrows an import decomposes into (bd 433.1), and beneath those the methods (bd 433.4, nodes only).
+ *
+ * The controls are the MODEL, not one boolean per implementation detail. Both axes are ordinal:
+ *   DEPTH   walks the containment tree      module > class > method   (each tier needs the one above it)
+ *   ARROWS  walks the decomposition         imports > structure > behaviour
+ * Line STYLE carries the same knows/does split as ARROWS — SOLID = what a class KNOWS (import/inherits/
+ * holds/references), DASHED = what it DOES (calls/construct) — so the reading survives greyscale and
+ * colour-blindness rather than relying on hue alone. The exact kind set stays reachable behind `per-kind`:
+ * it reads the RESOLVER, which is an author's question, not the reviewer's.
  */
 (async () => {
   cytoscape.use(window.cytoscapeFcose);
   const FCOSE = { name: 'fcose', quality: 'proof', animate: false, randomize: true, packComponents: true,
     nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.1, gravity: 0.25, numIter: 2500, tile: true };
 
-  const KINDS = ['import', 'inherits', 'holds', 'references', 'calls', 'construct'];
+  // ONE table owns every per-kind fact: how the arrow is drawn, and which band it belongs to. The cytoscape
+  // stylesheet, the legend swatches and the band membership are all derived from it, so a colour cannot
+  // drift between the graph and its key, and a kind cannot exist outside a band.
+  // Edge direction is always DEPENDS-ON: source needs target. `tail` is the mark at the SOURCE end, which
+  // is where UML puts an ownership diamond — the whole, not the part. Without it `holds` would draw the
+  // diamond on the field's type and read backwards to anyone who knows the notation.
+  const STYLE = {
+    import:     { color: '#5b6b7a', line: 'solid',  head: 'triangle',        band: 'imports' },
+    inherits:   { color: '#6f9fd0', line: 'solid',  head: 'triangle-tee',    band: 'structure' },
+    holds:      { color: '#5fae7f', line: 'solid',  head: 'triangle', tail: 'diamond', band: 'structure' },
+    references: { color: '#7d8590', line: 'dotted', head: 'triangle',        band: 'structure' },
+    calls:      { color: '#c8873b', line: 'dashed', head: 'triangle',        band: 'behaviour' },
+    construct:  { color: '#b06ec0', line: 'dashed', head: 'circle-triangle', band: 'behaviour' },
+  };
+  const KINDS = Object.keys(STYLE);
+  const BANDS = {};
+  for (const [kind, s] of Object.entries(STYLE)) (BANDS[s.band] = BANDS[s.band] || []).push(kind);
+
+  // A band label is a word the reviewer has to be taught once; the caption is where it gets taught.
+  const CAPTION = {
+    imports: 'what needs what — the file-level roll-up every finer arrow decomposes from',
+    structure: 'what a class KNOWS — the shape it is built from, drawn solid',
+    behaviour: 'what a class DOES — the traffic it generates at runtime, drawn dashed',
+  };
+
+  const DEPTHS = ['module', 'class', 'method'];
+  const PLURAL = { module: 'modules', class: 'classes', method: 'methods' };
   const RAW = await (await fetch('./graph.json')).json();
   const $ = (id) => document.getElementById(id);
 
-  // ---- filter state -> the graph actually drawn -------------------------------------------------------
+  // The swatch IS the edge: same colour, same dash, same arrowhead, so the key reads as a sample of the
+  // picture rather than a second thing to memorise.
+  // Every coordinate below is DERIVED from the box and the arrowhead size — the swatch stays correct at any
+  // scale, and the dash patterns are expressed in stroke widths (which is what makes a dash read as dashed)
+  // rather than as pixel counts that only happen to look right at this one size.
+  // The box is a UNITLESS grid, not pixels: CSS sizes the swatch in `em` so it tracks the type, and every
+  // coordinate here is a FRACTION of the grid, so the drawing is resolution- and zoom-independent.
+  const BOX = { w: 100, h: 40 };
+  const STROKE = 0.05 * BOX.h;
+  const PAD = 0.02 * BOX.w;
+  const HEAD_LEN = 0.26 * BOX.w;             // the wedge takes about a quarter of the run
+  const HEAD_HALF = 0.28 * BOX.h;            // ...and is a little over half as tall as it is long (UML)
+  const MID = BOX.h / 2;
+  const TIP = BOX.w - PAD;
+  const BACK = TIP - HEAD_LEN;               // where the head starts, i.e. where the line must stop
+  const DASH = {
+    solid: '',
+    dashed: `${STROKE * 2},${STROKE * 1.5}`,
+    dotted: `${STROKE / 2},${STROKE * 1.5}`,
+  };
+
+  const wedge = (x) => `<path d="M${x},${MID - HEAD_HALF} L${x + HEAD_LEN},${MID} L${x},${MID + HEAD_HALF} Z"/>`;
+  const HEAD = {
+    'triangle': () => wedge(BACK),
+    // UML generalization: the bar that closes off the wedge
+    'triangle-tee': () => wedge(BACK)
+      + `<rect x="${BACK - STROKE * 2}" y="${MID - HEAD_HALF - STROKE / 2}"`
+      + ` width="${STROKE}" height="${HEAD_HALF * 2 + STROKE}"/>`,
+    // UML composition: the whole owns the part
+    'diamond': () => `<path d="M${BACK},${MID} L${BACK + HEAD_LEN / 2},${MID - HEAD_HALF}`
+      + ` L${TIP},${MID} L${BACK + HEAD_LEN / 2},${MID + HEAD_HALF} Z"/>`,
+    // construct = a call that also instantiates, so it is the call wedge plus the object it makes
+    'circle-triangle': () => wedge(BACK)
+      + `<circle cx="${BACK - HEAD_HALF}" cy="${MID}" r="${HEAD_HALF / 2}"/>`,
+  };
+
+  // the mark at the SOURCE end — an ownership diamond sits on the holder, mirroring the head geometry
+  const TAIL = {
+    'diamond': () => `<path d="M${PAD},${MID} L${PAD + HEAD_LEN / 2},${MID - HEAD_HALF}`
+      + ` L${PAD + HEAD_LEN},${MID} L${PAD + HEAD_LEN / 2},${MID + HEAD_HALF} Z"/>`,
+  };
+
+  // no width/height attributes: CSS owns the size, the viewBox owns the proportions
+  function swatch(kind) {
+    const s = STYLE[kind];
+    const start = s.tail ? PAD + HEAD_LEN : PAD;
+    return `<svg class="sw" viewBox="0 0 ${BOX.w} ${BOX.h}" preserveAspectRatio="xMidYMid meet"
+      fill="${s.color}" stroke="${s.color}" aria-hidden="true"><line x1="${start}" y1="${MID}"
+      x2="${BACK}" y2="${MID}" stroke-width="${STROKE}" stroke-dasharray="${DASH[s.line]}"/>${
+      s.tail ? TAIL[s.tail]() : ''}${HEAD[s.head]()}</svg>`;
+  }
+
+  // ---- control state ----------------------------------------------------------------------------------
+  // `band` is null exactly when the per-kind panel owns the kind set (an arbitrary set has no band).
+  let depth = 'module', band = 'imports';
+
+  function kinds() {
+    return new Set(band ? BANDS[band] : KINDS.filter((k) => $('kind-' + k).checked));
+  }
   function readFilters() {
-    return {
-      classes: $('tier-class').checked,
-      methods: $('tier-method').checked,
-      hideSatellites: $('hide-satellites').checked,
-      kinds: new Set(KINDS.filter((k) => $('kind-' + k).checked)),
-    };
+    const d = DEPTHS.indexOf(depth);
+    return { classes: d >= 1, methods: d >= 2, hideSatellites: $('hide-satellites').checked, kinds: kinds() };
+  }
+  function paintSeg(id, value) {
+    for (const b of $(id).children) b.classList.toggle('on', b.dataset.v === value);
   }
 
   let GRAPH = { nodes: [], edges: [] }, PARENT = {}, KIDS = {}, DESC = {};
@@ -39,12 +126,12 @@
       const level = n.level || 'module';
       if (level === 'module') return true;
       // a METHOD hangs off a class, so it needs that class present — showing methods with the class tier
-      // off would orphan them. Both tiers are off by default: 165 methods in a 23-module tree is a wall.
+      // off would orphan them. Depth being ordinal makes that structural instead of a checkbox pairing.
       if (level === 'method') return f.classes && f.methods;
       return f.classes && !(f.hideSatellites && n.role === 'satellite');
     });
     const present = new Set(nodes.map((n) => n.id));
-    // an edge is drawn only when BOTH endpoints survive the tier filter — otherwise a class-level arrow
+    // an edge is drawn only when BOTH endpoints survive the depth filter — otherwise a class-level arrow
     // would dangle off a hidden node
     const edges = RAW.edges.filter(
       (e) => f.kinds.has(e.kind || 'import') && present.has(e.source) && present.has(e.target));
@@ -58,14 +145,37 @@
     // descendants recomputed from what is PRESENT, not from the file: with classes shown a module gains
     // children, and a stale count would mislabel the folded badge and break foldability
     for (const n of nodes) DESC[n.id] = nodes.filter((o) => o.id.startsWith(n.id + '.')).length;
-    $('nodes').textContent = nodes.length;
-    $('edges').textContent = edges.length;
+    paintLegend(nodes, edges);
   }
 
-  const collapsed = new Set();
-  function initCollapse() {
-    collapsed.clear();
-    GRAPH.nodes.filter((n) => !PARENT[n.id] && DESC[n.id] > 0).forEach((n) => collapsed.add(n.id));
+  // The legend IS the count: every kind currently selected, drawn exactly as it appears in the graph and
+  // carrying how many of it are on screen. A kind at ZERO stays listed but dims — "structure shows nothing"
+  // and "structure found no inheritance" are different answers, and only the second one is useful.
+  function paintLegend(nodes, edges) {
+    const tiers = DEPTHS
+      .map((k) => [k, nodes.filter((n) => (n.level || 'module') === k).length])
+      .filter(([, n]) => n > 0)
+      .map(([k, n]) => `${n} ${n === 1 ? k : PLURAL[k]}`);
+    $('counts').textContent = tiers.join(' · ');
+    const active = KINDS.filter((k) => kinds().has(k));
+    $('legend').innerHTML = active.map((k) => {
+      const n = edges.filter((e) => (e.kind || 'import') === k).length;
+      return `<span class="key${n ? '' : ' zero'}">${swatch(k)}${k}<b>${n}</b></span>`;
+    }).join('');
+    $('caption').textContent = band ? CAPTION[band] : 'a hand-picked set of arrow kinds';
+  }
+
+  // ---- fold state -------------------------------------------------------------------------------------
+  // `collapsed` OUTLIVES filter changes: folding is a reading position the user built by hand, and losing
+  // it on every toggle makes the two axes unusable together. Only a node never seen before takes the
+  // default (a root package starts folded); `reset view` is the one control that clears the lot.
+  const collapsed = new Set(), seen = new Set();
+  function applyDefaultFold() {
+    for (const n of GRAPH.nodes) {
+      if (seen.has(n.id)) continue;
+      seen.add(n.id);
+      if (!PARENT[n.id] && DESC[n.id] > 0) collapsed.add(n.id);
+    }
   }
 
   function ancestors(id) { const a = []; let p = PARENT[id]; while (p) { a.push(p); p = PARENT[p]; } return a; }
@@ -73,8 +183,10 @@
   function inV(id) { return !hiddenBy(id); }
   function rep(id) { let r = id; for (const a of [id, ...ancestors(id)]) if (collapsed.has(a)) r = a; return r; }
 
-  const EDGE = (color, style, arrow) => ({
-    'line-color': color, 'target-arrow-color': color, 'line-style': style, 'target-arrow-shape': arrow });
+  const EDGE = ({ color, line, head, tail }) => ({
+    'line-color': color, 'line-style': line,
+    'target-arrow-color': color, 'target-arrow-shape': head,
+    ...(tail ? { 'source-arrow-color': color, 'source-arrow-shape': tail } : {}) });
 
   const cy = cytoscape({
     container: $('cy'),
@@ -107,14 +219,12 @@
         label: (e) => (e.data('kind') === 'import' ? String(e.data('weight')) : ''),
         'font-size': 11, color: '#f0c674', 'text-background-color': '#05060a',
         'text-background-opacity': 0.9, 'text-background-padding': 2, 'arrow-scale': 1,
-        ...EDGE('#5b6b7a', 'solid', 'triangle') } },
+        ...EDGE(STYLE.import) } },
       // SOLID = structural (what the class knows) · DASHED = behavioural (what it does).
       // Arrowheads borrow UML: hollow triangle = generalization, diamond = composition, plain = dependency.
-      { selector: 'edge[kind="inherits"]', style: EDGE('#6f9fd0', 'solid', 'triangle-tee') },
-      { selector: 'edge[kind="holds"]', style: EDGE('#5fae7f', 'solid', 'diamond') },
-      { selector: 'edge[kind="references"]', style: EDGE('#7d8590', 'dotted', 'triangle') },
-      { selector: 'edge[kind="calls"]', style: EDGE('#c8873b', 'dashed', 'triangle') },
-      { selector: 'edge[kind="construct"]', style: EDGE('#b06ec0', 'dashed', 'circle-triangle') },
+      // Derived from STYLE, which the legend swatches read too — one table, so the key cannot lie.
+      ...KINDS.map((k) => ({
+        selector: `edge[kind="${k}"]`, style: EDGE(STYLE[k]) })),
       { selector: '.dim', style: { opacity: 0.16 } },                                  // focus spotlight: faded context
       { selector: '.lit', style: { opacity: 1 } },                                      // ...neighbourhood kept bright
       { selector: '.hl', style: { opacity: 1, 'border-width': 3, 'border-color': '#f0c674', 'line-color': '#f0c674', 'target-arrow-color': '#f0c674' } },
@@ -155,7 +265,8 @@
     cy.fit(cy.elements(), 40);
   }
 
-  function reload() { rebuild(); initCollapse(); refresh(); }
+  // the ONLY redraw path that preserves fold state — every control except `reset view` goes through here
+  function apply() { rebuild(); applyDefaultFold(); refresh(); }
 
   // focus = SPOTLIGHT: the node + its dependency neighbours + connecting edges (+ ancestor boxes) stay lit;
   // everything else DIMS but remains on screen (context is kept, not hidden), and we zoom to the cluster.
@@ -188,28 +299,48 @@
   // suppress the browser context menu so right-click is ours
   cy.container().addEventListener('contextmenu', (e) => e.preventDefault());
 
-  $('expandAll').onclick = () => { collapsed.clear(); refresh(); };
-  $('collapseAll').onclick = () => { initCollapse(); refresh(); };
-  $('reset').onclick = () => { reload(); };
+  // ---- wiring -----------------------------------------------------------------------------------------
+  // the per-kind panel gets its swatches from the same table as the legend and the graph
+  for (const k of KINDS) $('sw-' + k).outerHTML = swatch(k);
 
-  // presets: the three questions people actually arrive with — "what depends on what" (the coarse import
-  // backdrop), "how is it shaped" (structure), "what does it do" (behaviour).
-  const PRESETS = {
-    'preset-imports': { classes: false, kinds: ['import'] },
-    'preset-structure': { classes: true, kinds: ['inherits', 'holds'] },
-    'preset-behaviour': { classes: true, kinds: ['calls', 'construct'] },
+  $('depth').onclick = (e) => {
+    if (!e.target.dataset.v) return;
+    depth = e.target.dataset.v;
+    paintSeg('depth', depth);
+    apply();
   };
-  for (const [id, preset] of Object.entries(PRESETS)) {
-    $(id).onclick = () => {
-      $('tier-class').checked = preset.classes;
-      $('tier-method').checked = false;
-      KINDS.forEach((k) => { $('kind-' + k).checked = preset.kinds.includes(k); });
-      reload();
-    };
-  }
-  for (const id of ['tier-class', 'tier-method', 'hide-satellites', ...KINDS.map((k) => 'kind-' + k)]) {
-    $(id).addEventListener('change', reload);
-  }
+  $('arrows').onclick = (e) => {
+    if (!e.target.dataset.v) return;
+    band = e.target.dataset.v;
+    paintSeg('arrows', band);
+    KINDS.forEach((k) => { $('kind-' + k).checked = BANDS[band].includes(k); });
+    // structural and behavioural arrows do not exist at module level, so picking one there would draw an
+    // empty graph. Advance the depth instead of refusing the click.
+    if (band !== 'imports' && depth === 'module') { depth = 'class'; paintSeg('depth', depth); }
+    apply();
+  };
+  // touching an individual kind means the set is no longer a band — the segmented control stops claiming one
+  KINDS.forEach((k) => $('kind-' + k).addEventListener('change', () => {
+    band = null;
+    paintSeg('arrows', null);
+    apply();
+  }));
+  $('hide-satellites').addEventListener('change', apply);
+  $('kindsBtn').onclick = () => $('kinds').classList.toggle('open');
+  $('helpBtn').onclick = () => $('help').classList.toggle('open');
+  $('fold').onclick = () => {
+    collapsed.clear();
+    GRAPH.nodes.filter((n) => !PARENT[n.id] && DESC[n.id] > 0).forEach((n) => collapsed.add(n.id));
+    refresh();
+  };
+  $('reset').onclick = () => {
+    depth = 'module'; band = 'imports';
+    paintSeg('depth', depth); paintSeg('arrows', band);
+    KINDS.forEach((k) => { $('kind-' + k).checked = BANDS.imports.includes(k); });
+    $('hide-satellites').checked = false;
+    collapsed.clear(); seen.clear();
+    apply();
+  };
 
-  reload();
+  $('reset').onclick();
 })();

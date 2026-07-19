@@ -5,6 +5,7 @@ the viewer and the committed diff-truth both depend on.
 """
 
 import json
+import re
 
 from devtools.archmap import Archmap
 
@@ -91,26 +92,61 @@ def test_the_viewer_exposes_a_toggle_for_every_edge_kind(tmp_path):
     html = _viewer(tmp_path)
     for kind in ("import", "inherits", "holds", "references", "calls", "construct"):
         assert f'id="kind-{kind}"' in html, f"no toggle for {kind}"
-    assert 'id="tier-class"' in html, "the class tier needs a toggle"
+    for stop in ("module", "class", "method"):
+        assert f'data-v="{stop}"' in html, f"the depth control needs a {stop} stop"
     assert 'id="hide-satellites"' in html, "roles are filterable, not just decorative"
+
+
+def _style_table(html: str) -> dict[str, tuple[str, str]]:
+    """The kind -> (line, band) table the viewer derives its edge rules, swatches and bands from, read back
+    out of the shipped JS so the tests check what actually ships rather than a restatement of it."""
+    body = re.findall(r"const STYLE = \{(.*?)\n  \};", html, re.S)[0]
+    rows = re.findall(r"(\w+):\s*\{.*?line: '(\w+)'.*?band: '(\w+)'", body)
+    return {kind: (line, band) for kind, line, band in rows}
+
+
+def test_every_edge_kind_declares_an_arrow_band(tmp_path):
+    """The bands ARE the arrow control — a kind in no band is reachable only by hand-checking a box in the
+    per-kind panel, which is how `references` stayed invisible while looking supported."""
+    style = _style_table(_viewer(tmp_path))
+    assert set(style) == {"import", "inherits", "holds", "references", "calls", "construct"}
+
+
+def test_every_declared_band_has_a_button(tmp_path):
+    """Membership is structural (one `band` per kind, so a kind cannot be in two), but the SEGMENTED CONTROL
+    is hand-written markup — a kind given a brand-new band would silently become unreachable."""
+    html = _viewer(tmp_path)
+    offered = set(re.findall(r'<button data-v="(\w+)">', re.findall(r'id="arrows">(.*?)</span>', html, re.S)[0]))
+    bands = {band for _, band in _style_table(html).values()}
+    assert bands == offered, f"bands {bands} vs buttons {offered} — one side is unreachable"
 
 
 def test_line_style_carries_the_split_not_colour_alone(tmp_path):
     """SOLID = what a class knows, DASHED = what it does. Encoding that in style (not hue) keeps the graph
-    readable in greyscale and for colour-blind viewers."""
+    readable in greyscale and for colour-blind viewers — so the split must hold for EVERY kind, which is
+    checkable now that one table drives both the edge rules and the legend swatches."""
+    for kind, (line, band) in _style_table(_viewer(tmp_path)).items():
+        knows = band in ("imports", "structure")
+        assert (line != "dashed") == knows, f"{kind} is {band} but drawn {line} — the split would misread"
+
+
+def test_the_legend_is_derived_from_the_same_table_as_the_graph(tmp_path):
+    """A key that restates its colours by hand drifts from the picture the first time one is retuned. The
+    swatches are generated from STYLE, so no hex or dash may appear in the markup."""
     html = _viewer(tmp_path)
-    assert "'line-style': 'dashed'" in html or '"line-style": "dashed"' in html or "dashed" in html
-    for kind in ("inherits", "holds", "references", "calls", "construct"):
-        assert f'edge[kind="{kind}"]' in html, f"{kind} has no distinct style rule"
+    markup = re.sub(r"<!--.*?-->", "", html[html.index("<body>"):html.index("<script>")], flags=re.S)
+    for restated in ("#", "solid", "dashed", "dotted"):
+        assert restated not in markup, f"the markup restates {restated!r}, which STYLE already owns"
 
 
 def test_the_default_view_is_the_module_import_tier(tmp_path):
-    """Adding a class tier must not change what a consumer already renders — only `import` starts checked."""
+    """Adding a class tier must not change what a consumer already renders. The default now lives in the
+    control state rather than in `checked` attributes, because the two axes are ordinal segmented controls
+    — but the rendered result it pins down is the same one."""
     html = _viewer(tmp_path)
-    assert 'id="kind-import" checked' in html, "imports on by default"
-    for kind in ("inherits", "holds", "references", "calls", "construct"):
-        assert f'id="kind-{kind}" checked' not in html, f"{kind} must be OFF by default"
-    assert 'id="tier-class" checked' not in html, "the class tier is opt-in"
+    assert "let depth = 'module', band = 'imports';" in html, "the opening view is modules joined by imports"
+    banded = {k for k, (_, band) in _style_table(html).items() if band == "imports"}
+    assert banded == {"import"}, f"the opening band must be the import arrow alone, got {banded}"
 
 
 def test_the_viewer_stays_self_contained(tmp_path):
@@ -183,7 +219,16 @@ def test_no_method_level_edges_are_invented(monkeypatch, tmp_path):
 
 
 def test_the_method_tier_is_opt_in_in_the_viewer(tmp_path):
-    """165 methods in a 23-module tree is a wall — it must be off until asked for."""
+    """165 methods in a 23-module tree is a wall — it must be off until asked for. Depth being ORDINAL is
+    what guarantees that: `method` is the last stop, so it is unreachable until the user walks to it."""
     html = _viewer(tmp_path)
-    assert 'id="tier-method"' in html, "the tier needs a toggle"
-    assert 'id="tier-method" checked' not in html, "and it must be OFF by default"
+    assert "const DEPTHS = ['module', 'class', 'method'];" in html, "depth is a module>class>method scale"
+    assert "let depth = 'module'" in html, "and it opens at the shallowest stop"
+
+
+def test_folding_survives_a_filter_change(tmp_path):
+    """Fold state is a reading position built by hand; dropping it on every toggle makes the depth and arrow
+    axes unusable together. Only `reset view` may clear it."""
+    html = _viewer(tmp_path)
+    assert "function apply() { rebuild(); applyDefaultFold(); refresh(); }" in html
+    assert "if (seen.has(n.id)) continue;" in html, "a node already seen keeps the fold the user gave it"

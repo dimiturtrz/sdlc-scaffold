@@ -5,53 +5,120 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Architecture — {project}</title>
 <style>
+  /* Sizes are RELATIVE — a type scale in `rem`, spacing in `em` of the strip's own size, the swatch in `em`
+     so it tracks its label. The graph canvas takes what is left via flex rather than a computed height.
+     `1px` survives only for hairline borders, which are a device hairline and not a measurement. */
+  :root {
+    --bg: #05060a; --bg-strip: #0a0c11; --bg-sub: #080a0e; --bg-deep: #06080c;
+    --line: #23292f; --edge: #2e455c;
+    --ink: #c9d1d9; --ink-dim: #9fb4c8; --ink-faint: #7d8590; --ink-ghost: #6e7681; --ink-bright: #dce8f5;
+    --btn: #172431; --btn-hot: #2c4256; --btn-ink: #cfe3f7;
+    --pad-x: 1em; --pad-y: 0.5em; --radius: 0.35em;
+    --strip: 0.75rem;                      /* the control strips */
+    --bar: 0.8125rem;                      /* the title bar sits one step up */
+    font-family: system-ui, sans-serif;
+  }
   html, body { margin: 0; height: 100%; }
-  .wrap { position: fixed; inset: 0; display: flex; flex-direction: column; background: #05060a; }
-  #cy { background: #05060a; }
-  .bar { padding: 8px 12px; font: 13px system-ui, sans-serif; color: #c9d1d9; background: #0a0c11; border-bottom: 1px solid #23292f; }
-  .bar button { margin: 0 2px; padding: 3px 9px; font-size: 12px; background: #172431; color: #cfe3f7; border: 1px solid #2e455c; border-radius: 5px; cursor: pointer; }
-  .bar button:hover { background: #2c4256; }
-  .hint { color: #7d8590; font-size: 11px; margin-left: 6px; }
-  #cy { flex: 1; }
-  .filters { padding: 6px 12px; font: 12px system-ui, sans-serif; color: #9fb4c8; background: #080a0e; border-bottom: 1px solid #23292f; }
-  .filters label { margin-right: 10px; cursor: pointer; user-select: none; white-space: nowrap; }
-  .filters .swatch { display: inline-block; width: 20px; height: 0; vertical-align: middle; margin-right: 3px; }
-  .filters .grp { margin-right: 14px; }
-  .filters .grp > b { color: #7d8590; font-weight: 600; margin-right: 5px; }
+  .wrap { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); }
+  #cy { background: var(--bg); flex: 1; min-height: 0; }
+  .strip { padding: var(--pad-y) var(--pad-x); font-size: var(--strip); color: var(--ink-dim);
+    background: var(--bg-sub); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 1.25em; flex-wrap: wrap; }
+  .bar { font-size: var(--bar); color: var(--ink); background: var(--bg-strip); gap: 0.75em; }
+  button { padding: 0.25em 0.7em; font: inherit; background: var(--btn); color: var(--btn-ink);
+    border: 1px solid var(--edge); border-radius: var(--radius); cursor: pointer; }
+  button:hover { background: var(--btn-hot); }
+  button:focus-visible { outline: 2px solid var(--btn-ink); outline-offset: 1px; }
+  #counts { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .spacer { flex: 1; }
+  #helpBtn { border-radius: 50%; aspect-ratio: 1; padding: 0.25em 0; min-width: 1.9em; }
+  .help { display: none; line-height: 1.7; background: var(--bg-sub); max-width: 90ch; }
+  .help.open { display: block; }
+  .help kbd { background: var(--btn); border: 1px solid var(--edge); border-radius: var(--radius);
+    padding: 0.1em 0.4em; font-size: 0.9em; color: var(--btn-ink); }
+  .filters > span { display: flex; align-items: center; gap: 0.5em; }
+  .filters b { color: var(--ink-faint); font-weight: 600; }
+  label { cursor: pointer; user-select: none; white-space: nowrap; }
+  /* segmented control: the two ORDINAL axes (containment depth, arrow decomposition) read as one
+     scale each, not as a row of independent booleans */
+  .seg { display: inline-flex; border: 1px solid var(--edge); border-radius: var(--radius); overflow: hidden; }
+  .seg button { border: none; border-radius: 0; border-left: 1px solid var(--edge);
+    background: transparent; color: var(--ink-dim); }
+  .seg button:first-child { border-left: none; }
+  .seg button.on { background: var(--btn-hot); color: var(--ink-bright); }
+  #kindsBtn { background: none; border: none; color: var(--ink-faint); text-decoration: underline dotted;
+    padding: 0.25em 0.15em; }
+  #kindsBtn:hover { background: none; color: var(--btn-ink); }
+  .kinds { display: none; background: var(--bg-deep); gap: 1em; }
+  .kinds.open { display: flex; }
+  .kinds .note { color: var(--ink-ghost); font-size: 0.92em; }
+  .sw { width: 2.4em; height: 1.2em; vertical-align: middle; flex: none; }
+  /* the KEY to what is on screen: one entry per selected kind, drawn as the arrow itself and carrying its
+     live count. It replaces both the old static swatch row and the old hardcoded "n import edges" label. */
+  .legend { background: var(--bg-deep); }
+  #legend { display: flex; align-items: center; gap: 1.15em; flex-wrap: wrap; }
+  .legend .key { display: inline-flex; align-items: center; gap: 0.25em; white-space: nowrap; }
+  .legend .key b { color: var(--ink-bright); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .legend .key.zero { opacity: 0.4; }
+  .legend .key.zero b { color: var(--ink-dim); }
+  #caption { color: var(--ink-ghost); font-style: italic; margin-left: auto; text-align: right; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="bar">
-    <strong>{project}</strong> architecture &nbsp;·&nbsp;
-    <span id="nodes">?</span> modules, <span id="edges">?</span> import edges &nbsp;·&nbsp;
-    <button id="expandAll">expand all</button>
-    <button id="collapseAll">collapse all</button>
+  <div class="strip bar">
+    <strong>{project}</strong>
+    <span id="counts">?</span>
+    <span class="spacer"></span>
+    <button id="fold">fold all</button>
     <button id="reset">reset view</button>
-    <span class="hint">click a box = drill one level in · click an open package = fold it · right-click any node = focus (spotlight its deps, dims the rest) · click empty space = clear · arrow [n] = summed import count</span>
+    <button id="helpBtn" title="how to navigate">?</button>
   </div>
-  <!-- An import edge is the coarse OR of every reason one module needs another; these toggles show the
-       finer arrows it decomposes into. Line STYLE carries the split (solid = what a class KNOWS,
-       dashed = what it DOES), so the reading survives greyscale and colour-blindness. -->
-  <div class="filters">
-    <span class="grp"><b>tier</b>
-      <label><input type="checkbox" id="tier-class"> classes</label>
-      <label><input type="checkbox" id="tier-method"> methods</label>
-      <label><input type="checkbox" id="hide-satellites"> hide satellites</label>
+  <div class="strip help" id="help">
+    <kbd>click</kbd> a folded box drills one level in · <kbd>click</kbd> an open package folds it ·
+    <kbd>right-click</kbd> any node focuses it (spotlights its deps, dims the rest) ·
+    <kbd>click</kbd> empty space clears focus · a number on an arrow is the summed import count.
+    Folding is yours — changing depth or arrows keeps it, only <kbd>reset view</kbd> restores the default.
+  </div>
+  <!-- An import edge is the coarse OR of every reason one module needs another. The two segmented controls
+       are the model itself: DEPTH walks the containment tree (module > class > method), ARROWS walks the
+       decomposition (the roll-up, then what a class KNOWS, then what it DOES). Line STYLE carries that same
+       split (solid = knows, dashed = does), so the reading survives greyscale and colour-blindness. -->
+  <div class="strip filters">
+    <span><b>depth</b>
+      <span class="seg" id="depth">
+        <button data-v="module">module</button>
+        <button data-v="class">class</button>
+        <button data-v="method">method</button>
+      </span>
     </span>
-    <span class="grp"><b>arrows</b>
-      <label><input type="checkbox" id="kind-import" checked><span class="swatch" style="border-top:2px solid #5b6b7a"></span>import</label>
-      <label><input type="checkbox" id="kind-inherits"><span class="swatch" style="border-top:2px solid #6f9fd0"></span>inherits</label>
-      <label><input type="checkbox" id="kind-holds"><span class="swatch" style="border-top:2px solid #5fae7f"></span>holds</label>
-      <label><input type="checkbox" id="kind-references"><span class="swatch" style="border-top:2px dotted #7d8590"></span>references</label>
-      <label><input type="checkbox" id="kind-calls"><span class="swatch" style="border-top:2px dashed #c8873b"></span>calls</label>
-      <label><input type="checkbox" id="kind-construct"><span class="swatch" style="border-top:2px dashed #b06ec0"></span>construct</label>
+    <span><b>arrows</b>
+      <span class="seg" id="arrows">
+        <button data-v="imports">imports</button>
+        <button data-v="structure">structure</button>
+        <button data-v="behaviour">behaviour</button>
+      </span>
+      <button id="kindsBtn">per-kind</button>
     </span>
-    <span class="grp"><b>presets</b>
-      <button id="preset-imports">imports only</button>
-      <button id="preset-structure">structure</button>
-      <button id="preset-behaviour">behaviour</button>
-    </span>
+    <span><label><input type="checkbox" id="hide-satellites"> hide satellites</label></span>
+  </div>
+  <!-- The swatches are injected from the same STYLE table the graph is drawn from, so the key cannot drift
+       from the picture — nothing here restates a colour or a dash. -->
+  <div class="strip kinds" id="kinds">
+    <label><input type="checkbox" id="kind-import"><i id="sw-import"></i>import</label>
+    <label><input type="checkbox" id="kind-inherits"><i id="sw-inherits"></i>inherits</label>
+    <label><input type="checkbox" id="kind-holds"><i id="sw-holds"></i>holds</label>
+    <label><input type="checkbox" id="kind-references"><i id="sw-references"></i>references</label>
+    <label><input type="checkbox" id="kind-calls"><i id="sw-calls"></i>calls</label>
+    <label><input type="checkbox" id="kind-construct"><i id="sw-construct"></i>construct</label>
+    <span class="note">an exact kind set — for reading the resolver, not the architecture</span>
+  </div>
+  <!-- what is on screen right now: the drawn tiers, then every selected arrow kind as a SAMPLE of itself
+       plus its live count, then the plain-language meaning of the chosen band -->
+  <div class="strip legend">
+    <span id="legend"></span>
+    <span id="caption"></span>
   </div>
   <div id="cy"></div>
 </div>
