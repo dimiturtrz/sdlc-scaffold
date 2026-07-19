@@ -1,0 +1,20 @@
+import pytest
+
+from __PKG__.memory_store import MemoryStore
+from __PKG__.types import Store, StoreConfig
+
+
+def test_config_carries_capacity_and_namespace():
+    config = StoreConfig(capacity=3, namespace="ns")
+    assert (config.capacity, config.namespace) == (3, "ns")
+
+
+def test_config_is_frozen():
+    with pytest.raises(AttributeError):
+        StoreConfig(capacity=1, namespace="ns").capacity = 2
+
+
+def test_memory_store_satisfies_the_contract_structurally():
+    store: Store = MemoryStore(StoreConfig(capacity=1, namespace="ns"))
+    store.put("a", 1.0)
+    assert store.get("a") == 1.0

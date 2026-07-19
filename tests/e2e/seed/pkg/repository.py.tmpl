@@ -1,0 +1,29 @@
+"""Domain-facing access over a `Store` — HOLDS the contract, never a concrete implementation."""
+
+from __future__ import annotations
+
+from __PKG__.errors import KeyMissingError
+from __PKG__.types import Store
+
+
+class Repository:
+    """Reads and writes domain values through the store contract."""
+
+    def __init__(self, store: Store) -> None:
+        self._store = store
+
+    def load(self, key: str) -> float:
+        """Value for `key`.
+
+        Raises:
+            KeyMissingError: when the store holds no value for `key`.
+        """
+        value = self._store.get(key)
+        if value is None:
+            msg = f"no value stored for {key}"
+            raise KeyMissingError(msg)
+        return value
+
+    def save(self, key: str, value: float) -> None:
+        """Persist `value` under `key` through the contract."""
+        self._store.put(key, value)

@@ -1,0 +1,34 @@
+import pytest
+
+from __PKG__.errors import KeyMissingError
+from __PKG__.repository import Repository
+
+
+class FakeStore:
+    """A test double satisfying `Store` STRUCTURALLY — no subclassing, the Protocol's whole point."""
+
+    def __init__(self) -> None:
+        self.items: dict[str, float] = {}
+
+    def get(self, key: str) -> float | None:
+        return self.items.get(key)
+
+    def put(self, key: str, value: float) -> None:
+        self.items[key] = value
+
+
+def test_save_delegates_to_the_store():
+    store = FakeStore()
+    Repository(store).save("a", 2.0)
+    assert store.items == {"a": 2.0}
+
+
+def test_load_returns_a_stored_value():
+    store = FakeStore()
+    store.put("a", 2.0)
+    assert Repository(store).load("a") == 2.0
+
+
+def test_load_raises_the_domain_error_when_absent():
+    with pytest.raises(KeyMissingError, match="no value stored"):
+        Repository(FakeStore()).load("missing")

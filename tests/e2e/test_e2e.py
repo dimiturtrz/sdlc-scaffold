@@ -61,11 +61,10 @@ def test_no_leftover_jinja(project):
 def test_expected_layout(project):
     name, path = project
     pkg = example_pkg(name)
-    assert (path / pkg / "math_ops.py").exists()
-    assert (path / pkg / "pipeline.py").exists()
-    # example tests ship at their STRICT mirror path (tests/unit/<pkg>/test_<name>.py)
-    assert (path / "tests" / "unit" / pkg / "test_math_ops.py").exists()
-    assert (path / "tests" / "unit" / pkg / "test_pipeline.py").exists()
+    # every seeded module ships, each at its STRICT mirror path (tests/unit/<pkg>/test_<name>.py)
+    for module in ("math_ops", "pipeline", "types", "errors", "memory_store", "repository", "service"):
+        assert (path / pkg / f"{module}.py").exists(), f"seed module {module} missing"
+        assert (path / "tests" / "unit" / pkg / f"test_{module}.py").exists(), f"mirror for {module} missing"
     # the analyzers are an INSTALLED package now (sdlc-devtools, pinned by tag) — not vendored source,
     # and neither is the ast-grep/jscpd config (located from the install via `python -m devtools.config`).
     pyproject_dep = (path / "pyproject.toml").read_text()
@@ -80,6 +79,30 @@ def test_expected_layout(project):
     assert "bd (beads)" in (path / "AGENTS.md").read_text()
     # import-linter only ships with >1 package (these combos are single-package -> absent even when enabled)
     assert "[tool.importlinter]" not in (path / "pyproject.toml").read_text()
+
+
+def test_seed_exercises_every_arrow_kind(project):
+    """A0 (bd 4bl.6): the fixture must carry every relationship the class-graph gates read, so the later
+    batches can assert on REAL arrows. Guards the seed against being thinned back out."""
+    name, path = project
+    pkg = example_pkg(name)
+    src = {
+        m: (path / pkg / f"{m}.py").read_text() for m in ("types", "errors", "memory_store", "repository", "service")
+    }
+    # inherits — INTRA-file (both errors in one module) and CROSS-file (memory_store -> errors)
+    assert "class KeyMissingError(StoreError)" in src["errors"], "intra-file inherits pair"
+    assert "class CapacityError(StoreError)" in src["memory_store"], "cross-file inherits"
+    assert f"from {pkg}.errors import StoreError" in src["memory_store"], "cross-file inherits rides an import"
+    # holds — fields typed as the CONTRACT (never a concrete) and as the config satellite
+    assert "def __init__(self, store: Store)" in src["repository"], "holds the Store contract"
+    assert "def __init__(self, config: StoreConfig)" in src["memory_store"], "holds its config"
+    # calls — resolve to the INTERFACE; MemoryStore satisfies Store STRUCTURALLY, never subclassing it
+    assert "self._store.get(key)" in src["repository"] and "self._store.put(key, value)" in src["repository"]
+    assert "class MemoryStore:" in src["memory_store"], "satisfies Store structurally (no subclassing)"
+    # constructs — the CONCRETE is wired in exactly one place (the service), never held by name elsewhere
+    assert "Repository(MemoryStore(config))" in src["service"], "construct -> concrete at the wiring site"
+    # node roles — a primary class plus its satellite config share one file
+    assert "class StoreConfig:" in src["types"] and "class Store(Protocol):" in src["types"]
 
 
 def test_domain_gating(project):
@@ -422,8 +445,17 @@ def test_readme_repo_url_badges_and_arch_link(scaffold, tmp_path_factory):
     # 0hp: repo_url drives README CI + license badges (owner/repo slug) and, with archviz_pages, the live
     # architecture-viewer link (derived https://OWNER.github.io/REPO/architecture/). scp/ssh remotes parse too.
     on = tmp_path_factory.mktemp("readme_on")
-    generate(scaffold, on / "p", {"project_name": "pg", "packages": "pg", "domain": "none",
-                                   "archviz_pages": "true", "repo_url": "git@github.com:me/pg.git"})
+    generate(
+        scaffold,
+        on / "p",
+        {
+            "project_name": "pg",
+            "packages": "pg",
+            "domain": "none",
+            "archviz_pages": "true",
+            "repo_url": "git@github.com:me/pg.git",
+        },
+    )
     readme = (on / "p" / "README.md").read_text(encoding="utf-8")
     assert "github.com/me/pg/actions/workflows/ci.yml/badge.svg" in readme, "CI badge from the parsed slug"
     assert "license-MIT-blue" in readme, "license badge"
@@ -438,7 +470,11 @@ def test_readme_repo_url_badges_and_arch_link(scaffold, tmp_path_factory):
 
     # repo_url but archviz_pages off (compose case) -> badges yes, live link NO (consumer folds it in themselves).
     comp = tmp_path_factory.mktemp("readme_compose")
-    generate(scaffold, comp / "p", {"project_name": "pg", "packages": "pg", "domain": "none", "repo_url": "https://github.com/me/pg"})
+    generate(
+        scaffold,
+        comp / "p",
+        {"project_name": "pg", "packages": "pg", "domain": "none", "repo_url": "https://github.com/me/pg"},
+    )
     r3 = (comp / "p" / "README.md").read_text(encoding="utf-8")
     assert "badge.svg" in r3, "badges still render (repo_url set)"
     assert "github.io" not in r3, "no auto live-link without archviz_pages (compose case)"

@@ -1,0 +1,39 @@
+import pytest
+
+from __PKG__.memory_store import CapacityError, MemoryStore
+from __PKG__.types import StoreConfig
+
+
+def _store(capacity: int = 2, namespace: str = "ns") -> MemoryStore:
+    return MemoryStore(StoreConfig(capacity=capacity, namespace=namespace))
+
+
+def test_put_then_get_roundtrips():
+    store = _store()
+    store.put("a", 1.5)
+    assert store.get("a") == 1.5
+
+
+def test_get_missing_returns_none():
+    assert _store().get("nope") is None
+
+
+def test_namespace_scopes_keys():
+    one, two = _store(namespace="one"), _store(namespace="two")
+    one.put("k", 1.0)
+    assert one.get("k") == 1.0
+    assert two.get("k") is None
+
+
+def test_capacity_evicts_oldest():
+    store = _store(capacity=2)
+    store.put("a", 1.0)
+    store.put("b", 2.0)
+    store.put("c", 3.0)
+    assert store.get("a") is None
+    assert store.get("c") == 3.0
+
+
+def test_non_positive_capacity_rejected():
+    with pytest.raises(CapacityError, match="must be positive"):
+        _store(capacity=0)
