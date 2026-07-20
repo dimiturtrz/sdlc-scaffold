@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import jinja2
+import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tests"))
@@ -140,6 +141,44 @@ def test_the_shipped_devtools_pin_matches_the_package_version():
     assert pin == expected, (
         f"copier.yml ships devtools_ref={pin!r} but sdlc-devtools is {version.group(1)} (expected "
         f"{expected!r}) — every generated project would pin analyzers from the wrong release"
+    )
+
+
+def test_the_template_only_calls_engines_the_pinned_release_actually_has():
+    """The template invokes `python -m devtools.<mod>`; `devtools_ref` decides WHICH devtools a consumer
+    installs. If the template starts calling a module newer than that pin, `copier update` hands them a
+    runner that dies with ModuleNotFoundError on the next lint.
+
+    Not hypothetical: batching the gates behind `devtools.run` (bd f9y.3) landed while devtools_ref still
+    pointed at v1.20.0, which predates run.py. Nothing caught it — the version-agreement test passes when
+    all three homes say 1.20.0, and the e2e cannot see it because it overrides the pin with the
+    working-tree package, so it tests the template against code no consumer has yet.
+
+    Skipped when the pinned tag does not exist, because that is a RELEASE in progress: this PR bumps the
+    version and merging cuts the tag from this very tree, so the modules are there by construction.
+    """
+    referenced = {
+        match.group(1)
+        for path in _RUNNERS.values()
+        for match in re.finditer(r"devtools\.(\w+)", Path(path).read_text(encoding="utf-8"))
+    }
+    ref = copier_default("devtools_ref")
+    probe = ["git", "rev-parse", "-q", "--verify", ref]
+    if subprocess.run(probe, **_CAPTURE).returncode != 0:  # noqa: S603 (fixed git probe)
+        pytest.skip(f"{ref} is not cut yet — this tree becomes it on merge")
+    missing = sorted(
+        module
+        for module in referenced
+        if subprocess.run(  # noqa: S603 (fixed git probe)
+            ["git", "cat-file", "-e", f"{ref}:sdlc-devtools/devtools/{module}.py"],  # noqa: S607 (git on PATH)
+            **_CAPTURE,
+        ).returncode
+        != 0
+    )
+    assert not missing, (
+        f"the template calls devtools.{{{','.join(missing)}}} but the pinned {ref} does not ship them — "
+        f"a consumer's `copier update` would install a runner it cannot execute. Bump the version so the "
+        f"pin names the release that contains them."
     )
 
 
