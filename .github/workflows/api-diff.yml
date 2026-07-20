@@ -8,6 +8,11 @@ name: api-diff
 on:
   push:
     tags: ["v*"]
+  # Dispatchable so `release.yml` can invoke it on the tag it just published: a tag pushed with
+  # GITHUB_TOKEN does not fire `push: tags`, so without this the gate would quietly stop running as soon
+  # as tagging became automatic. Also lets a tag be re-checked by hand. GITHUB_REF_NAME is the tag under
+  # either trigger, so the step below is unchanged.
+  workflow_dispatch:
 
 jobs:
   api-diff:
