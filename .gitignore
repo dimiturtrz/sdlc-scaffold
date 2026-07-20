@@ -5,6 +5,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 uv.lock
+# a coverage run's binary datafile — regenerable measurement output, not source. It had been committed by
+# the `cov` session's first run because nothing here matched it.
+.coverage
 
 # local scratch instance generated from the template for manual poking — regenerable, never committed
 /sdlc_test/

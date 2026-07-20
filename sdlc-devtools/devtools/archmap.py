@@ -31,10 +31,9 @@ import grimp
 
 from devtools._common import ENCODING
 from devtools.arrows import ClassArrows
-from devtools.calls import CONSTRUCT, CallArrows
+from devtools.calls import CallArrows
 from devtools.classes import ClassIndex
 from devtools.resolve import Resolver
-from devtools.trees import Trees
 
 log = logging.getLogger("devtools.archmap")
 
@@ -88,6 +87,9 @@ class Archmap:
 
     def __init__(self, packages: list[str]) -> None:
         self.packages = packages
+        # ONE Resolver for the whole emission (bd 5cg): the class arrows, the call arrows and the method
+        # tier all read the same parsed trees, and each used to walk the source itself.
+        self.resolver = Resolver(packages)
 
     def graph(self) -> grimp.ImportGraph:
         """The combined import graph over ALL marked packages — combined (not per-package like graph.py) so
@@ -114,7 +116,7 @@ class Archmap:
                     "level": "class",
                     "role": role,
                 }
-                for path, records in ClassIndex(self.packages).by_file().items()
+                for path, records in ClassIndex(self.packages, self.resolver.trees).by_file().items()
                 for name, role in records
             ),
             key=lambda n: n["id"],
@@ -124,9 +126,9 @@ class Archmap:
         """The METHOD tier (bd 433.4) — the deepest fold level, so a class can be opened to read its actual
         surface instead of guessing it from the class name.
 
-        Nodes only, no method-level EDGES: the call resolver aggregates per class (bd 4bl.3), so drawing a
-        method->method arrow would mean inventing a precision the graph does not have. Method-level edges
-        arrive with the feature-envy work (bd 4bl.7), which needs that cut anyway.
+        The tier is where the BEHAVIOURAL arrows now terminate (bd f1u.2): a `calls` edge lands on the
+        method it invokes, so opening a class shows what its methods actually do rather than a wall of
+        labels with no connectivity.
         """
         return sorted(
             (
@@ -138,7 +140,7 @@ class Archmap:
                     "level": "method",
                     "role": None,
                 }
-                for path, tree in Trees(self.packages).walk()
+                for path, tree in self.resolver.trees
                 for cls in Resolver.classes_in(tree)
                 for fn in cls.body
                 if isinstance(fn, ast.FunctionDef)
@@ -148,10 +150,17 @@ class Archmap:
 
     def _typed_edges(self) -> list[EdgeRow]:
         """The finer arrows an import edge decomposes into, each tagged with its KIND. Deduped and sorted so
-        the committed diff stays minimal; `weight` is 1 because a kind between two classes is a fact, not a
-        count (the import edge keeps the statement count)."""
-        structural = [(s, d, kind) for s, d, kind in ClassArrows(self.packages).edges()]
-        behavioural = [(s, d, CONSTRUCT if via else kind) for s, d, kind, via in CallArrows(self.packages).edges()]
+        the committed diff stays minimal; `weight` is 1 because a kind between two nodes is a fact, not a
+        count (the import edge keeps the statement count).
+
+        Structural arrows join CLASSES; behavioural arrows are emitted at their finest endpoints — method
+        to method for a call, method to class for a construction. They are emitted ONCE, at that depth,
+        rather than also as a class-level copy: the viewer rolls an arrow up to whichever ancestor is on
+        screen, so a duplicate coarse edge would draw the same fact twice at method depth. That roll-up is
+        the same invariant the import tier already rests on, one tier further down.
+        """
+        structural = [(s, d, kind) for s, d, kind in ClassArrows(self.packages, self.resolver).edges()]
+        behavioural = [(e.source_id, e.target_id, e.kind) for e in CallArrows(self.packages, self.resolver).edges()]
         return [
             {"source": s, "target": d, "weight": 1, "kind": kind}
             for s, d, kind in sorted(set(structural + behavioural))

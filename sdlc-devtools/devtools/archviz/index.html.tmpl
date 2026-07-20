@@ -72,6 +72,7 @@
     <span id="counts">?</span>
     <span class="spacer"></span>
     <button id="fold">fold all</button>
+    <button id="expand">expand all</button>
     <button id="reset">reset view</button>
     <button id="helpBtn" title="how to navigate">?</button>
   </div>
@@ -80,9 +81,11 @@
     <kbd>right-click</kbd> any node focuses it (spotlights its deps, dims the rest) ·
     <kbd>click</kbd> empty space clears focus · a number on an arrow is the summed import count.
     Folding is yours — changing depth or arrows keeps it, only <kbd>reset view</kbd> restores the default.
+    <kbd>fold all</kbd> and <kbd>expand all</kbd> are the two ends of that axis at the current depth.
   </div>
   <!-- An import edge is the coarse OR of every reason one module needs another. The two segmented controls
-       are the model itself: DEPTH walks the containment tree (module > class > method), ARROWS walks the
+       are the model itself: DEPTH walks the containment tree (module > class > public > all — the last two
+       are one method tier, since a class's public surface is a subset of its methods), ARROWS walks the
        decomposition (the roll-up, then what a class KNOWS, then what it DOES). Line STYLE carries that same
        split (solid = knows, dashed = does), so the reading survives greyscale and colour-blindness. -->
   <div class="strip filters">
@@ -90,7 +93,8 @@
       <span class="seg" id="depth">
         <button data-v="module">module</button>
         <button data-v="class">class</button>
-        <button data-v="method">method</button>
+        <button data-v="public">public</button>
+        <button data-v="all">all</button>
       </span>
     </span>
     <span><b>arrows</b>

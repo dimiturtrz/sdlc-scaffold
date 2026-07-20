@@ -1,5 +1,13 @@
 # sdlc-scaffold
 
+[![The architecture viewer rendering sdlc-devtools' own tree — 25 modules, 35 classes and 214 methods as nested boxes, with dashed call and construct arrows running between individual methods](docs/images/architecture-viewer.png)](https://dimiturtrz.github.io/sdlc-scaffold/)
+
+<sub>**The analyzer package mapping itself** — method depth, behavioural arrows. Every box is a container in
+one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved* dependency, not an import. A
+`calls` edge lands on the method that **defines** what was invoked, found by walking the project MRO, so an
+inherited call points at the base where the code actually lives. [Open the live viewer
+→](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
+
 **v1.20** — the guardrails now reach **below the import graph**. An import edge is the coarse OR of every
 reason one module needs another; it decomposes into typed class-level arrows (`inherits`, `holds`,
 `references`, `calls`, `construct`) that say *what kind* of dependency it is, which is what lets a rule
@@ -51,28 +59,20 @@ to fire (R1 unit / R2 module / R3 system — the structural mirror of the test p
 Each tier sees things the tiers below it structurally cannot, and the gradient tracks cost-to-fix and
 blast-radius — a magic number is a local nit; an import cycle is architectural debt.
 
-```
-        ┌────────────────────────────────────────────────────┐
-  R3    │  ACROSS THE SYSTEM GRAPH    (whole corpus)          │
- system │  Structure  — cycles · fan-in/out · layering ·      │
-        │               test-mirror (Correctness) · god-file · │
-        │               data clumps                            │
-        │  Minimality — cross-file dup · vocab drift · dead    │
-        ├────────────────────────────────────────────────────┤
-  R2    │  WITHIN A MODULE / CLASS    (one file, self-cont.)  │
- module │  Structure  — LCOM cohesion · latent shared state ·  │
-        │               class roles (one subject / file)       │
-        ├────────────────────────────────────────────────────┤
-  R1    │  WITHIN A LINE / FUNCTION   (one construct)         │
-  unit  │  Correctness — real-bug lints · types · shapes      │
-        │  Structure   — cyclomatic complexity · demeter depth │
-        │  Minimality  — magic values                         │
-        │  Consistency — style / naming                       │
-        └────────────────────────────────────────────────────┘
-   ⟂  Security      (supply-chain): ruff S unsafe-construct · pip-audit known-CVE
-   ⟂  Completeness  (math: all required subcases) — ABSENT, no requirements spec; coverage floors
-                    test presence under Correctness, not requirement-completeness
-```
+Widest radius first, so the many-cheap base sits at the bottom:
+
+| Radius | Minimum it must read | Axis — and what only that radius can catch |
+|:--|:--|:--|
+| **R3** · system | across the system graph<br>*(whole corpus)* | **Structure** — cycles · fan-in/out · layering · test-mirror *(Correctness)* · god-file · data clumps<br>**Minimality** — cross-file dup · vocab drift · dead |
+| **R2** · module | within a module / class<br>*(one file, self-contained)* | **Structure** — LCOM cohesion · latent shared state · class roles *(one subject / file)* |
+| **R1** · unit | within a line / function<br>*(one construct)* | **Correctness** — real-bug lints · types · shapes<br>**Structure** — cyclomatic complexity · demeter depth<br>**Minimality** — magic values<br>**Consistency** — style / naming |
+
+Two axes are **orthogonal** to the radii — they cut across every tier instead of belonging to one:
+
+- **Security** *(supply-chain)* — ruff `S` · unsafe-construct · `pip-audit` known-CVE
+- **Completeness** *(math: all required subcases)* — **absent**, and deliberately named rather than quietly
+  omitted: there is no requirements spec to check against. Coverage floors test *presence* under
+  Correctness, which is a different claim from requirement-completeness.
 
 Running many small checks instead of one is the point: a linter reading a single line can't see an import
 cycle; a cycle-checker can't see a one-way forbidden dependency; neither sees a class whose methods split

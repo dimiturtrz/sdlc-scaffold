@@ -26,7 +26,6 @@ import logging
 from devtools.cli import Cli
 from devtools.names import Names
 from devtools.resolve import Resolver
-from devtools.trees import Trees
 
 log = logging.getLogger("devtools.arrows")
 
@@ -39,9 +38,11 @@ _INIT = "__init__"
 class ClassArrows:
     """Structural class->class arrows (inherits / holds / references) over the root packages."""
 
-    def __init__(self, packages: list[str]) -> None:
+    def __init__(self, packages: list[str], resolver: Resolver | None = None) -> None:
         self.packages = packages
-        self.resolver = Resolver(packages)
+        # A sibling engine's Resolver may be handed in (bd 5cg): it already carries the parsed trees, so
+        # sharing it collapses the repeated walks a single gate run used to make.
+        self.resolver = resolver if resolver is not None else Resolver(packages)
 
     @staticmethod
     def field_types(cls: ast.ClassDef) -> set[str]:
@@ -62,9 +63,17 @@ class ClassArrows:
         return names
 
     def edges(self) -> list[tuple[str, str, str]]:
-        """[(source class, target class, kind)] — every resolvable structural arrow between classes we own."""
+        """[(source class, target class, kind)] — every resolvable structural arrow between classes we own.
+
+        SELF-ARROWS ARE EMITTED (bd a0a). A class holding an instance of itself is a recursive data
+        structure — a tree node, a linked list, a Composite — and it was previously filtered out, which
+        made self-composition invisible in the object graph rather than excluded on purpose. An arrow is a
+        FACT about the source; whether a given shape is a defect is a question for a gate, and
+        `composition.py` states its own boundary: a mutual cycle between two classes blocks, a self-loop
+        does not, because recursion through your own type is a legitimate shape and mutual ownership is not.
+        """
         out: list[tuple[str, str, str]] = []
-        for path, tree in Trees(self.packages).walk():
+        for path, tree in self.resolver.trees:
             scope = Resolver.scope_of(path, tree)
             for cls in Resolver.classes_in(tree):
                 src = f"{scope.module}.{cls.name}"
@@ -74,7 +83,7 @@ class ClassArrows:
                     (HOLDS, held),
                     (REFERENCES, self.signature_types(cls) - held),
                 ):
-                    out += [(src, target, kind) for target in self.resolver.resolve_all(names, scope, src)]
+                    out += [(src, target, kind) for target in self.resolver.resolve_all(names, scope)]
         return out
 
     def report(self) -> str:

@@ -50,7 +50,14 @@ class CompositionCycles:
         return sorted(map(str, component))
 
     def cycles(self) -> list[str]:
-        """Every mutually-composing group — each reported once, members sorted for a stable message."""
+        """Every mutually-composing group — each reported once, members sorted for a stable message.
+
+        A SELF-LOOP does not block, and that is now a stated boundary rather than an accident (bd a0a).
+        `holds` emits self-arrows, so a class owning an instance of its own type does reach this graph —
+        but a tree node, a linked list and a Composite are all exactly that shape and all ordinary designs.
+        What cannot be built is MUTUAL ownership, so `len(component) > 1` is the rule itself and not a
+        convenience: a recursive type can be constructed and tested alone, a mutually-recursive pair cannot.
+        """
         return [
             f"composition cycle: {' -> '.join([*self._names(component), self._names(component)[0]])} — "
             f"neither can be built or tested without the other; break the loop with an interface or an owner"

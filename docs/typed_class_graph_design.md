@@ -23,12 +23,14 @@ Every class→class relationship, UML-grounded:
 | `import` | file → file | **file** | grimp | the roll-up projection (below); sound |
 | `inherits` | class → class | **class** | ast bases | is-a (subclass / ABC / Protocol) |
 | `holds` | class → class | **class** | ast field annotations | has-a (`self.repo: UserRepo`) — composition + resolver fuel |
-| `calls` | method → method | **method** | ast Call + declared receiver | uses behavior; `via=construct` sub-tag = `B()` creation |
-| `references` | method → class | **method** | ast signature annotations | API-surface dep; **kept as attribute, ungated** (rarely pure, low signal) |
+| `calls` | method → method | **method** | ast Call + declared receiver + project MRO | uses behavior; the target is the class that DEFINES the method, not the receiver's declared type (bd f1u.2) |
+| `construct` | method → class | **method** | ast Call naming a class | `B()` creation. Was a `via=` sub-tag on `calls`; now its own kind, because it is the one behavioural arrow that lands on the class as a whole (constructing is `__init__`) |
+| `references` | class → class | **class** | ast signature annotations | API-surface dep; **kept as attribute, ungated** (rarely pure, low signal). Emitted at CLASS level — the design's method-level endpoint buys nothing for an ungated attribute |
 
-Sound *modulo reflection* (the `calls` residual, below). **Folded:** `constructs` → a `via=construct`
-sub-tag on `calls` (mechanically a call to `__init__`; still queried separately for the concrete-wiring
-partition). **Demoted:** `references` computed but ungated until a real need. `raises`/`catches`/`decorates`
+Sound *modulo reflection* (the `calls` residual, below). **Unfolded:** `construct` began as a `via=` sub-tag
+on `calls` and is now its own kind — once `calls` gained a method endpoint the two stopped sharing a shape,
+since a construction is the only behavioural arrow that lands on the class itself. **Demoted:** `references`
+computed but ungated until a real need. `raises`/`catches`/`decorates`
 — deferred. So **four gated kinds**: `import` · `inherits` · `holds` · `calls`.
 
 ## Levels and roll-up — import is the coarsest projection

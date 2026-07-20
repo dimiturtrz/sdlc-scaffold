@@ -119,6 +119,30 @@ def test_the_readme_headline_version_matches_the_package():
     )
 
 
+def test_the_shipped_devtools_pin_matches_the_package_version():
+    """`devtools_ref` is the ONLY thread joining a consumer to an analyzer release — it renders into every
+    generated pyproject as `sdlc-devtools @ git+...@{ref}`. copier.yml already STATES the rule ("Must track
+    the tag the matching sdlc-devtools/ was published at"); nothing enforced it, so the pin shipped naming a
+    v1.20.0 tag that did not exist, and any `copier update` would have written a project whose `uv sync`
+    cannot resolve its own analyzers.
+
+    The e2e cannot catch this by construction: it injects a `[tool.uv.sources]` override so a generated
+    project builds the LOCAL package instead of fetching the ref. That is right for testing unreleased code,
+    and it is precisely why the pin is never resolved by anything the suite runs — so it is checked here.
+
+    Only that the two AGREE. Whether the tag is published is release-time, and `release.yml` settles it by
+    deriving the tag from this same version on merge.
+    """
+    package = (REPO / "sdlc-devtools" / "pyproject.toml").read_text(encoding="utf-8")
+    version = re.search(r'^version = "([^"]+)"', package, re.M)
+    assert version, "sdlc-devtools/pyproject.toml must declare a version"
+    pin, expected = copier_default("devtools_ref"), f"v{version.group(1)}"
+    assert pin == expected, (
+        f"copier.yml ships devtools_ref={pin!r} but sdlc-devtools is {version.group(1)} (expected "
+        f"{expected!r}) — every generated project would pin analyzers from the wrong release"
+    )
+
+
 def test_every_structure_key_the_template_ships_is_known_to_the_reader():
     """[tool.structure] is validated on load — an unknown key RAISES so a typo cannot silently leave a gate
     at its default. That makes this relationship load-bearing: a key added to the template but not to

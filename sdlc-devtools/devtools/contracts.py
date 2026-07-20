@@ -34,6 +34,7 @@ from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
 from devtools.calls import CALLS, CONSTRUCT, CallArrows
 from devtools.cli import Cli
 from devtools.pyproject import Pyproject
+from devtools.resolve import Resolver
 
 log = logging.getLogger("devtools.contracts")
 
@@ -74,10 +75,13 @@ class UseContracts:
         return out
 
     def edges(self) -> list[tuple[str, str, str]]:
-        """Every arrow, structural and behavioural, as (source, target, kind) with `construct` split out."""
-        structural = ClassArrows(self.packages).edges()
-        behavioural = [(s, d, CONSTRUCT if via else kind) for s, d, kind, via in CallArrows(self.packages).edges()]
-        return structural + behavioural
+        """Every arrow, structural and behavioural, as (source, target, kind).
+
+        ONE Resolver, built once and shared (bd 5cg). Both engines resolve names over the same tree, and
+        each used to build its own — so evaluating contracts parsed every source file twice for no reason.
+        """
+        resolver = Resolver(self.packages)
+        return ClassArrows(self.packages, resolver).edges() + CallArrows(self.packages, resolver).class_edges()
 
     @staticmethod
     def _under(qualified: str, prefix: str) -> bool:

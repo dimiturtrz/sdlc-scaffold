@@ -5,11 +5,16 @@
  * you fold/expand — a cytoscape compound with all children hidden renders zero-size, so a folded node must
  * be a genuinely childless leaf box. Layout = fcose (compound-aware) with a cose fallback.
  *
- * graph.json carries THREE tiers: modules joined by imports, beneath them classes joined by the typed
- * arrows an import decomposes into (bd 433.1), and beneath those the methods (bd 433.4, nodes only).
+ * graph.json carries THREE tiers: modules joined by imports, beneath them classes joined by the STRUCTURAL
+ * arrows an import decomposes into (bd 433.1), and beneath those the methods, where the BEHAVIOURAL arrows
+ * terminate (bd 433.4 / f1u.2 — a call lands on the method it invokes).
+ *
+ * Every arrow is emitted ONCE, at its finest depth, and rolls UP to whichever ancestor is on screen. So the
+ * class view is a projection of the method view rather than a second copy of it, exactly as the import tier
+ * is a projection of both.
  *
  * The controls are the MODEL, not one boolean per implementation detail. Both axes are ordinal:
- *   DEPTH   walks the containment tree      module > class > method   (each tier needs the one above it)
+ *   DEPTH   walks the containment tree      module > class > public > all   (each stop needs the one above)
  *   ARROWS  walks the decomposition         imports > structure > behaviour
  * Line STYLE carries the same knows/does split as ARROWS — SOLID = what a class KNOWS (import/inherits/
  * holds/references), DASHED = what it DOES (calls/construct) — so the reading survives greyscale and
@@ -18,8 +23,20 @@
  */
 (async () => {
   cytoscape.use(window.cytoscapeFcose);
-  const FCOSE = { name: 'fcose', quality: 'proof', animate: false, randomize: true, packComponents: true,
-    nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.1, gravity: 0.25, numIter: 2500, tile: true };
+  // `randomize` is deliberately absent: it is a per-RUN decision, not a constant (see relayout).
+  // `tile` was carried over from cose-bilkent and is not an fcose option at all — it did nothing.
+  // `packComponents: true` was passed explicitly while already being the default; also dropped.
+  // `nestingFactor` feeds PER_LEVEL_IDEAL_EDGE_LENGTH_FACTOR, which LENGTHENS an edge that crosses compound
+  // boundaries, scaled by how many levels it crosses. It is the only force holding two boxes apart, and at
+  // the stock 0.1 a cross-module method->method edge earned about 48px of separation for two whole module
+  // boxes — so they simply sat on top of each other, worse the deeper the tier. Scaling with depth is the
+  // right shape (the deeper stops need more room); the coefficient was just far too small.
+  const FCOSE = { name: 'fcose', quality: 'proof', animate: false,
+    nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.8, gravity: 0.25, numIter: 2500,
+    // Our nodes are sized to their text (`width: 'label'`) and a compound draws its own label above its
+    // children. fcose measures raw boxes unless told otherwise, so without this it packs siblings into
+    // each other's labels — which is most of the overlap between module boxes.
+    nodeDimensionsIncludeLabels: true };
 
   // ONE table owns every per-kind fact: how the arrow is drawn, and which band it belongs to. The cytoscape
   // stylesheet, the legend swatches and the band membership are all derived from it, so a colour cannot
@@ -46,8 +63,15 @@
     behaviour: 'what a class DOES — the traffic it generates at runtime, drawn dashed',
   };
 
-  const DEPTHS = ['module', 'class', 'method'];
+  // DEPTH stops are ORDINAL, and `public` / `all` are two stops on the same METHOD tier rather than a new
+  // axis: public methods are a strict subset of all methods, so walking one stop further only ever adds
+  // nodes. That is what keeps this a single scale instead of a tier control plus a private-methods
+  // checkbox — `public` shows a class's SURFACE, `all` opens its internals (where a public method calling
+  // its own private helper is the structure worth seeing).
+  const DEPTHS = ['module', 'class', 'public', 'all'];
+  const LEVELS = ['module', 'class', 'method'];   // the node tiers graph.json actually carries
   const PLURAL = { module: 'modules', class: 'classes', method: 'methods' };
+  const isPrivate = (n) => n.label.startsWith('_');
   const RAW = await (await fetch('./graph.json')).json();
   const $ = (id) => document.getElementById(id);
 
@@ -112,7 +136,8 @@
   }
   function readFilters() {
     const d = DEPTHS.indexOf(depth);
-    return { classes: d >= 1, methods: d >= 2, hideSatellites: $('hide-satellites').checked, kinds: kinds() };
+    return { classes: d >= 1, methods: d >= 2, privates: d >= 3,
+      hideSatellites: $('hide-satellites').checked, kinds: kinds() };
   }
   function paintSeg(id, value) {
     for (const b of $(id).children) b.classList.toggle('on', b.dataset.v === value);
@@ -127,14 +152,33 @@
       if (level === 'module') return true;
       // a METHOD hangs off a class, so it needs that class present — showing methods with the class tier
       // off would orphan them. Depth being ordinal makes that structural instead of a checkbox pairing.
-      if (level === 'method') return f.classes && f.methods;
+      if (level === 'method') return f.classes && f.methods && (f.privates || !isPrivate(n));
       return f.classes && !(f.hideSatellites && n.role === 'satellite');
     });
     const present = new Set(nodes.map((n) => n.id));
-    // an edge is drawn only when BOTH endpoints survive the depth filter — otherwise a class-level arrow
-    // would dangle off a hidden node
-    const edges = RAW.edges.filter(
-      (e) => f.kinds.has(e.kind || 'import') && present.has(e.source) && present.has(e.target));
+    // An arrow ROLLS UP to whichever ancestor is on screen rather than vanishing with its endpoint. A
+    // `calls` edge is emitted once, at its finest depth (method -> method), so dropping it whenever a
+    // method is filtered out would make the behaviour bands empty at class depth — and emitting a second,
+    // coarser copy would draw the same fact twice once methods are shown. Climbing is the same fold the
+    // import tier already rests on: project an arrow's endpoints upward and you land on the coarser edge.
+    const climb = (id) => {
+      let at = id;
+      while (at && !present.has(at)) at = at.includes('.') ? at.slice(0, at.lastIndexOf('.')) : null;
+      return at;
+    };
+    // an id CONTAINS another when it is a dotted prefix of it — `pkg.mod.A` contains `pkg.mod.A.go`
+    const contains = (outer, inner) => inner.startsWith(outer + '.');
+    const edges = RAW.edges
+      .filter((e) => f.kinds.has(e.kind || 'import'))
+      .map((e) => ({ ...e, source: climb(e.source), target: climb(e.target),
+        // a GENUINE self-arrow (a class holding its own type) is a real shape and stays drawable; a pair
+        // that merely climbed onto the same ancestor is internal detail at this depth and must not
+        loop: e.source === e.target }))
+      .filter((e) => e.source && e.target)
+      // ...and neither may an arrow that climbed onto its own ANCESTOR. At `public` depth a call to a
+      // private helper loses its target, which would otherwise climb to the calling class and draw a
+      // method pointing at the box it already sits inside. Containment is not a dependency.
+      .filter((e) => !contains(e.source, e.target) && !contains(e.target, e.source));
     GRAPH = { nodes, edges };
     PARENT = {}; KIDS = {}; DESC = {};
     for (const n of nodes) {
@@ -152,7 +196,7 @@
   // carrying how many of it are on screen. A kind at ZERO stays listed but dims — "structure shows nothing"
   // and "structure found no inheritance" are different answers, and only the second one is useful.
   function paintLegend(nodes, edges) {
-    const tiers = DEPTHS
+    const tiers = LEVELS
       .map((k) => [k, nodes.filter((n) => (n.level || 'module') === k).length])
       .filter(([, n]) => n > 0)
       .map(([k, n]) => `${n} ${n === 1 ? k : PLURAL[k]}`);
@@ -197,9 +241,12 @@
         label: 'data(label)', 'font-size': 11, 'text-valign': 'center', color: '#e6e6e6',
         'background-color': '#3b5b7a', 'border-width': 1, 'border-color': '#6f9fd0', shape: 'round-rectangle',
         width: 'label', padding: 6, 'text-wrap': 'wrap' } },
+      // A compound's label sits ABOVE its children (`text-valign: top`), so the padding is not decoration —
+      // it is the strip the label lives in. At 10 the title was overlapping the topmost child inside its
+      // own box, and a sibling box could be packed into that same strip from outside.
       { selector: 'node:parent', style: {
         'background-color': '#1c2a3a', 'background-opacity': 0.5, 'border-color': '#4a6a8a',
-        'text-valign': 'top', 'font-size': 13, color: '#9fc4ef', padding: 10 } },
+        'text-valign': 'top', 'text-margin-y': -4, 'font-size': 13, color: '#9fc4ef', padding: 18 } },
       { selector: 'node.collapsed', style: {
         'background-color': '#2e4a66', 'background-opacity': 1, 'text-valign': 'center', 'font-size': 12,
         color: '#dce8f5', label: (e) => e.data('label') + '  (' + e.data('descendants') + ')' } },
@@ -234,21 +281,62 @@
 
   let focused = null;
 
+  // ---- position memory --------------------------------------------------------------------------------
+  // Fold and filter state already SURVIVE a rebuild; position did not, which undid most of that benefit —
+  // the arrangement you had just read was thrown away every time you touched a control.
+  const POS = {};
+  let lastDepth = null;
+
+  // Seeds for the nodes about to be added. An incremental run skips fcose's global placement phase and only
+  // relaxes forces from where things already are, so WHERE new nodes start is the whole game — and my first
+  // attempt started every new sibling within ±30px of its parent. Coincident nodes give a force layout no
+  // direction to push apart in, so it could not recover, which is what turned the deep tiers into soup.
+  function seedPositions(nodes) {
+    const seeds = {}, fresh = new Map();
+    for (const n of nodes) {
+      if (POS[n.id]) { seeds[n.id] = { ...POS[n.id] }; continue; }
+      const parent = PARENT[n.id] || '';
+      if (!fresh.has(parent)) fresh.set(parent, []);
+      fresh.get(parent).push(n.id);
+    }
+    for (const [parent, ids] of fresh) {
+      const at = POS[parent];
+      if (!at) continue;                            // nothing to anchor on — let the layout place them
+      // A RING, sized so the siblings do not start on top of each other. Opening a class puts its methods
+      // in a circle around it, which is a non-degenerate start the force pass can actually improve on.
+      const radius = Math.max(80, (ids.length * 70) / (2 * Math.PI));
+      ids.forEach((id, i) => {
+        const angle = (2 * Math.PI * i) / ids.length;
+        seeds[id] = { x: at.x + radius * Math.cos(angle), y: at.y + radius * Math.sin(angle) };
+      });
+    }
+    return seeds;
+  }
+
   // Rebuild the whole view from `collapsed`. A node is present iff no ancestor is folded, so a folded node
   // is present but childless (a leaf box); its descendants are absent. Edges aggregate per visible pair AND
   // KIND — folding must not merge a `calls` into an `import`, or the colour would lie.
   function refresh() {
     focused = null;
+    // Remember where everything sat BEFORE tearing the graph down. Rebuilding removes and re-adds every
+    // element, so without this there are no positions for an incremental layout to improve on and each
+    // change re-solved from a random seed — which is what made a depth change reshuffle the whole picture.
+    cy.nodes().forEach((n) => { POS[n.id()] = { ...n.position() }; });
     cy.elements().remove();
     const nodes = GRAPH.nodes.filter((n) => inV(n.id));  // sorted dotted order -> parents precede children
-    cy.add(nodes.map((n) => ({ group: 'nodes', data: {
-      id: n.id, label: n.label, descendants: DESC[n.id], level: n.level || 'module', role: n.role || null,
-      parent: (PARENT[n.id] && inV(PARENT[n.id])) ? PARENT[n.id] : undefined } })));
+    const seeds = seedPositions(nodes);
+    cy.add(nodes.map((n) => ({ group: 'nodes',
+      data: {
+        id: n.id, label: n.label, descendants: DESC[n.id], level: n.level || 'module', role: n.role || null,
+        parent: (PARENT[n.id] && inV(PARENT[n.id])) ? PARENT[n.id] : undefined },
+      ...(seeds[n.id] ? { position: seeds[n.id] } : {}) })));
     nodes.forEach((n) => { if (collapsed.has(n.id)) cy.getElementById(n.id).addClass('collapsed'); });
     const agg = {};
     for (const e of GRAPH.edges) {
       const s = rep(e.source), t = rep(e.target);
-      if (s === t) continue;
+      // A self-arrow survives only where it is genuinely one AND the box is open. Folded, it would claim a
+      // package owns itself when what it really holds is one recursive class inside.
+      if (s === t && (!e.loop || collapsed.has(s))) continue;
       const key = s + '|' + t + '|' + (e.kind || 'import');
       agg[key] = (agg[key] || 0) + (e.weight || 1);
     }
@@ -259,10 +347,72 @@
     relayout();
   }
 
-  function relayout() {
-    try { cy.layout(FCOSE).run(); }
-    catch (e) { console.warn('fcose failed -> cose', e); cy.layout({ name: 'cose', animate: false }).run(); }
+  // ---- parking the edgeless ---------------------------------------------------------------------------
+  // A force layout has NOTHING to place a node with no edges: repulsion pushes it away and only weak
+  // gravity pulls back, so it drifts until its parent box stretches to bound it. That is the whole reason
+  // `archmap` rendered as a mostly-empty box around three TypedDicts — the box was sized correctly, its
+  // children were placed badly. cose-bilkent had `tile` for exactly this and fcose has no equivalent, so
+  // this is that: tuck the edgeless into a tidy block under the part of the box that has structure.
+  //
+  // Deliberately only the EDGELESS. Gridding every child would scramble the intra-class calls, which are
+  // most of the arrows at the deepest stop and the reason that stop exists — physics places those well.
+  const PARK_GAP = 24;
+
+  function parkEdgeless() {
+    const groups = new Map();
+    cy.nodes().forEach((n) => {
+      if (n.isParent() || n.degree(false) > 0) return;     // a box, or something with structure to hold it
+      const key = n.parent().empty() ? '' : n.parent().id();
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(n);
+    });
+    for (const [key, loose] of groups) {
+      const siblings = key ? cy.getElementById(key).children() : cy.nodes().filter((n) => n.parent().empty());
+      const looseIds = new Set(loose.map((n) => n.id()));
+      const anchored = siblings.filter((n) => !looseIds.has(n.id()));
+      // Anchor UNDER the connected cluster, so the reading order is structure first, companions beneath.
+      // With nothing connected to anchor to, tidy them where they already are rather than dragging the
+      // whole group across the graph to sit under something unrelated.
+      const under = anchored.nonempty();
+      const box = under ? anchored.boundingBox() : cy.collection(loose).boundingBox();
+      const cellW = Math.max(...loose.map((n) => n.outerWidth())) + PARK_GAP;
+      const cellH = Math.max(...loose.map((n) => n.outerHeight())) + PARK_GAP;
+      // match the block's width to the cluster it sits under, so it reads as belonging to it
+      const cols = Math.max(1, Math.min(loose.length, Math.round(box.w / cellW) || 1));
+      const top = under ? box.y2 + PARK_GAP : box.y1;
+      loose.forEach((n, i) => n.position({
+        x: box.x1 + (i % cols) * cellW + cellW / 2,
+        y: top + Math.floor(i / cols) * cellH + cellH / 2,
+      }));
+    }
+  }
+
+  // Parking runs after the layout SETTLES, not after run() returns — fcose reports completion by event, and
+  // repositioning mid-solve would just be overwritten.
+  function settle() {
+    parkEdgeless();
     cy.fit(cy.elements(), 40);
+  }
+
+  function relayout() {
+    // Randomize ONCE. The first layout has nothing to improve on; every later one starts from positions the
+    // reader has already made sense of, so it should ADJUST the picture rather than re-solve it.
+    // Reseed when the DEPTH STOP changes, and only then. That is the semantic line rather than a threshold
+    // on how many nodes moved: a new depth is a different KIND of picture and deserves a fresh solve, while
+    // folding a package or switching arrow bands is the same picture rearranged — and folding is the main
+    // way this thing is read, so it is exactly where the reader's arrangement must survive.
+    const reseed = depth !== lastDepth;
+    lastDepth = depth;
+    try {
+      const layout = cy.layout({ ...FCOSE, randomize: reseed });
+      layout.one('layoutstop', settle);
+      layout.run();          // fcose throws HERE, not on construction — so the fallback must cover the run
+    } catch (e) {
+      console.warn('fcose failed -> cose', e);
+      const fallback = cy.layout({ name: 'cose', animate: false });
+      fallback.one('layoutstop', settle);
+      fallback.run();
+    }
   }
 
   // the ONLY redraw path that preserves fold state — every control except `reset view` goes through here
@@ -333,12 +483,24 @@
     GRAPH.nodes.filter((n) => !PARENT[n.id] && DESC[n.id] > 0).forEach((n) => collapsed.add(n.id));
     refresh();
   };
+  // The other end of the same axis: nothing folded, so the current depth stop is shown in full. `seen` is
+  // marked so applyDefaultFold cannot re-fold a root the next time a control is touched — otherwise the
+  // very next toggle would quietly undo this.
+  $('expand').onclick = () => {
+    collapsed.clear();
+    GRAPH.nodes.forEach((n) => seen.add(n.id));
+    refresh();
+  };
   $('reset').onclick = () => {
     depth = 'module'; band = 'imports';
     paintSeg('depth', depth); paintSeg('arrows', band);
     KINDS.forEach((k) => { $('kind-' + k).checked = BANDS.imports.includes(k); });
     $('hide-satellites').checked = false;
     collapsed.clear(); seen.clear();
+    // position is reading state exactly like folding is, so the control that restores the default view
+    // clears it too — otherwise `reset` would rebuild the default graph in the arrangement you just left
+    Object.keys(POS).forEach((id) => delete POS[id]);
+    lastDepth = null;   // no previous stop to match, so `reset` always solves fresh
     apply();
   };
 

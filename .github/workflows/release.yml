@@ -1,0 +1,62 @@
+# The tag is a CONSEQUENCE of merging, not a step anyone has to remember. Both release defects this guards
+# against were memory failures, not bad luck: v1.19.1 was tagged off a branch that was then deleted (so it
+# is not reachable from main at all), and copier.yml shipped `devtools_ref: v1.20.0` while no such tag
+# existed — any consumer running `copier update` would have received a pyproject whose `uv sync` cannot
+# resolve its own analyzers.
+#
+# `sdlc-devtools/pyproject.toml`'s version is the SINGLE source. Bump it in the PR — a unit test holds both
+# the README headline and copier.yml's `devtools_ref` to it — and merging publishes the matching tag.
+# Forgetting to bump is a safe failure: the tag already exists, this no-ops, and consumers stay coherently
+# on the previous pin rather than pointing at something unpublished.
+name: release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create and push the tag
+  actions: write    # dispatch api-diff — see the note on its step
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history AND tags, or an already-published tag looks absent
+
+      - name: Read the version the package declares
+        id: version
+        run: |
+          version=$(grep -m1 '^version = ' sdlc-devtools/pyproject.toml | cut -d'"' -f2)
+          [ -n "$version" ] || { echo "::error::no version found in sdlc-devtools/pyproject.toml"; exit 1; }
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the tag, unless it is already published
+        id: tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "::notice::${TAG} is already published — nothing to release"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git tag "${TAG}"
+          git push origin "${TAG}"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::published ${TAG}"
+
+      # A tag pushed using GITHUB_TOKEN does NOT trigger workflows listening on `push: tags` — GitHub
+      # suppresses that to stop workflows recursing. api-diff is the release's breaking-change gate, so
+      # automating the tag would have silently stopped it running: exactly the failure this repo treats as
+      # a bug, since a gate that does not run is indistinguishable from a clean result. Hence the explicit
+      # dispatch. api-diff reads GITHUB_REF_NAME, which is the tag under `workflow_dispatch --ref` too.
+      - name: Run the breaking-API gate against the new tag
+        if: steps.tag.outputs.created == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: gh workflow run api-diff.yml --ref "${TAG}"

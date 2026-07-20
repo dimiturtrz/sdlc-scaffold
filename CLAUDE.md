@@ -22,6 +22,15 @@ bd close <id>         # Complete work
 - Run `bd prime` for detailed command reference and session close protocol
 - Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
 
+## Releasing
+
+Releases tag **themselves**. `.github/workflows/release.yml` reads the version from
+`sdlc-devtools/pyproject.toml` on every merge to `main` and publishes the matching `v{version}` tag.
+
+So: bump that version in the PR, and merge. **Never hand-roll a tag** — that is how `v1.19.1` ended up
+pointing at a deleted branch, unreachable from `main`. A unit test holds the README headline and
+copier.yml's `devtools_ref` to the same version, so all three move together or CI goes red.
+
 ## Session Completion
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.

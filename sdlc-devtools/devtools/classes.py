@@ -47,8 +47,12 @@ _DATA_BASES = {"BaseModel", "NamedTuple", "TypedDict"}
 class ClassIndex:
     """Every class under the root packages, grouped by file and tagged with its role."""
 
-    def __init__(self, packages: list[str]) -> None:
+    def __init__(self, packages: list[str], trees: list[tuple[Path, ast.Module]] | None = None) -> None:
         self.packages = packages
+        # The parsed trees may be handed in by a caller that already walked the source (bd 5cg). This
+        # engine takes the TREES rather than a Resolver, because the walk is all it ever needed — asking
+        # for the resolver would make a standalone run build a name index it never reads.
+        self.trees = trees if trees is not None else list(Trees(packages).walk())
 
     @staticmethod
     def _is_error(cls: ast.ClassDef) -> bool:
@@ -134,7 +138,7 @@ class ClassIndex:
 
     def by_file(self) -> dict[Path, list[tuple[str, str]]]:
         """{file: [(class-name, role)]} across the root packages — the containment tree's class tier."""
-        return {path: self.classify(tree) for path, tree in Trees(self.packages).walk()}
+        return {path: self.classify(tree) for path, tree in self.trees}
 
     def multi_primary(self) -> list[str]:
         """Files defining more than one PRIMARY class — two subjects in one module, split them."""

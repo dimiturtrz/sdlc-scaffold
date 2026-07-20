@@ -8,6 +8,18 @@ name: api-diff
 on:
   push:
     tags: ["v*"]
+  # ALSO on every PR that touches the package, comparing the branch against the newest tag. On a tag this
+  # check necessarily speaks AFTER the tag exists, so a break it finds there belongs to a release already
+  # cut — its own promise to "force the releaser to set the version accordingly" was unachievable, because
+  # the version was chosen two steps earlier. On a PR the annotation lands while the major/minor decision
+  # is still open, which is the only moment it can inform anything. Advisory either way: an intended break
+  # must not block a merge. The value here is timing, not blocking.
+  pull_request:
+    paths: ["sdlc-devtools/**"]
+  # Dispatchable so `release.yml` can invoke it on the tag it just published: a tag pushed with
+  # GITHUB_TOKEN does not fire `push: tags`, so without this the gate would quietly stop running as soon
+  # as tagging became automatic. Also lets a tag be re-checked by hand.
+  workflow_dispatch:
 
 jobs:
   api-diff:
@@ -20,6 +32,9 @@ jobs:
       - name: Breaking-API check vs previous tag (sdlc-devtools)
         continue-on-error: true
         run: |
+          # On a tag push the current tag is itself in the list and must be excluded. On a PR the checked-out
+          # tree carries no tag, so nothing is excluded and the newest tag becomes the baseline — which is
+          # exactly the question a PR wants answered: does this branch break what the last release published?
           PREV=$(git tag --sort=-v:refname | grep -vFx "${GITHUB_REF_NAME}" | head -1)
           echo "comparing devtools public API: ${GITHUB_REF_NAME} vs ${PREV:-<none>}"
           [ -z "$PREV" ] && { echo "no previous tag — nothing to diff"; exit 0; }

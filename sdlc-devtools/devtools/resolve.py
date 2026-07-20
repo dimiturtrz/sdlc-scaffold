@@ -9,6 +9,11 @@ The rule is deliberately narrow: a name resolves through the file's OWN classes 
 `from X import Y` bindings. Anything else — a builtin, a third-party type, something built dynamically —
 resolves to nothing and the caller emits no edge. PRECISE BUT INCOMPLETE: never a wrong edge, sometimes a
 missing one, which is what lets a gate fire on an arrow's PRESENCE and still block safely.
+
+Resolution runs one tier deeper than the class: `definer` walks the project MRO to find which class a
+METHOD is actually defined on, so a behavioural arrow can terminate on the code it invokes rather than on
+the receiver's box (bd f1u.2). The walk stops at the project boundary by design — we do not track into
+stdlib or third-party bases — and `leaves_project` reports which side of that boundary a miss fell on.
 """
 
 from __future__ import annotations
@@ -38,7 +43,13 @@ class Resolver:
 
     def __init__(self, packages: list[str]) -> None:
         self.packages = packages
+        # Parsed ONCE and kept (bd 5cg). Every engine standing on this used to build its own Resolver AND
+        # re-walk the tree itself, so a gate run that touches contracts + composition + archmap parsed the
+        # same files four times over. The trees are the resolver's own input anyway; exposing them lets an
+        # engine iterate the source it is already resolving against instead of opening it again.
+        self.trees: list[tuple[Path, ast.Module]] = list(Trees(packages).walk())
         self._homes = self._class_homes()
+        self._methods, self._bases, self._open = self._inheritance()
 
     @staticmethod
     def module_of(path: Path) -> str:
@@ -77,9 +88,73 @@ class Resolver:
         """{(module, class-name): qualified id} — every class we own, so a name can resolve to one."""
         return {
             (self.module_of(path), cls.name): f"{self.module_of(path)}.{cls.name}"
-            for path, tree in Trees(self.packages).walk()
+            for path, tree in self.trees
             for cls in self.classes_in(tree)
         }
+
+    def _inheritance(self) -> tuple[dict[str, frozenset[str]], dict[str, tuple[str, ...]], set[str]]:
+        """The three facts an MRO walk needs: each class's own methods, its IN-PROJECT bases, and whether
+        its base list reaches outside the packages we own.
+
+        That third one is not bookkeeping — it is what makes a resolver miss READABLE (bd f1u.3). A method
+        we cannot find on a class whose every ancestor is ours is a gap in this walk; the same miss on a
+        class deriving from `BaseModel` or `Protocol` is the chain simply leaving the project, which is an
+        expected drop by decision. Without the distinction both look identical and neither can be reported.
+        """
+        methods: dict[str, frozenset[str]] = {}
+        bases: dict[str, tuple[str, ...]] = {}
+        left_project: set[str] = set()
+        for path, tree in self.trees:
+            scope = self.scope_of(path, tree)
+            for cls in self.classes_in(tree):
+                qualified = f"{scope.module}.{cls.name}"
+                methods[qualified] = frozenset(n.name for n in cls.body if isinstance(n, ast.FunctionDef))
+                declared = Names.bases(cls)
+                bases[qualified] = tuple(self.resolve_all(declared, scope))
+                if any(self.resolve(name, scope) is None for name in declared):
+                    left_project.add(qualified)
+        return methods, bases, left_project
+
+    def definer(self, qualified: str, method: str) -> str | None:
+        """The class that DEFINES `method`, walking the project MRO upward from `qualified`.
+
+        This is the one rule behind every method-level call edge (bd f1u.2): an edge points at where the
+        code being invoked actually LIVES, not at the receiver's declared type. Inheriting from a project
+        base lands on the base; a declared Protocol receiver lands on the Protocol, which is the
+        call->interface partition falling out rather than a case anyone wrote.
+
+        Breadth-first over the declared bases — an approximation of C3 that agrees with it wherever a name
+        is defined in exactly one place, which is every case that yields an edge. Returns None when the
+        method is not ours to find; `leaves_project` says whether that is a bug or an expected drop.
+        """
+        queue, seen = [qualified], set()
+        while queue:
+            current = queue.pop(0)
+            if current in seen:
+                continue
+            seen.add(current)
+            if method in self._methods.get(current, frozenset()):
+                return current
+            queue.extend(self._bases.get(current, ()))
+        return None
+
+    def leaves_project(self, qualified: str) -> bool:
+        """Does the inheritance chain above this class reach outside our packages?
+
+        If so, a method we cannot find may well be defined out there (`dict.get`, `BaseModel.model_dump`)
+        and its absence says nothing about our resolution. If not, every ancestor is ours and a miss is a
+        real finding.
+        """
+        queue, seen = [qualified], set()
+        while queue:
+            current = queue.pop(0)
+            if current in seen:
+                continue
+            seen.add(current)
+            if current in self._open:
+                return True
+            queue.extend(self._bases.get(current, ()))
+        return False
 
     def qualified(self, module: str, name: str) -> str | None:
         """The qualified id of `name` if it is a class we own in `module`, else None."""
@@ -106,11 +181,14 @@ class Resolver:
             return self.qualified(scope.imports[name], name)
         return None
 
-    def resolve_all(self, names: set[str], scope: FileScope, exclude: str = "") -> list[str]:
-        """Every name in `names` that resolves to a class we own, sorted, minus `exclude` (a self-edge)."""
-        return sorted(
-            {target for name in names if (target := self.resolve(name, scope)) is not None and target != exclude}
-        )
+    def resolve_all(self, names: set[str], scope: FileScope) -> list[str]:
+        """Every name in `names` that resolves to a class we own, sorted.
+
+        It used to take an `exclude` for dropping self-arrows. Whether a self-arrow is wanted turned out to
+        be the CONSUMER's question, not resolution's — the object graph wants it (bd a0a) and a construct
+        arrow does not — so each caller decides and this one just answers what a name denotes.
+        """
+        return sorted({target for name in names if (target := self.resolve(name, scope)) is not None})
 
     # ---- declared types of a class's own state ------------------------------------------------------
 

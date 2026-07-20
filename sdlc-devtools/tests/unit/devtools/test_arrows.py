@@ -72,10 +72,18 @@ def test_unresolvable_names_are_dropped_not_guessed(monkeypatch, tmp_path, write
     assert edges == set(), "no edge to a type outside the graphed packages"
 
 
-def test_a_class_never_points_at_itself(monkeypatch, tmp_path, write_pkg):
-    src = "class A:\n    def clone(self) -> A: ...\n"
+def test_a_class_holding_its_own_type_is_an_arrow(monkeypatch, tmp_path, write_pkg):
+    """SUPERSEDES "a class never points at itself" (bd a0a). Self-arrows were filtered out, so a tree node
+    owning a child of its own type produced no `holds` edge at all — self-composition was invisible in the
+    object graph rather than excluded on purpose, and could never form an SCC for the cycle gate to see.
+
+    An arrow is a FACT about the source. Whether the shape is a defect belongs to a gate, and
+    `composition.py` now states its boundary explicitly: a recursive type can be built alone, so a
+    self-loop does not block; a mutually-owning PAIR cannot, so it does.
+    """
+    src = "class Node:\n    def __init__(self, child: Node):\n        self._child = child\n"
     edges = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_self", src)
-    assert not [e for e in edges if e[0] == e[1]], "a self-referencing signature is not an arrow"
+    assert ("arrows_self.mod.Node", "arrows_self.mod.Node", HOLDS) in edges
 
 
 def test_holds_wins_over_references_for_the_same_type(monkeypatch, tmp_path, write_pkg):
