@@ -57,9 +57,10 @@ jobs:
       # Module shape — ast-grep: the SYNTACTIC axis ruff has no plugin API for (in-a-class house rule +
       # no import-time side effects). Rules are data under devtools/sg-rules/*.yml, severity=error (BLOCKS).
       # config lives in the INSTALLED devtools package (no vendored devtools/ dir) — `python -m
-      # devtools.config` prints the packaged path (`uv run` bootstraps the env with the devtools extra).
+      # `devtools.astgrep` locates the packaged config and runs the scan itself — one home for how the rule
+      # set is invoked, and no `$(…)` substitution, which is what kept this gate off Windows entirely.
       - name: "Module shape — enforced (ast-grep)"
-        run: uvx --from ast-grep-cli ast-grep scan -c "$(uv run -q --extra devtools python -m devtools.config sgconfig)" {{ pkgs }}
+        run: uv run --extra devtools python -m devtools.astgrep {{ pkgs }} --assert
       # Duplication — the DRY axis (jscpd) the coupling tools can't see. Threshold in devtools/jscpd.json.
       - uses: actions/setup-node@v4
         with:

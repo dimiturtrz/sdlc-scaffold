@@ -49,32 +49,10 @@ def lint(session: nox.Session) -> None:
     session.run("uvx", VULTURE, "--min-confidence", "60", external=True, success_codes=[0, 3])
 {% if use_import_linter %}    session.run("uvx", "--from", "import-linter", "lint-imports", external=True)
 {% endif %}    # (graph — god-module / import-cycle / god-file / test-mirror — rides the single batch run below.)
-    # ast-grep + jscpd read their config from the INSTALLED devtools package (no vendored devtools/ dir);
-    # `python -m devtools.config` prints the packaged config path for the external CLI to consume.
-    _sgconfig = session.run(
-        "uv",
-        "run",
-        "-q",  # silence uv's VIRTUAL_ENV-mismatch notice so only the config path is captured
-        "--extra",
-        "devtools",
-        "python",
-        "-m",
-        "devtools.config",
-        "sgconfig",
-        external=True,
-        silent=True,
-    ).strip()
-    session.run(
-        "uvx",
-        "--from",
-        "ast-grep-cli",
-        "ast-grep",
-        "scan",
-        "-c",
-        _sgconfig,
-        *LAYERS,
-        external=True,
-    )
+    # (ast-grep module-shape rides the single batch run below — `devtools.astgrep` owns locating the
+    # packaged config and invoking the CLI, so nox no longer re-encodes that invocation.)
+    # jscpd still reads its config from the INSTALLED devtools package; `python -m devtools.config` prints
+    # the packaged path for the external CLI to consume.
     # DRY gate — ENFORCED (blocks over the jscpd.json threshold), matching the cardiac/mindscape majority.
     _jscpd_cfg = session.run(
         "uv",
@@ -131,6 +109,8 @@ def lint(session: nox.Session) -> None:
     #   demeter     CALLING a method through a field into a stranger couples this class to a type it never
     #               declared. Ceiling: [tool.structure] demeter_max_depth (default 2). Only chains that end
     #               in a call count — reading a deep config tree is data navigation, not coupling.
+    #   astgrep     the packaged ast-grep rule set (module shape). It shells out to the vendored CLI, but it
+    #               answers the same two verbs as the AST engines, so the runner drives it identically.
     #   purity      a @property that assigns to self. A read dressed as an attribute has to BE a read, and
     #               it is also what makes demeter's "an attribute chain is only data" true in a language
     #               where a property is a method call spelled as attribute access.
@@ -154,7 +134,7 @@ def lint(session: nox.Session) -> None:
         "devtools.run",
         *LAYERS,
         "--gate",
-        "graph,demeter,purity,composition,envy,contracts{% if enable_ml %},shape_contracts{% endif %}",
+        "graph,demeter,purity,composition,envy,contracts,astgrep{% if enable_ml %},shape_contracts{% endif %}",
         external=True,
     )
     # ENFORCED static type gate — pyrefly strict: every def annotated + the annotations check. `--with` adds

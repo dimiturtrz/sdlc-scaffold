@@ -62,18 +62,17 @@ def lint(session: nox.Session) -> None:
     session.run(
         "uv", "run", "--group", "dev", "python", "-m", "devtools.run", LAYER,
         # god-module / import-cycle / god-file / test-mirror, then the arrow-level gates
-        "--gate", "graph,demeter,purity,composition,contracts,envy",
+        "--gate", "graph,demeter,purity,composition,contracts,envy,astgrep",
         # ADVISORY explorers — ranked reports that never fail. `classes` is here rather than under --gate
         # for the reason it is advisory everywhere: its survivors are genuine multi-abstraction files, i.e.
         # refactoring work rather than a classifier bug. It graduates when a real tree reaches zero.
         "--report", "magic_literals,complexity,lcom,data_clumps,state_candidates,arrows,calls,classes",
         external=True,
     )
-    # class-shape: every helper is a method on its engine class, only main() top-level. Config ships in the
-    # package (devtools/sgconfig.yml), so ast-grep reads it in place — no `python -m devtools.config` hop.
-    session.run(
-        "uvx", "--from", "ast-grep-cli", "ast-grep", "scan", "-c", "devtools/sgconfig.yml", LAYER, external=True
-    )
+    # (class-shape — every helper a method on its engine class, only main() top-level — rides the batch run
+    # above as `astgrep`. It shells out to the vendored CLI, but it answers the same two verbs as the AST
+    # engines, so there is no reason for the runner to know the difference or for this file to re-encode
+    # the invocation a third time.)
     # Dependency hygiene — deptry (config in [tool.deptry]); env-aware via `--with` so it reads installed
     # dist metadata (transitive detection). Blocks on undeclared/unused/transitive imports.
     session.run("uv", "run", "--with", "deptry", "--group", "dev", "deptry", ".", external=True)

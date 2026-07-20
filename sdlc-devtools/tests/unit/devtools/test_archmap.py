@@ -93,6 +93,24 @@ def test_check_flags_missing_and_stale(tmp_path, monkeypatch):
     assert a.check()[0].startswith("stale:"), "a drifted graph.json is stale"
 
 
+def test_regen_writes_and_reports_the_drift_that_existed_before_the_write(tmp_path, monkeypatch):
+    """The pre-push form. It replaced a `bash -c` hook that sequenced a write and a check with `;` — which
+    discarded the regen's exit code (green when archmap failed) and could not find `uv` on Windows. Doing
+    both in the engine makes the behaviour unit-testable instead of e2e-only, which is this test."""
+    monkeypatch.chdir(tmp_path)
+    a = Archmap(["viewer", "core"])
+    monkeypatch.setattr(a, "graph", _tree)
+    monkeypatch.setattr(a, "write_viewer", lambda *_, **__: None)  # the shell needs no grimp and no assets
+
+    assert a.regen()[0].startswith("missing:"), "nothing committed yet -> drift reported"
+    assert Path("docs/architecture/graph.json").exists(), "and it WROTE, which is the half `--check` skips"
+    assert a.regen() == [], "a second run finds it current and reports no drift"
+
+    Path("docs/architecture/graph.json").write_text("tampered\n", encoding="utf-8")
+    assert a.regen()[0].startswith("stale:"), "drift is measured BEFORE the write, or there is nothing left to compare"
+    assert a.check() == [], "and the write healed it, so the next check is clean"
+
+
 def test_write_viewer_is_self_contained(tmp_path):
     # write_viewer only assembles the template + vendored assets (no grimp) — the interactive site shell
     p = Archmap(["core"]).write_viewer(tmp_path / "index.html", project="demo-proj")

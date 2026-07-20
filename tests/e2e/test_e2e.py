@@ -22,7 +22,6 @@ from conftest import (
     SELECT,
     VULTURE,
     assert_bites,
-    bash_sees_uv,
     config_path,
     copier_cmd,
     copier_default,
@@ -158,6 +157,29 @@ def _assert_advisory_surface(ci_text: str) -> None:
         assert "--extend-select" not in ci_text, "no advisory codes configured, so no --extend-select"
 
 
+def _assert_precommit_wiring(precommit_text: str) -> None:
+    """The hook file: archmap's pre-push regen, the pre-push unit suite, and the no-shell rule."""
+    assert "id: archmap" in precommit_text, "the archmap regen hook ships in pre-commit (2vt.4)"
+    # c80: archmap regen moved to the PRE-PUSH stage (fast commits; refresh once before the deploying push)
+    # and blocks the push if graph.json drifted, so the committed diff-truth stays current with no manual regen.
+    assert "python -m devtools.archmap" in precommit_text, "archmap regen present (c80)"
+    assert "--regen" in precommit_text, "archmap regenerates AND blocks on drift in one engine call (c80)"
+    # NO HOOK SHELLS OUT. Two hooks used `bash -c` — archmap to sequence a regen with a staleness check, and
+    # ast-grep for a `$(devtools.config sgconfig)` substitution. Both are dead: the sequencing moved into
+    # `archmap --regen` and the lookup into `devtools.astgrep`. This is a real gate, not tidiness — the bash
+    # pre-commit picks on Windows cannot find `uv`, so every shelling hook was silently broken there, and the
+    # archmap one reported Passed while doing nothing because it joined its two commands with `;`.
+    # Anchored on `entry:` lines, not the raw text: the comments explaining WHY the shell is gone name
+    # `bash -c` themselves, and a substring search over the whole file matches its own documentation.
+    entries = [ln for ln in precommit_text.splitlines() if ln.strip().startswith("entry:")]
+    assert entries, "the hook file must actually declare entries"
+    assert not [ln for ln in entries if "bash -c" in ln], "no hook may shell out — it does not run on Windows"
+    assert precommit_text.count("stages: [pre-push]") >= 2, "archmap + unit-tests both ride pre-push (c80/cma)"
+    # cma: fast unit suite bound to the PRE-PUSH stage (shift-left the CI test gate). Push-only, unit-only.
+    assert "id: unit-tests" in precommit_text, "the pre-push unit-tests hook ships (cma)"
+    assert "pytest tests/unit" in precommit_text, "the pre-push hook runs the fast unit suite (cma)"
+
+
 def test_select_and_ci_wiring(project):
     """The union ruff select, the enforced/advisory split, the base gates, and the CI step wiring."""
     name, path = project
@@ -191,16 +213,7 @@ def test_select_and_ci_wiring(project):
     # regen hook, and a manual nox regen session. Doc-gen/advisory; import-linter stays the directional gate.
     assert "devtools.archmap" in ci_text and "--check" in ci_text, "archmap --check runs in CI (advisory; 2vt.4)"
     precommit_text = (path / ".pre-commit-config.yaml").read_text()
-    assert "id: archmap" in precommit_text, "the archmap regen hook ships in pre-commit (2vt.4)"
-    # c80: archmap regen moved to the PRE-PUSH stage (fast commits; refresh once before the deploying push) and
-    # blocks the push if graph.json drifted, so the committed diff-truth stays current with no manual regen.
-    assert "python -m devtools.archmap" in precommit_text, "archmap regen present (c80)"
-    assert "regenerated & staged; commit it and push again" in precommit_text, "archmap blocks on drift (c80)"
-    assert precommit_text.count("stages: [pre-push]") >= 2, "archmap + unit-tests both ride pre-push (c80/cma)"
-    # cma: fast unit suite bound to the PRE-PUSH stage (shift-left the CI test gate). Push-only, unit-only.
-    assert "id: unit-tests" in precommit_text, "the pre-push unit-tests hook ships (cma)"
-    assert "stages: [pre-push]" in precommit_text, "unit-tests runs at the pre-push stage, not commit (cma)"
-    assert "pytest tests/unit" in precommit_text, "the pre-push hook runs the fast unit suite (cma)"
+    _assert_precommit_wiring(precommit_text)
     nox_text = (path / "noxfile.py").read_text()
     assert "def archmap(" in nox_text, "the manual archmap regen session ships in noxfile (2vt.4)"
     # i5q: the pyrefly strict type gate — [tool.pyrefly] config + wired into all three runners, ENFORCED.
@@ -300,7 +313,8 @@ def test_hygiene_scope_widens_ruff_and_jscpd(scaffold, tmp_path_factory):
     assert 'LINT_LAYERS = ["core", "viewer", "tests"]' in nox
     assert 'JSCPD_LAYERS = ["core", "viewer/web/src"]' in nox
     # arch gates (graph / ast-grep) STAY on the package arch set — hygiene widens, structure does not
-    assert "--assert core" in ci and 'sgconfig)" core' in ci, "arch gates keep the package set, not the wide scope"
+    assert "--assert core" in ci, "arch gates keep the package set, not the wide scope"
+    assert "devtools.astgrep core --assert" in ci, "ast-grep keeps the package set too (structure does not widen)"
 
 
 def test_template_ships_no_package_code(scaffold, tmp_path_factory):
@@ -646,8 +660,6 @@ def test_nox_gates(project):
 
 def test_precommit_all_hooks(project):
     # no node needed: jscpd is CI+nox only, never a commit hook; every pre-commit hook is uvx/uv-run
-    if not bash_sees_uv():
-        pytest.skip("the archmap hook runs through `bash -c` and this bash cannot find uv (Windows PATH)")
     _, path = project
     run(["uvx", PRECOMMIT, "run", "--all-files"], path)
 
@@ -709,8 +721,6 @@ def _add_module(root):
 def test_prepush_archmap_regenerates_and_blocks_on_drift(full_project):
     # c80: the pre-push archmap hook regenerates graph.json and BLOCKS the push if it drifted, so the committed
     # diff-truth (and the /architecture/ page it feeds) stays current without a manual `nox -s archmap`.
-    if not bash_sees_uv():
-        pytest.skip("the archmap hook runs through `bash -c` and this bash cannot find uv (Windows PATH)")
     run(PREPUSH_ARCHMAP, full_project, check=False)  # first run creates graph.json (was untracked)
     run(["git", "add", "docs/architecture/graph.json"], full_project)
     run(["git", "commit", "-m", "baseline graph.json", "--no-verify"], full_project)
