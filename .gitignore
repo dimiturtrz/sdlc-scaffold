@@ -21,3 +21,6 @@ sdlc-devtools/docs/architecture/index.html
 .dolt/
 *.db
 .beads-credential-key
+
+# copier installed once for the e2e suite, isolated from the developers own uv tool set (bd f9y.1)
+.e2e-tools/

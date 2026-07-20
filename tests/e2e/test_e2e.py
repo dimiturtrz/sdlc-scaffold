@@ -12,7 +12,6 @@ import json
 import pytest
 from conftest import (
     COMBOS,
-    COPIER,
     DEPTRY,
     NOX,
     NPX,
@@ -24,6 +23,7 @@ from conftest import (
     VULTURE,
     assert_bites,
     config_path,
+    copier_cmd,
     copier_default,
     example_pkg,
     generate,
@@ -958,7 +958,7 @@ def test_copier_update_heals_portable_preserves_local(tmp_path):
     run(["git", "tag", "v0.2.0"], scaffold)
 
     # 3. update
-    run(["uvx", COPIER, "update", "--defaults", "--trust"], project)
+    run([*copier_cmd(), "update", "--defaults", "--trust"], project)
 
     answers = (project / ".copier-answers.yml").read_text()
     result = (project / "pyproject.toml").read_text()
@@ -991,7 +991,7 @@ def test_copier_update_preserves_nondefault_fact_vars(tmp_path):
     run(["git", "commit", "-aqm", "v0.2.0"], scaffold)
     run(["git", "tag", "v0.2.0"], scaffold)
 
-    run(["uvx", COPIER, "update", "--defaults", "--trust"], project)
+    run([*copier_cmd(), "update", "--defaults", "--trust"], project)
 
     # the FACTS SURVIVE the update (the whole point of fsl)
     ci = (project / ".github" / "workflows" / "ci.yml").read_text()

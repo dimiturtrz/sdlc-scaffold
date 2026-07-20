@@ -30,7 +30,6 @@ pytestmark = [
     ),
 ]
 
-COPIER = "copier@9.16.0"
 _TAG = re.compile(r"refs/tags/(v\d+\.\d+\.\d+)$")
 
 
@@ -103,7 +102,7 @@ def test_remote_copy_then_update_across_tags(tmp_path):
     data = ["--data", "project_name=remote-proj", "--data", "packages=core", "--data", "domain=none"]
 
     # Copy from the REMOTE at the older tag.
-    _sh(["uvx", COPIER, "copy", "--defaults", "--trust", "--vcs-ref", older, *data, url, str(proj)])
+    _sh([*copier_cmd(), "copy", "--defaults", "--trust", "--vcs-ref", older, *data, url, str(proj)])
     assert _answers_commit(proj) == older, "copy should stamp the older tag as _commit"
 
     # A generated project must be a git repo for `copier update` (it 3-way-merges against git state).
@@ -114,5 +113,5 @@ def test_remote_copy_then_update_across_tags(tmp_path):
     _sh(["git", "commit", "-qm", "gen"], cwd=proj)
 
     # Update to the newer tag over the network — the hop this test exists to guard.
-    _sh(["uvx", COPIER, "update", "--defaults", "--trust", "--vcs-ref", newer], cwd=proj)
+    _sh([*copier_cmd(), "update", "--defaults", "--trust", "--vcs-ref", newer], cwd=proj)
     assert _answers_commit(proj) == newer, f"update should advance _commit {older} -> {newer}"
