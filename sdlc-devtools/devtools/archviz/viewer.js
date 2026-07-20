@@ -23,8 +23,15 @@
  */
 (async () => {
   cytoscape.use(window.cytoscapeFcose);
-  const FCOSE = { name: 'fcose', quality: 'proof', animate: false, randomize: true, packComponents: true,
-    nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.1, gravity: 0.25, numIter: 2500, tile: true };
+  // `randomize` is deliberately absent: it is a per-RUN decision, not a constant (see relayout).
+  // `tile` was carried over from cose-bilkent and is not an fcose option at all — it did nothing.
+  // `packComponents: true` was passed explicitly while already being the default; also dropped.
+  const FCOSE = { name: 'fcose', quality: 'proof', animate: false,
+    nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.1, gravity: 0.25, numIter: 2500,
+    // Our nodes are sized to their text (`width: 'label'`) and a compound draws its own label above its
+    // children. fcose measures raw boxes unless told otherwise, so without this it packs siblings into
+    // each other's labels — which is most of the overlap between module boxes.
+    nodeDimensionsIncludeLabels: true };
 
   // ONE table owns every per-kind fact: how the arrow is drawn, and which band it belongs to. The cytoscape
   // stylesheet, the legend swatches and the band membership are all derived from it, so a colour cannot
@@ -229,9 +236,12 @@
         label: 'data(label)', 'font-size': 11, 'text-valign': 'center', color: '#e6e6e6',
         'background-color': '#3b5b7a', 'border-width': 1, 'border-color': '#6f9fd0', shape: 'round-rectangle',
         width: 'label', padding: 6, 'text-wrap': 'wrap' } },
+      // A compound's label sits ABOVE its children (`text-valign: top`), so the padding is not decoration —
+      // it is the strip the label lives in. At 10 the title was overlapping the topmost child inside its
+      // own box, and a sibling box could be packed into that same strip from outside.
       { selector: 'node:parent', style: {
         'background-color': '#1c2a3a', 'background-opacity': 0.5, 'border-color': '#4a6a8a',
-        'text-valign': 'top', 'font-size': 13, color: '#9fc4ef', padding: 10 } },
+        'text-valign': 'top', 'text-margin-y': -4, 'font-size': 13, color: '#9fc4ef', padding: 18 } },
       { selector: 'node.collapsed', style: {
         'background-color': '#2e4a66', 'background-opacity': 1, 'text-valign': 'center', 'font-size': 12,
         color: '#dce8f5', label: (e) => e.data('label') + '  (' + e.data('descendants') + ')' } },
@@ -266,16 +276,40 @@
 
   let focused = null;
 
+  // ---- position memory --------------------------------------------------------------------------------
+  // Fold and filter state already SURVIVE a rebuild; position did not, which undid most of that benefit —
+  // the arrangement you had just read was thrown away every time you touched a control.
+  const POS = {};
+  let laidOut = false;
+
+  function seed(id) {
+    if (POS[id]) return { ...POS[id] };
+    // A node appearing for the first time (drilling class -> public) starts at its PARENT's last position
+    // rather than at the origin, where every new node would otherwise pile up and then explode outward.
+    // The jitter only breaks the tie: coincident nodes give a force layout no direction to push apart in.
+    const at = POS[PARENT[id]];
+    return at ? { x: at.x + (Math.random() - 0.5) * 60, y: at.y + (Math.random() - 0.5) * 60 } : undefined;
+  }
+
   // Rebuild the whole view from `collapsed`. A node is present iff no ancestor is folded, so a folded node
   // is present but childless (a leaf box); its descendants are absent. Edges aggregate per visible pair AND
   // KIND — folding must not merge a `calls` into an `import`, or the colour would lie.
   function refresh() {
     focused = null;
+    // Remember where everything sat BEFORE tearing the graph down. Rebuilding removes and re-adds every
+    // element, so without this there are no positions for an incremental layout to improve on and each
+    // change re-solved from a random seed — which is what made a depth change reshuffle the whole picture.
+    cy.nodes().forEach((n) => { POS[n.id()] = { ...n.position() }; });
     cy.elements().remove();
     const nodes = GRAPH.nodes.filter((n) => inV(n.id));  // sorted dotted order -> parents precede children
-    cy.add(nodes.map((n) => ({ group: 'nodes', data: {
-      id: n.id, label: n.label, descendants: DESC[n.id], level: n.level || 'module', role: n.role || null,
-      parent: (PARENT[n.id] && inV(PARENT[n.id])) ? PARENT[n.id] : undefined } })));
+    cy.add(nodes.map((n) => {
+      const at = seed(n.id);   // computed ONCE — it carries jitter, so a second call is a different point
+      return { group: 'nodes',
+        data: {
+          id: n.id, label: n.label, descendants: DESC[n.id], level: n.level || 'module', role: n.role || null,
+          parent: (PARENT[n.id] && inV(PARENT[n.id])) ? PARENT[n.id] : undefined },
+        ...(at ? { position: at } : {}) };
+    }));
     nodes.forEach((n) => { if (collapsed.has(n.id)) cy.getElementById(n.id).addClass('collapsed'); });
     const agg = {};
     for (const e of GRAPH.edges) {
@@ -294,7 +328,9 @@
   }
 
   function relayout() {
-    try { cy.layout(FCOSE).run(); }
+    // Randomize ONCE. The first layout has nothing to improve on; every later one starts from positions the
+    // reader has already made sense of, so it should ADJUST the picture rather than re-solve it.
+    try { cy.layout({ ...FCOSE, randomize: !laidOut }).run(); laidOut = true; }
     catch (e) { console.warn('fcose failed -> cose', e); cy.layout({ name: 'cose', animate: false }).run(); }
     cy.fit(cy.elements(), 40);
   }
@@ -373,6 +409,10 @@
     KINDS.forEach((k) => { $('kind-' + k).checked = BANDS.imports.includes(k); });
     $('hide-satellites').checked = false;
     collapsed.clear(); seen.clear();
+    // position is reading state exactly like folding is, so the control that restores the default view
+    // clears it too — otherwise `reset` would rebuild the default graph in the arrangement you just left
+    Object.keys(POS).forEach((id) => delete POS[id]);
+    laidOut = false;
     apply();
   };
 
