@@ -122,7 +122,7 @@ def lint(session: nox.Session) -> None:
     # ENFORCED dependency hygiene — deptry: undeclared (DEP001) / unused (DEP002) / transitive (DEP003)
     # imports. `--with` adds deptry to the run so it reads installed dist metadata; config in [tool.deptry].
     session.run("uv", "run", "--with", "deptry=={{ deptry_version }}", "deptry", ".", external=True)
-    # EVERY python gate, in ONE process. Each `python -m devtools.X` pays to start an interpreter and import
+    # EVERY python gate, in ONE process. Each `python -m devtools.<tool>` pays to start an interpreter and import
     # devtools before it analyses anything, and that startup is the larger half of a gate's cost — so six of
     # them paid it six times. The batch runner pays once and shares a single parse of the tree between the
     # engines that resolve names.

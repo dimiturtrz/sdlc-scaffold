@@ -160,7 +160,9 @@ def test_the_template_only_calls_engines_the_pinned_release_actually_has():
     referenced = {
         match.group(1)
         for path in _RUNNERS.values()
-        for match in re.finditer(r"devtools\.(\w+)", Path(path).read_text(encoding="utf-8"))
+        # anchored on `-m`, so only a real invocation counts — `"-m", "devtools.run"` and
+        # `python -m devtools.graph` both match, while prose naming a module does not
+        for match in re.finditer(r"-m[\"',\s]+devtools\.(\w+)", Path(path).read_text(encoding="utf-8"))
     }
     ref = copier_default("devtools_ref")
     probe = ["git", "rev-parse", "-q", "--verify", ref]
