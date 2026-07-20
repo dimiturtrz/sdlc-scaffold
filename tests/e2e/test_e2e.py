@@ -12,7 +12,6 @@ import json
 import pytest
 from conftest import (
     COMBOS,
-    COPIER,
     DEPTRY,
     NOX,
     NPX,
@@ -24,6 +23,7 @@ from conftest import (
     VULTURE,
     assert_bites,
     config_path,
+    copier_cmd,
     copier_default,
     example_pkg,
     generate,
@@ -250,8 +250,12 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
     )
     noxfile = (out / "noxfile.py").read_text()
     assert 'LAYERS = ["pkg_a", "pkg_b"]' in noxfile
-    # graph.py needs the devtools extra (grimp/networkx) — nox must pull it, matching CI (not plain uv run)
-    assert '"uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph"' in noxfile
+    # graph.py needs the devtools extra (grimp/networkx) — nox must pull it, matching CI (not plain uv run).
+    # Asserted on the batch runner's invocation rather than a per-gate one: since bd f9y.3 the python gates
+    # run in ONE process, so `--extra devtools` has to reach THAT call or graph cannot import grimp at all.
+    batch = noxfile[noxfile.index('"devtools.run"') - 400 : noxfile.index('"devtools.run"') + 400]
+    assert '"--extra",' in batch and '"devtools",' in batch, f"the batch run must pull the devtools extra:\n{batch}"
+    assert "graph," in batch, "graph must be among the batched gates"
     ci = (out / ".github" / "workflows" / "ci.yml").read_text()
     assert "check pkg_a pkg_b --select" in ci
     assert "--assert pkg_a pkg_b" in ci
@@ -958,7 +962,7 @@ def test_copier_update_heals_portable_preserves_local(tmp_path):
     run(["git", "tag", "v0.2.0"], scaffold)
 
     # 3. update
-    run(["uvx", COPIER, "update", "--defaults", "--trust"], project)
+    run([*copier_cmd(), "update", "--defaults", "--trust"], project)
 
     answers = (project / ".copier-answers.yml").read_text()
     result = (project / "pyproject.toml").read_text()
@@ -991,7 +995,7 @@ def test_copier_update_preserves_nondefault_fact_vars(tmp_path):
     run(["git", "commit", "-aqm", "v0.2.0"], scaffold)
     run(["git", "tag", "v0.2.0"], scaffold)
 
-    run(["uvx", COPIER, "update", "--defaults", "--trust"], project)
+    run([*copier_cmd(), "update", "--defaults", "--trust"], project)
 
     # the FACTS SURVIVE the update (the whole point of fsl)
     ci = (project / ".github" / "workflows" / "ci.yml").read_text()

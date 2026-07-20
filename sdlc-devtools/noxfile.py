@@ -30,7 +30,7 @@ JSCPD_IGNORE = "**/archviz/**"
 SELECT = (
     "F,B,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,"
     "PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,"
-    "E402,ICN001,S603,S607,PTH123,TID251,E501"
+    "E402,ICN001,S603,S607,PTH123,TID251,E501,SLF001"
 )
 
 
@@ -54,12 +54,21 @@ def lint(session: nox.Session) -> None:
     session.run(
         "npx", "--yes", "jscpd", LAYER, "--config", "devtools/jscpd.json", "--ignore", JSCPD_IGNORE, external=True
     )
-    # god-module / import-cycle / god-file AND test-mirror — the FULL --assert (engines carry their mirrors).
-    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.graph", LAYER, "--assert", external=True)
-    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.demeter", LAYER, "--assert", external=True)
-    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.composition", LAYER, "--assert", external=True)
-    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.contracts", LAYER, "--assert", external=True)
-    session.run("uv", "run", "--group", "dev", "python", "-m", "devtools.envy", LAYER, "--assert", external=True)
+    # EVERY python analyzer, in ONE process (bd f9y.3). Twelve `python -m devtools.X` calls paid to start an
+    # interpreter and import devtools twelve times over, for analysis that is a fraction of the cost; the
+    # batch runner pays it once and shares one parse of the tree between the engines that resolve names.
+    # Measured here: 1855ms -> 673ms. Which engines GATE and which merely report stays right here, in the
+    # runner config, because that is a per-repo policy decision and not something the runner should infer.
+    session.run(
+        "uv", "run", "--group", "dev", "python", "-m", "devtools.run", LAYER,
+        # god-module / import-cycle / god-file / test-mirror, then the arrow-level gates
+        "--gate", "graph,demeter,composition,contracts,envy",
+        # ADVISORY explorers — ranked reports that never fail. `classes` is here rather than under --gate
+        # for the reason it is advisory everywhere: its survivors are genuine multi-abstraction files, i.e.
+        # refactoring work rather than a classifier bug. It graduates when a real tree reaches zero.
+        "--report", "magic_literals,complexity,lcom,data_clumps,state_candidates,arrows,calls,classes",
+        external=True,
+    )
     # class-shape: every helper is a method on its engine class, only main() top-level. Config ships in the
     # package (devtools/sgconfig.yml), so ast-grep reads it in place — no `python -m devtools.config` hop.
     session.run(
@@ -68,17 +77,11 @@ def lint(session: nox.Session) -> None:
     # Dependency hygiene — deptry (config in [tool.deptry]); env-aware via `--with` so it reads installed
     # dist metadata (transitive detection). Blocks on undeclared/unused/transitive imports.
     session.run("uv", "run", "--with", "deptry", "--group", "dev", "deptry", ".", external=True)
-    # The full ADVISORY explorer set the template ships — ranked reports that always exit 0 (the fixed
-    # complexity gate is ruff C901; there is no honest universal magic-literal ceiling). All but the first
-    # two were absent here, so the package shipped reports it never read about itself.
-    for tool in ("magic_literals", "complexity", "lcom", "data_clumps", "state_candidates", "arrows", "calls"):
-        session.run("uv", "run", "--group", "dev", "python", "-m", f"devtools.{tool}", LAYER, external=True)
-    # Class roles: ADVISORY here and everywhere. 16/13/11 findings across the three consumer repos even
-    # after the az9 fix, and those survivors are genuine multi-abstraction files, i.e. real refactoring
-    # work rather than a classifier bug. It graduates when a real tree is clean (the shape_contracts rule).
-    session.run(
-        "uv", "run", "--group", "dev", "python", "-m", "devtools.classes", LAYER, external=True, success_codes=[0, 1]
-    )
+    # (the advisory explorer set — magic_literals / complexity / lcom / data_clumps / state_candidates /
+    # arrows / calls, plus class-roles — now rides the single batch run above rather than seven more
+    # interpreter starts. Class roles stays ADVISORY here and everywhere: 16/13/11 findings across the
+    # three consumer repos even after the az9 fix, and those survivors are genuine multi-abstraction files,
+    # i.e. real refactoring work rather than a classifier bug. It graduates when a real tree is clean.)
     # Self-scaffolding (advisory): the scaffold maps its OWN guardrail engines — archmap --check flags a
     # stale committed docs/architecture/graph.json. Regenerate with `python -m devtools.archmap devtools`.
     # success_codes swallows the exit-1-on-drift so it reports without blocking (doc-gen, not a gate).

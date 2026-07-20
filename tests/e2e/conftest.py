@@ -6,6 +6,7 @@ Runs on Linux/CI (matches the generated projects' `ubuntu-latest`); copier needs
 each run builds a throwaway git repo from the on-disk template (testing what is on disk, not a tag).
 """
 
+import functools
 import os
 import shutil
 import subprocess
@@ -19,6 +20,11 @@ sys.path.insert(0, str(REPO / "tests"))
 from _meta import copier_default  # noqa: E402  (shared copier.yml reader, one home)
 
 COPIER = "copier@9.16.0"
+COPIER_VERSION = COPIER.split("@")[1]
+# Where the pinned copier is INSTALLED, isolated from the developer's own `uv tool` set so a test run never
+# mutates it. Kept in the repo (gitignored) rather than a temp dir on purpose: it survives between runs, so
+# the install cost is paid once ever instead of once per run.
+_TOOLS = REPO / ".e2e-tools"
 RUFF = f"ruff@{copier_default('ruff_version')}"
 VULTURE = f"vulture@{copier_default('vulture_version')}"
 NOX = f"nox@{copier_default('nox_version')}"
@@ -150,8 +156,45 @@ def make_scaffold(dst: Path):
     run(["git", "tag", "v0.1.0"], dst)
 
 
+@functools.cache
+def copier_cmd() -> list[str]:
+    """The pinned copier as an INSTALLED executable, resolved once per session (bd f9y.1).
+
+    `uvx copier@9.16.0` re-resolves the tool environment on every call — 0.72s before any work happens, of
+    a 2.80s generation, paid ~17 times across the suite. Installing it once and invoking the binary spends
+    that once (and zero times on later runs, since the install persists).
+
+    THE PIN STAYS LOAD-BEARING. `uvx tool@version` had the virtue of making the version unmissable at the
+    call site, and dropping to a bare `copier` would quietly test whatever happened to be installed — which
+    is not what consumers run. So the installed binary is version-checked against COPIER on every session,
+    and reinstalled the moment it disagrees. Drift fails loudly instead of silently changing the subject.
+    """
+    binaries = _TOOLS / "bin"
+    env = {"UV_TOOL_DIR": str(_TOOLS / "tools"), "UV_TOOL_BIN_DIR": str(binaries)}
+    exe = binaries / ("copier.exe" if sys.platform == "win32" else "copier")
+    if _installed_version(exe) != COPIER_VERSION:
+        subprocess.run(  # noqa: S603 (test infra: a fixed, pinned command)
+            ["uv", "tool", "install", "--force", f"copier=={COPIER_VERSION}"],  # noqa: S607 (uv on PATH)
+            env={**os.environ, **env},
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    found = _installed_version(exe)
+    assert found == COPIER_VERSION, f"copier {found!r} installed but the suite pins {COPIER_VERSION!r}"
+    return [str(exe)]
+
+
+def _installed_version(exe: Path) -> str | None:
+    """The version of an already-installed copier, or None when there is nothing runnable there yet."""
+    if not exe.exists():
+        return None
+    result = subprocess.run([str(exe), "--version"], capture_output=True, text=True, check=False)  # noqa: S603
+    return result.stdout.strip().split()[-1] if result.returncode == 0 else None
+
+
 def generate(scaffold: Path, out: Path, answers: dict):
-    cmd = ["uvx", COPIER, "copy", "--defaults", "--trust"]
+    cmd = [*copier_cmd(), "copy", "--defaults", "--trust"]
     for key, value in answers.items():
         cmd += ["--data", f"{key}={value}"]
     cmd += [str(scaffold), str(out)]

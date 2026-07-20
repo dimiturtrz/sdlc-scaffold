@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import jinja2
+import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tests"))
@@ -143,6 +144,44 @@ def test_the_shipped_devtools_pin_matches_the_package_version():
     )
 
 
+def test_the_template_only_calls_engines_the_pinned_release_actually_has():
+    """The template invokes `python -m devtools.<mod>`; `devtools_ref` decides WHICH devtools a consumer
+    installs. If the template starts calling a module newer than that pin, `copier update` hands them a
+    runner that dies with ModuleNotFoundError on the next lint.
+
+    Not hypothetical: batching the gates behind `devtools.run` (bd f9y.3) landed while devtools_ref still
+    pointed at v1.20.0, which predates run.py. Nothing caught it — the version-agreement test passes when
+    all three homes say 1.20.0, and the e2e cannot see it because it overrides the pin with the
+    working-tree package, so it tests the template against code no consumer has yet.
+
+    Skipped when the pinned tag does not exist, because that is a RELEASE in progress: this PR bumps the
+    version and merging cuts the tag from this very tree, so the modules are there by construction.
+    """
+    referenced = {
+        match.group(1)
+        for path in _RUNNERS.values()
+        for match in re.finditer(r"devtools\.(\w+)", Path(path).read_text(encoding="utf-8"))
+    }
+    ref = copier_default("devtools_ref")
+    probe = ["git", "rev-parse", "-q", "--verify", ref]
+    if subprocess.run(probe, **_CAPTURE).returncode != 0:  # noqa: S603 (fixed git probe)
+        pytest.skip(f"{ref} is not cut yet — this tree becomes it on merge")
+    missing = sorted(
+        module
+        for module in referenced
+        if subprocess.run(  # noqa: S603 (fixed git probe)
+            ["git", "cat-file", "-e", f"{ref}:sdlc-devtools/devtools/{module}.py"],  # noqa: S607 (git on PATH)
+            **_CAPTURE,
+        ).returncode
+        != 0
+    )
+    assert not missing, (
+        f"the template calls devtools.{{{','.join(missing)}}} but the pinned {ref} does not ship them — "
+        f"a consumer's `copier update` would install a runner it cannot execute. Bump the version so the "
+        f"pin names the release that contains them."
+    )
+
+
 def test_every_structure_key_the_template_ships_is_known_to_the_reader():
     """[tool.structure] is validated on load — an unknown key RAISES so a typo cannot silently leave a gate
     at its default. That makes this relationship load-bearing: a key added to the template but not to
@@ -188,16 +227,34 @@ _RUNNERS = {
 
 
 def _enforced_gates(text: str) -> set[str]:
-    """The devtools engines this runner invokes as a GATE (`--assert`), by module name.
+    """The devtools engines this runner invokes as a GATE, by module name.
+
+    TWO invocation forms, because bd f9y.3 added a batch runner:
+
+        python -m devtools.demeter ... --assert     one process per gate
+        python -m devtools.run ... --gate a,b,c     one process for many
+
+    A detector that knew only the first would go BLIND to every batched gate the moment a runner adopted
+    the runner — and a gate this cannot SEE is indistinguishable from a gate that is not wired, which is
+    the exact failure the test below exists to catch. So the detector learns the form; it is not relaxed.
 
     Windowed rather than line-based on purpose: ci.yml puts the module and `--assert` on one line, while a
     formatted nox `session.run(...)` spreads them over several.
+
+    Jinja tags are stripped FIRST because a conditional gate lives inside the list it belongs to —
+    `"...,contracts{% if enable_ml %},shape_contracts{% endif %}"` — and reading the raw text stops the
+    match dead at the brace, hiding the ML gate in exactly the runner that batches it.
     """
-    return {
+    text = re.sub(r"{%.*?%}", "", text, flags=re.S)
+    single = {
         match.group(1)
         for match in re.finditer(r"devtools\.(\w+)", text)
-        if "--assert" in text[match.start() : match.start() + 250]
+        if match.group(1) != "run" and "--assert" in text[match.start() : match.start() + 250]
     }
+    batched = {
+        name for match in re.finditer(r"--gate[\"',\s]+([\w,]+)", text) for name in match.group(1).split(",") if name
+    }
+    return single | batched
 
 
 def test_every_enforced_gate_is_wired_into_all_three_runners():
