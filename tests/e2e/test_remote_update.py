@@ -21,6 +21,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from conftest import copier_cmd  # the pinned copier, installed once per session (bd f9y.1)
 
 pytestmark = [
     pytest.mark.slow,  # network + full copier round-trip — lives in the slow layer (uo0.4)

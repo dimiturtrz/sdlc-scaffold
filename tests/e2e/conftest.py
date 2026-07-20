@@ -174,7 +174,7 @@ def copier_cmd() -> list[str]:
     exe = binaries / ("copier.exe" if sys.platform == "win32" else "copier")
     if _installed_version(exe) != COPIER_VERSION:
         subprocess.run(  # noqa: S603 (test infra: a fixed, pinned command)
-            ["uv", "tool", "install", "--force", f"copier=={COPIER_VERSION}"],
+            ["uv", "tool", "install", "--force", f"copier=={COPIER_VERSION}"],  # noqa: S607 (uv on PATH)
             env={**os.environ, **env},
             capture_output=True,
             text=True,

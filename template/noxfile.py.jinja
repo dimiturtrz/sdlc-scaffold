@@ -48,10 +48,7 @@ def lint(session: nox.Session) -> None:
     # when it finds dead code — success_codes swallows that (0=clean, 3=found), only a usage error blocks.
     session.run("uvx", VULTURE, "--min-confidence", "60", external=True, success_codes=[0, 3])
 {% if use_import_linter %}    session.run("uvx", "--from", "import-linter", "lint-imports", external=True)
-{% endif %}    # --extra devtools: graph.py needs grimp+networkx (optional extra), same as CI's synced tests job.
-    session.run(
-        "uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph", "--assert", *LAYERS, external=True
-    )
+{% endif %}    # (graph — god-module / import-cycle / god-file / test-mirror — rides the single batch run below.)
     # ast-grep + jscpd read their config from the INSTALLED devtools package (no vendored devtools/ dir);
     # `python -m devtools.config` prints the packaged config path for the external CLI to consume.
     _sgconfig = session.run(
@@ -122,28 +119,15 @@ def lint(session: nox.Session) -> None:
         external=True,
         success_codes=[0, 1],
     )
-{% if enable_ml %}    # ENFORCED shape-contract gate (GRADUATED advisory->blocking, bd vip.4) — every public array/tensor
-    # boundary must carry a jaxtyping shape, not a bare np.ndarray/Tensor (aliases in [tool.shape_contracts]).
-    # A fresh gen has 0 boundaries (passes); a bare boundary then fails. No success_codes swallow — it blocks.
-    session.run(
-        "uv",
-        "run",
-        "--extra",
-        "devtools",
-        "python",
-        "-m",
-        "devtools.shape_contracts",
-        *LAYERS,
-        "--assert",
-        external=True,
-    )
-{% endif %}    # ENFORCED dependency hygiene — deptry: undeclared (DEP001) / unused (DEP002) / transitive (DEP003)
+    # ENFORCED dependency hygiene — deptry: undeclared (DEP001) / unused (DEP002) / transitive (DEP003)
     # imports. `--with` adds deptry to the run so it reads installed dist metadata; config in [tool.deptry].
     session.run("uv", "run", "--with", "deptry=={{ deptry_version }}", "deptry", ".", external=True)
-    # The arrow-level gates, in ONE process. Each `python -m devtools.X` pays to start an interpreter and
-    # import devtools before it analyses anything, and that startup is the larger half of a gate's cost —
-    # so four of them paid it four times. The batch runner pays once and shares a single parse of the tree
-    # between the engines that resolve names.
+    # EVERY python gate, in ONE process. Each `python -m devtools.X` pays to start an interpreter and import
+    # devtools before it analyses anything, and that startup is the larger half of a gate's cost — so six of
+    # them paid it six times. The batch runner pays once and shares a single parse of the tree between the
+    # engines that resolve names.
+    #   graph       god-module / import-cycle / god-file / test-mirror. `--extra devtools` because it needs
+    #               grimp+networkx (optional extra), same as CI's synced tests job.
     #   demeter     a chain reaching THROUGH a field into a stranger couples this class to a type it never
     #               declared. Ceiling: [tool.structure] demeter_max_depth (default 2).
     #   composition a `holds` cycle (A owns a B that owns an A) means neither can be built or tested alone.
@@ -151,7 +135,10 @@ def lint(session: nox.Session) -> None:
     #   envy        a METHOD more interested in one other class than its own object. Floor:
     #               [tool.structure] feature_envy_min (default 4); value objects are never the target.
     #   contracts   directional forbidden-USE rules over the decomposed arrows. Empty by default.
-    # Every one of them RUNS even if an earlier one fails, so a commit that breaks three gates is reported
+{% if enable_ml %}    #   shape_contracts  ML-only (bd vip.4): every public array/tensor boundary carries a jaxtyping shape,
+    #               not a bare np.ndarray/Tensor (aliases in [tool.shape_contracts]). A fresh gen has 0
+    #               boundaries and passes; a bare boundary then fails. It BLOCKS — no success_codes swallow.
+{% endif %}    # Every one of them RUNS even if an earlier one fails, so a commit that breaks three gates is reported
     # once rather than discovered three times. `python -m devtools.<tool> --assert` still works unchanged.
     session.run(
         "uv",
@@ -163,7 +150,7 @@ def lint(session: nox.Session) -> None:
         "devtools.run",
         *LAYERS,
         "--gate",
-        "demeter,composition,envy,contracts",
+        "graph,demeter,composition,envy,contracts{% if enable_ml %},shape_contracts{% endif %}",
         external=True,
     )
     # ENFORCED static type gate — pyrefly strict: every def annotated + the annotations check. `--with` adds

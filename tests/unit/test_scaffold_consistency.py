@@ -201,7 +201,12 @@ def _enforced_gates(text: str) -> set[str]:
 
     Windowed rather than line-based on purpose: ci.yml puts the module and `--assert` on one line, while a
     formatted nox `session.run(...)` spreads them over several.
+
+    Jinja tags are stripped FIRST because a conditional gate lives inside the list it belongs to —
+    `"...,contracts{% if enable_ml %},shape_contracts{% endif %}"` — and reading the raw text stops the
+    match dead at the brace, hiding the ML gate in exactly the runner that batches it.
     """
+    text = re.sub(r"{%.*?%}", "", text, flags=re.S)
     single = {
         match.group(1)
         for match in re.finditer(r"devtools\.(\w+)", text)
