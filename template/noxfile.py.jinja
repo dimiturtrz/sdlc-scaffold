@@ -140,22 +140,31 @@ def lint(session: nox.Session) -> None:
 {% endif %}    # ENFORCED dependency hygiene — deptry: undeclared (DEP001) / unused (DEP002) / transitive (DEP003)
     # imports. `--with` adds deptry to the run so it reads installed dist metadata; config in [tool.deptry].
     session.run("uv", "run", "--with", "deptry=={{ deptry_version }}", "deptry", ".", external=True)
-    # ENFORCED Law of Demeter — a chain reaching THROUGH a field into a stranger couples this class to a
-    # type it never declared. Ceiling: [tool.structure] demeter_max_depth (default 2).
+    # The arrow-level gates, in ONE process. Each `python -m devtools.X` pays to start an interpreter and
+    # import devtools before it analyses anything, and that startup is the larger half of a gate's cost —
+    # so four of them paid it four times. The batch runner pays once and shares a single parse of the tree
+    # between the engines that resolve names.
+    #   demeter     a chain reaching THROUGH a field into a stranger couples this class to a type it never
+    #               declared. Ceiling: [tool.structure] demeter_max_depth (default 2).
+    #   composition a `holds` cycle (A owns a B that owns an A) means neither can be built or tested alone.
+    #               Catches the intra-file case the IMPORT cycle check cannot represent.
+    #   envy        a METHOD more interested in one other class than its own object. Floor:
+    #               [tool.structure] feature_envy_min (default 4); value objects are never the target.
+    #   contracts   directional forbidden-USE rules over the decomposed arrows. Empty by default.
+    # Every one of them RUNS even if an earlier one fails, so a commit that breaks three gates is reported
+    # once rather than discovered three times. `python -m devtools.<tool> --assert` still works unchanged.
     session.run(
-        "uv", "run", "--extra", "devtools", "python", "-m", "devtools.demeter", *LAYERS, "--assert", external=True
-    )
-    # ENFORCED object-graph acyclicity — a `holds` cycle (A owns a B that owns an A) means neither can be
-    # built or tested alone. Catches the intra-file case the IMPORT cycle check cannot represent.
-    session.run(
-        "uv", "run", "--extra", "devtools", "python", "-m", "devtools.composition", *LAYERS, "--assert", external=True
-    )
-    # ENFORCED feature envy — a METHOD more interested in one other class than its own object. Floor:
-    # [tool.structure] feature_envy_min (default 4); value objects are never the target (role-aware).
-    session.run("uv", "run", "--extra", "devtools", "python", "-m", "devtools.envy", *LAYERS, "--assert", external=True)
-    # ENFORCED forbidden-USE contracts — directional rules over the decomposed arrows. Empty by default.
-    session.run(
-        "uv", "run", "--extra", "devtools", "python", "-m", "devtools.contracts", *LAYERS, "--assert", external=True
+        "uv",
+        "run",
+        "--extra",
+        "devtools",
+        "python",
+        "-m",
+        "devtools.run",
+        *LAYERS,
+        "--gate",
+        "demeter,composition,envy,contracts",
+        external=True,
     )
     # ENFORCED static type gate — pyrefly strict: every def annotated + the annotations check. `--with` adds
     # pyrefly to the synced run so it reads installed dep stubs (pydantic/numpy); scope=lint_paths (LINT_LAYERS).

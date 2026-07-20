@@ -21,7 +21,10 @@ import devtools
 
 # Engines are the modules that expose a CLI. `config` prints a packaged path and `archmap` writes files —
 # both are genuinely bespoke verbs rather than report/gate engines, so they are named here as decisions.
-BESPOKE = {"config", "archmap"}
+# `run` is the batch RUNNER, not an engine — it drives the others. It would pass the contract below by
+# coincidence (`Batch.report(name)` is callable and takes self, while the contract means `report() -> str`),
+# and a check that passes for the wrong reason is the thing this file exists to prevent.
+BESPOKE = {"config", "archmap", "run"}
 _INTERNAL = {"_common", "names", "trees", "pyproject", "resolve", "omit", "cli"}
 
 

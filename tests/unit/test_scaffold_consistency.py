@@ -188,16 +188,29 @@ _RUNNERS = {
 
 
 def _enforced_gates(text: str) -> set[str]:
-    """The devtools engines this runner invokes as a GATE (`--assert`), by module name.
+    """The devtools engines this runner invokes as a GATE, by module name.
+
+    TWO invocation forms, because bd f9y.3 added a batch runner:
+
+        python -m devtools.demeter ... --assert     one process per gate
+        python -m devtools.run ... --gate a,b,c     one process for many
+
+    A detector that knew only the first would go BLIND to every batched gate the moment a runner adopted
+    the runner — and a gate this cannot SEE is indistinguishable from a gate that is not wired, which is
+    the exact failure the test below exists to catch. So the detector learns the form; it is not relaxed.
 
     Windowed rather than line-based on purpose: ci.yml puts the module and `--assert` on one line, while a
     formatted nox `session.run(...)` spreads them over several.
     """
-    return {
+    single = {
         match.group(1)
         for match in re.finditer(r"devtools\.(\w+)", text)
-        if "--assert" in text[match.start() : match.start() + 250]
+        if match.group(1) != "run" and "--assert" in text[match.start() : match.start() + 250]
     }
+    batched = {
+        name for match in re.finditer(r"--gate[\"',\s]+([\w,]+)", text) for name in match.group(1).split(",") if name
+    }
+    return single | batched
 
 
 def test_every_enforced_gate_is_wired_into_all_three_runners():
