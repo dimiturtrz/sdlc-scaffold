@@ -37,6 +37,7 @@ from devtools.cli import Cli, Flag, Switch
 from devtools.names import Names
 from devtools.omit import Omit
 from devtools.pyproject import Pyproject
+from devtools.resolve import Resolver
 from devtools.trees import Trees
 
 log = logging.getLogger("devtools.graph")
@@ -279,11 +280,10 @@ class ImportGraph:
         cannot false-positive. This is the explorer side, where an approximate answer is still useful.
         """
         g: nx.DiGraph[str] = nx.DiGraph()
-        for src, dst, kind in ClassArrows(self.packages).edges():
-            if kind in kinds:
-                g.add_edge(src, dst)
-        for src, dst, kind, via in CallArrows(self.packages).edges():
-            if (CONSTRUCT if via else kind) in kinds:
+        resolver = Resolver(self.packages)  # built once and shared by both engines (bd 5cg)
+        arrows = ClassArrows(self.packages, resolver).edges() + CallArrows(self.packages, resolver).class_edges()
+        for src, dst, kind in arrows:
+            if kind in kinds and src != dst:  # a self-arrow is a shape, not a ranking signal
                 g.add_edge(src, dst)
         return g
 

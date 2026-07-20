@@ -425,19 +425,46 @@ def test_arrows_advisory_decomposes_the_seed(project):
     assert f"{pkg}.service.Service -> {pkg}.repository.Repository" in text, "holds a constructed field"
 
 
+def _arrow_pairs(block: str) -> list[tuple[str, str]]:
+    """(source, target) for every `a -> b` line in one section of the calls report."""
+    return [
+        (left.strip(), right.strip())
+        for line in block.splitlines()
+        if " -> " in line and line.startswith("  ")
+        for left, _, right in [line.partition(" -> ")]
+    ]
+
+
 def test_calls_advisory_splits_contract_from_concrete(project):
     """A3 (bd 4bl.3): the partition the design rests on. A behavioural call resolves to the DECLARED type
-    (the contract), while the CONCRETE shows up only where it is constructed — at the wiring site."""
+    (the contract), while the CONCRETE shows up only where it is constructed — at the wiring site.
+
+    Endpoints are matched by PREFIX rather than spelled out, because since bd f1u.2 the two sides of the
+    partition terminate at different depths — and that difference IS the thing under test. A call lands on
+    the method it invokes (inside the contract's box); a construction lands on the class as a whole, since
+    constructing is `__init__`. Naming the exact methods here would pin the demo's spelling instead.
+    """
     name, path = project
     pkg = example_pkg(name)
     result = run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.calls", *layers(name)], path)
     text = result.stdout + result.stderr
     contract, concrete = text.split("construct -> the concrete")
     # the repository calls the Store CONTRACT — never the MemoryStore that actually runs
-    assert f"{pkg}.repository.Repository -> {pkg}.types.Store" in contract, "call lands on the interface"
-    assert f"{pkg}.memory_store.MemoryStore" not in contract, "a call never reaches the concrete impl"
-    # ...and the concrete is reached exactly once, by the class that wires it
-    assert f"{pkg}.service.Service -> {pkg}.memory_store.MemoryStore" in concrete, "construct -> concrete"
+    calls = _arrow_pairs(contract)
+    assert any(
+        s.startswith(f"{pkg}.repository.Repository.") and t.startswith(f"{pkg}.types.Store.") for s, t in calls
+    ), f"a call lands on a METHOD of the interface: {calls}"
+    # No arrow crosses INTO the concrete. Stated as "from somewhere else", because since bd f1u.2 the
+    # concrete's own internals are visible too — `MemoryStore.put` calling its `_scoped` helper is intra-
+    # class structure, not a dependency on the implementation, and a bare substring check reads it as one.
+    concrete_cls = f"{pkg}.memory_store.MemoryStore"
+    intruders = [(s, t) for s, t in calls if t.startswith(concrete_cls) and not s.startswith(concrete_cls)]
+    assert intruders == [], f"a call never reaches the concrete impl from outside: {intruders}"
+    # ...and the concrete is reached exactly once, by the class that wires it — on the class itself
+    builds = _arrow_pairs(concrete)
+    assert any(
+        s.startswith(f"{pkg}.service.Service.") and t == f"{pkg}.memory_store.MemoryStore" for s, t in builds
+    ), f"construct lands on the CLASS: {builds}"
 
 
 def test_magic_literals_advisory_runs_clean(project):

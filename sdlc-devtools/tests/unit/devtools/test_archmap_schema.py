@@ -92,7 +92,7 @@ def test_the_viewer_exposes_a_toggle_for_every_edge_kind(tmp_path):
     html = _viewer(tmp_path)
     for kind in ("import", "inherits", "holds", "references", "calls", "construct"):
         assert f'id="kind-{kind}"' in html, f"no toggle for {kind}"
-    for stop in ("module", "class", "method"):
+    for stop in ("module", "class", "public", "all"):
         assert f'data-v="{stop}"' in html, f"the depth control needs a {stop} stop"
     assert 'id="hide-satellites"' in html, "roles are filterable, not just decorative"
 
@@ -209,20 +209,54 @@ def test_methods_are_emitted_under_their_class(monkeypatch, tmp_path):
     assert methods["schema_pkg.store.Store.put"]["label"] == "put", "the label is the bare method name"
 
 
-def test_no_method_level_edges_are_invented(monkeypatch, tmp_path):
-    """The call resolver aggregates per CLASS, so a method->method arrow would be precision the graph does
-    not have. Method nodes carry containment only; the edges arrive with bd 4bl.7."""
+def test_a_call_terminates_on_the_method_it_invokes(monkeypatch, tmp_path):
+    """SUPERSEDES "no method-level edges are invented" (bd f1u.2). The resolver no longer aggregates per
+    class: it walks the project MRO to whichever class DEFINES the called method, so the arrow lands on
+    real code rather than inventing precision. `Service.go` calls `self._store.put(...)`, and `put` is
+    defined on Store — that is the edge."""
     data = _data(monkeypatch, tmp_path)
-    methods = {n["id"] for n in data["nodes"] if n["level"] == "method"}
-    touching = [e for e in data["edges"] if e["source"] in methods or e["target"] in methods]
-    assert touching == [], f"no edge may terminate on a method yet: {touching}"
+    calls = {(e["source"], e["target"]) for e in data["edges"] if e["kind"] == "calls"}
+    assert ("schema_pkg.service.Service.go", "schema_pkg.store.Store.put") in calls, calls
+
+
+def test_a_construction_terminates_on_the_class(monkeypatch, tmp_path):
+    """The partition: behavioural coupling lands INSIDE the box, wiring lands ON it. Constructing is
+    `__init__`, i.e. the class as a whole, so a construct arrow keeps a class endpoint."""
+    data = _data(monkeypatch, tmp_path)
+    builds = {(e["source"], e["target"]) for e in data["edges"] if e["kind"] == "construct"}
+    assert ("schema_pkg.service.Service.__init__", "schema_pkg.store.Store") in builds, builds
+
+
+def test_no_edge_dangles_off_a_node_that_does_not_exist(monkeypatch, tmp_path):
+    """The invariant the viewer's roll-up rests on. It climbs an arrow's endpoint to the nearest ancestor
+    that is on screen — so an endpoint naming a node the file never emits would climb past every tier and
+    the arrow would silently vanish, or worse, attach to a package. Cheap to state, and it is what makes
+    the method tier trustworthy now that arrows terminate there."""
+    data = _data(monkeypatch, tmp_path)
+    known = {n["id"] for n in data["nodes"]}
+    dangling = [(e["source"], e["target"]) for e in data["edges"] if e["source"] not in known or e["target"] not in known]
+    assert dangling == [], f"every endpoint must be a node: {dangling}"
+
+
+def test_a_behavioural_arrow_is_emitted_once_at_its_finest_depth(monkeypatch, tmp_path):
+    """The roll-up invariant, one tier down. The viewer climbs an arrow to whichever ancestor is on screen,
+    so emitting a class-level COPY of a method-level call would draw the same fact twice at method depth —
+    and the count on the legend would silently double."""
+    data = _data(monkeypatch, tmp_path)
+    classes = {n["id"] for n in data["nodes"] if n["level"] == "class"}
+    coarse = [e for e in data["edges"] if e["kind"] == "calls" and e["source"] in classes]
+    assert coarse == [], f"a call is emitted at method depth only: {coarse}"
 
 
 def test_the_method_tier_is_opt_in_in_the_viewer(tmp_path):
     """165 methods in a 23-module tree is a wall — it must be off until asked for. Depth being ORDINAL is
-    what guarantees that: `method` is the last stop, so it is unreachable until the user walks to it."""
+    what guarantees that: the method stops are last, so they are unreachable until the user walks to them.
+
+    `public` and `all` are two stops on ONE tier, not a tier plus a checkbox: a class's public surface is a
+    strict subset of its methods, so walking further only ever adds nodes and the scale stays ordinal.
+    """
     html = _viewer(tmp_path)
-    assert "const DEPTHS = ['module', 'class', 'method'];" in html, "depth is a module>class>method scale"
+    assert "const DEPTHS = ['module', 'class', 'public', 'all'];" in html, "depth is a 4-stop ordinal scale"
     assert "let depth = 'module'" in html, "and it opens at the shallowest stop"
 
 

@@ -5,11 +5,16 @@
  * you fold/expand — a cytoscape compound with all children hidden renders zero-size, so a folded node must
  * be a genuinely childless leaf box. Layout = fcose (compound-aware) with a cose fallback.
  *
- * graph.json carries THREE tiers: modules joined by imports, beneath them classes joined by the typed
- * arrows an import decomposes into (bd 433.1), and beneath those the methods (bd 433.4, nodes only).
+ * graph.json carries THREE tiers: modules joined by imports, beneath them classes joined by the STRUCTURAL
+ * arrows an import decomposes into (bd 433.1), and beneath those the methods, where the BEHAVIOURAL arrows
+ * terminate (bd 433.4 / f1u.2 — a call lands on the method it invokes).
+ *
+ * Every arrow is emitted ONCE, at its finest depth, and rolls UP to whichever ancestor is on screen. So the
+ * class view is a projection of the method view rather than a second copy of it, exactly as the import tier
+ * is a projection of both.
  *
  * The controls are the MODEL, not one boolean per implementation detail. Both axes are ordinal:
- *   DEPTH   walks the containment tree      module > class > method   (each tier needs the one above it)
+ *   DEPTH   walks the containment tree      module > class > public > all   (each stop needs the one above)
  *   ARROWS  walks the decomposition         imports > structure > behaviour
  * Line STYLE carries the same knows/does split as ARROWS — SOLID = what a class KNOWS (import/inherits/
  * holds/references), DASHED = what it DOES (calls/construct) — so the reading survives greyscale and
@@ -46,8 +51,15 @@
     behaviour: 'what a class DOES — the traffic it generates at runtime, drawn dashed',
   };
 
-  const DEPTHS = ['module', 'class', 'method'];
+  // DEPTH stops are ORDINAL, and `public` / `all` are two stops on the same METHOD tier rather than a new
+  // axis: public methods are a strict subset of all methods, so walking one stop further only ever adds
+  // nodes. That is what keeps this a single scale instead of a tier control plus a private-methods
+  // checkbox — `public` shows a class's SURFACE, `all` opens its internals (where a public method calling
+  // its own private helper is the structure worth seeing).
+  const DEPTHS = ['module', 'class', 'public', 'all'];
+  const LEVELS = ['module', 'class', 'method'];   // the node tiers graph.json actually carries
   const PLURAL = { module: 'modules', class: 'classes', method: 'methods' };
+  const isPrivate = (n) => n.label.startsWith('_');
   const RAW = await (await fetch('./graph.json')).json();
   const $ = (id) => document.getElementById(id);
 
@@ -112,7 +124,8 @@
   }
   function readFilters() {
     const d = DEPTHS.indexOf(depth);
-    return { classes: d >= 1, methods: d >= 2, hideSatellites: $('hide-satellites').checked, kinds: kinds() };
+    return { classes: d >= 1, methods: d >= 2, privates: d >= 3,
+      hideSatellites: $('hide-satellites').checked, kinds: kinds() };
   }
   function paintSeg(id, value) {
     for (const b of $(id).children) b.classList.toggle('on', b.dataset.v === value);
@@ -127,14 +140,33 @@
       if (level === 'module') return true;
       // a METHOD hangs off a class, so it needs that class present — showing methods with the class tier
       // off would orphan them. Depth being ordinal makes that structural instead of a checkbox pairing.
-      if (level === 'method') return f.classes && f.methods;
+      if (level === 'method') return f.classes && f.methods && (f.privates || !isPrivate(n));
       return f.classes && !(f.hideSatellites && n.role === 'satellite');
     });
     const present = new Set(nodes.map((n) => n.id));
-    // an edge is drawn only when BOTH endpoints survive the depth filter — otherwise a class-level arrow
-    // would dangle off a hidden node
-    const edges = RAW.edges.filter(
-      (e) => f.kinds.has(e.kind || 'import') && present.has(e.source) && present.has(e.target));
+    // An arrow ROLLS UP to whichever ancestor is on screen rather than vanishing with its endpoint. A
+    // `calls` edge is emitted once, at its finest depth (method -> method), so dropping it whenever a
+    // method is filtered out would make the behaviour bands empty at class depth — and emitting a second,
+    // coarser copy would draw the same fact twice once methods are shown. Climbing is the same fold the
+    // import tier already rests on: project an arrow's endpoints upward and you land on the coarser edge.
+    const climb = (id) => {
+      let at = id;
+      while (at && !present.has(at)) at = at.includes('.') ? at.slice(0, at.lastIndexOf('.')) : null;
+      return at;
+    };
+    // an id CONTAINS another when it is a dotted prefix of it — `pkg.mod.A` contains `pkg.mod.A.go`
+    const contains = (outer, inner) => inner.startsWith(outer + '.');
+    const edges = RAW.edges
+      .filter((e) => f.kinds.has(e.kind || 'import'))
+      .map((e) => ({ ...e, source: climb(e.source), target: climb(e.target),
+        // a GENUINE self-arrow (a class holding its own type) is a real shape and stays drawable; a pair
+        // that merely climbed onto the same ancestor is internal detail at this depth and must not
+        loop: e.source === e.target }))
+      .filter((e) => e.source && e.target)
+      // ...and neither may an arrow that climbed onto its own ANCESTOR. At `public` depth a call to a
+      // private helper loses its target, which would otherwise climb to the calling class and draw a
+      // method pointing at the box it already sits inside. Containment is not a dependency.
+      .filter((e) => !contains(e.source, e.target) && !contains(e.target, e.source));
     GRAPH = { nodes, edges };
     PARENT = {}; KIDS = {}; DESC = {};
     for (const n of nodes) {
@@ -152,7 +184,7 @@
   // carrying how many of it are on screen. A kind at ZERO stays listed but dims — "structure shows nothing"
   // and "structure found no inheritance" are different answers, and only the second one is useful.
   function paintLegend(nodes, edges) {
-    const tiers = DEPTHS
+    const tiers = LEVELS
       .map((k) => [k, nodes.filter((n) => (n.level || 'module') === k).length])
       .filter(([, n]) => n > 0)
       .map(([k, n]) => `${n} ${n === 1 ? k : PLURAL[k]}`);
@@ -248,7 +280,9 @@
     const agg = {};
     for (const e of GRAPH.edges) {
       const s = rep(e.source), t = rep(e.target);
-      if (s === t) continue;
+      // A self-arrow survives only where it is genuinely one AND the box is open. Folded, it would claim a
+      // package owns itself when what it really holds is one recursive class inside.
+      if (s === t && (!e.loop || collapsed.has(s))) continue;
       const key = s + '|' + t + '|' + (e.kind || 'import');
       agg[key] = (agg[key] || 0) + (e.weight || 1);
     }
