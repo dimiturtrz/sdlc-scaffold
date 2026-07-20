@@ -8,7 +8,7 @@ one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved
 inherited call points at the base where the code actually lives. [Open the live viewer
 →](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
 
-**v1.21** — the guardrails now reach **below the import graph**. An import edge is the coarse OR of every
+**v1.22** — the guardrails now reach **below the import graph**. An import edge is the coarse OR of every
 reason one module needs another; it decomposes into typed class-level arrows (`inherits`, `holds`,
 `references`, `calls`, `construct`) that say *what kind* of dependency it is, which is what lets a rule
 forbid one kind of coupling without forbidding the file. That graph backs new gates — Law of Demeter,
