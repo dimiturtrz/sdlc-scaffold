@@ -72,6 +72,7 @@
     <span id="counts">?</span>
     <span class="spacer"></span>
     <button id="fold">fold all</button>
+    <button id="expand">expand all</button>
     <button id="reset">reset view</button>
     <button id="helpBtn" title="how to navigate">?</button>
   </div>
@@ -80,6 +81,7 @@
     <kbd>right-click</kbd> any node focuses it (spotlights its deps, dims the rest) ·
     <kbd>click</kbd> empty space clears focus · a number on an arrow is the summed import count.
     Folding is yours — changing depth or arrows keeps it, only <kbd>reset view</kbd> restores the default.
+    <kbd>fold all</kbd> and <kbd>expand all</kbd> are the two ends of that axis at the current depth.
   </div>
   <!-- An import edge is the coarse OR of every reason one module needs another. The two segmented controls
        are the model itself: DEPTH walks the containment tree (module > class > public > all — the last two

@@ -26,8 +26,13 @@
   // `randomize` is deliberately absent: it is a per-RUN decision, not a constant (see relayout).
   // `tile` was carried over from cose-bilkent and is not an fcose option at all — it did nothing.
   // `packComponents: true` was passed explicitly while already being the default; also dropped.
+  // `nestingFactor` feeds PER_LEVEL_IDEAL_EDGE_LENGTH_FACTOR, which LENGTHENS an edge that crosses compound
+  // boundaries, scaled by how many levels it crosses. It is the only force holding two boxes apart, and at
+  // the stock 0.1 a cross-module method->method edge earned about 48px of separation for two whole module
+  // boxes — so they simply sat on top of each other, worse the deeper the tier. Scaling with depth is the
+  // right shape (the deeper stops need more room); the coefficient was just far too small.
   const FCOSE = { name: 'fcose', quality: 'proof', animate: false,
-    nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.1, gravity: 0.25, numIter: 2500,
+    nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.8, gravity: 0.25, numIter: 2500,
     // Our nodes are sized to their text (`width: 'label'`) and a compound draws its own label above its
     // children. fcose measures raw boxes unless told otherwise, so without this it packs siblings into
     // each other's labels — which is most of the overlap between module boxes.
@@ -280,15 +285,32 @@
   // Fold and filter state already SURVIVE a rebuild; position did not, which undid most of that benefit —
   // the arrangement you had just read was thrown away every time you touched a control.
   const POS = {};
-  let laidOut = false;
+  let lastDepth = null;
 
-  function seed(id) {
-    if (POS[id]) return { ...POS[id] };
-    // A node appearing for the first time (drilling class -> public) starts at its PARENT's last position
-    // rather than at the origin, where every new node would otherwise pile up and then explode outward.
-    // The jitter only breaks the tie: coincident nodes give a force layout no direction to push apart in.
-    const at = POS[PARENT[id]];
-    return at ? { x: at.x + (Math.random() - 0.5) * 60, y: at.y + (Math.random() - 0.5) * 60 } : undefined;
+  // Seeds for the nodes about to be added. An incremental run skips fcose's global placement phase and only
+  // relaxes forces from where things already are, so WHERE new nodes start is the whole game — and my first
+  // attempt started every new sibling within ±30px of its parent. Coincident nodes give a force layout no
+  // direction to push apart in, so it could not recover, which is what turned the deep tiers into soup.
+  function seedPositions(nodes) {
+    const seeds = {}, fresh = new Map();
+    for (const n of nodes) {
+      if (POS[n.id]) { seeds[n.id] = { ...POS[n.id] }; continue; }
+      const parent = PARENT[n.id] || '';
+      if (!fresh.has(parent)) fresh.set(parent, []);
+      fresh.get(parent).push(n.id);
+    }
+    for (const [parent, ids] of fresh) {
+      const at = POS[parent];
+      if (!at) continue;                            // nothing to anchor on — let the layout place them
+      // A RING, sized so the siblings do not start on top of each other. Opening a class puts its methods
+      // in a circle around it, which is a non-degenerate start the force pass can actually improve on.
+      const radius = Math.max(80, (ids.length * 70) / (2 * Math.PI));
+      ids.forEach((id, i) => {
+        const angle = (2 * Math.PI * i) / ids.length;
+        seeds[id] = { x: at.x + radius * Math.cos(angle), y: at.y + radius * Math.sin(angle) };
+      });
+    }
+    return seeds;
   }
 
   // Rebuild the whole view from `collapsed`. A node is present iff no ancestor is folded, so a folded node
@@ -302,14 +324,12 @@
     cy.nodes().forEach((n) => { POS[n.id()] = { ...n.position() }; });
     cy.elements().remove();
     const nodes = GRAPH.nodes.filter((n) => inV(n.id));  // sorted dotted order -> parents precede children
-    cy.add(nodes.map((n) => {
-      const at = seed(n.id);   // computed ONCE — it carries jitter, so a second call is a different point
-      return { group: 'nodes',
-        data: {
-          id: n.id, label: n.label, descendants: DESC[n.id], level: n.level || 'module', role: n.role || null,
-          parent: (PARENT[n.id] && inV(PARENT[n.id])) ? PARENT[n.id] : undefined },
-        ...(at ? { position: at } : {}) };
-    }));
+    const seeds = seedPositions(nodes);
+    cy.add(nodes.map((n) => ({ group: 'nodes',
+      data: {
+        id: n.id, label: n.label, descendants: DESC[n.id], level: n.level || 'module', role: n.role || null,
+        parent: (PARENT[n.id] && inV(PARENT[n.id])) ? PARENT[n.id] : undefined },
+      ...(seeds[n.id] ? { position: seeds[n.id] } : {}) })));
     nodes.forEach((n) => { if (collapsed.has(n.id)) cy.getElementById(n.id).addClass('collapsed'); });
     const agg = {};
     for (const e of GRAPH.edges) {
@@ -327,12 +347,72 @@
     relayout();
   }
 
+  // ---- parking the edgeless ---------------------------------------------------------------------------
+  // A force layout has NOTHING to place a node with no edges: repulsion pushes it away and only weak
+  // gravity pulls back, so it drifts until its parent box stretches to bound it. That is the whole reason
+  // `archmap` rendered as a mostly-empty box around three TypedDicts — the box was sized correctly, its
+  // children were placed badly. cose-bilkent had `tile` for exactly this and fcose has no equivalent, so
+  // this is that: tuck the edgeless into a tidy block under the part of the box that has structure.
+  //
+  // Deliberately only the EDGELESS. Gridding every child would scramble the intra-class calls, which are
+  // most of the arrows at the deepest stop and the reason that stop exists — physics places those well.
+  const PARK_GAP = 24;
+
+  function parkEdgeless() {
+    const groups = new Map();
+    cy.nodes().forEach((n) => {
+      if (n.isParent() || n.degree(false) > 0) return;     // a box, or something with structure to hold it
+      const key = n.parent().empty() ? '' : n.parent().id();
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(n);
+    });
+    for (const [key, loose] of groups) {
+      const siblings = key ? cy.getElementById(key).children() : cy.nodes().filter((n) => n.parent().empty());
+      const looseIds = new Set(loose.map((n) => n.id()));
+      const anchored = siblings.filter((n) => !looseIds.has(n.id()));
+      // Anchor UNDER the connected cluster, so the reading order is structure first, companions beneath.
+      // With nothing connected to anchor to, tidy them where they already are rather than dragging the
+      // whole group across the graph to sit under something unrelated.
+      const under = anchored.nonempty();
+      const box = under ? anchored.boundingBox() : cy.collection(loose).boundingBox();
+      const cellW = Math.max(...loose.map((n) => n.outerWidth())) + PARK_GAP;
+      const cellH = Math.max(...loose.map((n) => n.outerHeight())) + PARK_GAP;
+      // match the block's width to the cluster it sits under, so it reads as belonging to it
+      const cols = Math.max(1, Math.min(loose.length, Math.round(box.w / cellW) || 1));
+      const top = under ? box.y2 + PARK_GAP : box.y1;
+      loose.forEach((n, i) => n.position({
+        x: box.x1 + (i % cols) * cellW + cellW / 2,
+        y: top + Math.floor(i / cols) * cellH + cellH / 2,
+      }));
+    }
+  }
+
+  // Parking runs after the layout SETTLES, not after run() returns — fcose reports completion by event, and
+  // repositioning mid-solve would just be overwritten.
+  function settle() {
+    parkEdgeless();
+    cy.fit(cy.elements(), 40);
+  }
+
   function relayout() {
     // Randomize ONCE. The first layout has nothing to improve on; every later one starts from positions the
     // reader has already made sense of, so it should ADJUST the picture rather than re-solve it.
-    try { cy.layout({ ...FCOSE, randomize: !laidOut }).run(); laidOut = true; }
-    catch (e) { console.warn('fcose failed -> cose', e); cy.layout({ name: 'cose', animate: false }).run(); }
-    cy.fit(cy.elements(), 40);
+    // Reseed when the DEPTH STOP changes, and only then. That is the semantic line rather than a threshold
+    // on how many nodes moved: a new depth is a different KIND of picture and deserves a fresh solve, while
+    // folding a package or switching arrow bands is the same picture rearranged — and folding is the main
+    // way this thing is read, so it is exactly where the reader's arrangement must survive.
+    const reseed = depth !== lastDepth;
+    lastDepth = depth;
+    try {
+      const layout = cy.layout({ ...FCOSE, randomize: reseed });
+      layout.one('layoutstop', settle);
+      layout.run();          // fcose throws HERE, not on construction — so the fallback must cover the run
+    } catch (e) {
+      console.warn('fcose failed -> cose', e);
+      const fallback = cy.layout({ name: 'cose', animate: false });
+      fallback.one('layoutstop', settle);
+      fallback.run();
+    }
   }
 
   // the ONLY redraw path that preserves fold state — every control except `reset view` goes through here
@@ -403,6 +483,14 @@
     GRAPH.nodes.filter((n) => !PARENT[n.id] && DESC[n.id] > 0).forEach((n) => collapsed.add(n.id));
     refresh();
   };
+  // The other end of the same axis: nothing folded, so the current depth stop is shown in full. `seen` is
+  // marked so applyDefaultFold cannot re-fold a root the next time a control is touched — otherwise the
+  // very next toggle would quietly undo this.
+  $('expand').onclick = () => {
+    collapsed.clear();
+    GRAPH.nodes.forEach((n) => seen.add(n.id));
+    refresh();
+  };
   $('reset').onclick = () => {
     depth = 'module'; band = 'imports';
     paintSeg('depth', depth); paintSeg('arrows', band);
@@ -412,7 +500,7 @@
     // position is reading state exactly like folding is, so the control that restores the default view
     // clears it too — otherwise `reset` would rebuild the default graph in the arrangement you just left
     Object.keys(POS).forEach((id) => delete POS[id]);
-    laidOut = false;
+    lastDepth = null;   // no previous stop to match, so `reset` always solves fresh
     apply();
   };
 
