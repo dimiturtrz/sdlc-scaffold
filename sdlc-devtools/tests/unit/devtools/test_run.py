@@ -99,9 +99,18 @@ def test_an_engine_that_needs_neither_is_handed_neither(batch):
 
 
 def test_the_resolver_is_not_built_until_something_needs_it(batch):
-    """A run of purely line-level engines must not pay to parse the tree for resolution it never uses."""
+    """A run of purely line-level engines must not pay to parse the tree for resolution it never uses.
+
+    `resolver` is a `cached_property`, so "not built yet" IS the absence of its instance-dict entry —
+    reading `batch.resolver` to check would build the thing the test is asserting was not built.
+    """
     batch.build("plain")
-    assert batch._resolver is None, "constructing a non-resolving engine parsed the tree anyway"
+    assert "resolver" not in batch.__dict__, "constructing a non-resolving engine parsed the tree anyway"
+
+
+def test_the_resolver_is_built_once_and_reused(batch):
+    """The other half of the same claim: every engine in a batch shares ONE parse of the source tree."""
+    assert batch.resolver is batch.resolver
 
 
 # ---- every engine runs, whatever the others do --------------------------------------------------------

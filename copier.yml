@@ -146,21 +146,23 @@ archviz_pages:
 # a real reach-in signal. (b) E501 is legislated already — line-length 120 is a decided absolute; the gate
 # just enforces it. A genuine long line (URL, dense literal) takes a per-line `# noqa: E501`. Both ship clean
 # on a fresh gen (0 hits), so they BLOCK regressions from day one, same as the rest of the union.
+# TID251 bans `typing.Any` (see [tool.ruff.lint.flake8-tidy-imports.banned-api]). ENFORCED by OWNER'S
+# DECISION rather than by the usual graduation rule, and the cost was measured first, not discovered:
+# 49 findings on cardiac-seg, 47 on mindscape, 0 on synthscape. So two consumers go red on their next
+# update, and ~75% of the hits are `dict[str, Any]` at JSON/config boundaries — real refactoring into a
+# TypedDict, not a rename. Recorded plainly because it BREAKS the shape_contracts precedent (advisory
+# until a real tree reaches 0); the rule stands for everything else, this is a deliberate exception.
 ruff_select:
   type: str
-  default: "F,B,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123,E501,SLF001,PGH003,PGH004"
+  default: "F,B,I,T201,FBT,BLE001,S101,S110,C901,PLR0912,PLR0913,PLR0915,PLR2004,PLC0415,RUF100,N,E741,E742,E743,PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,E402,ICN001,S603,S607,PTH123,E501,SLF001,PGH003,PGH004,TID251"
   when: false
 
 # Extra codes surfaced by the non-blocking `ruff check . --statistics` run over the WHOLE tree (`.` vs the
 # enforced `lint_paths`) — reported, never a merge gate. This is the seam the comment always described: a
 # code that needs whole-tree visibility BEFORE it is honest to gate rides here until a real tree is clean.
-# TID251 bans `typing.Any` (see [tool.ruff.lint.flake8-tidy-imports.banned-api]). Advisory because it was
-# MEASURED first (bd lph): 49 violations on cardiac-seg, 47 on mindscape, 0 on synthscape — and ~75% of
-# them are `dict[str, Any]` at JSON/config boundaries, which is real refactoring into a TypedDict rather
-# than a rename. It graduates into ruff_select when a real tree reaches 0, per the shape_contracts rule.
 ruff_advisory_select:
   type: str
-  default: "TID251"
+  default: ""
   when: false
 
 # Single source of truth for the pinned tool versions — rendered into ci.yml / noxfile.py /
@@ -208,5 +210,5 @@ pyrefly_version:
 # sdlc-devtools/ was published at. `when: false` (never asked, always the release value).
 devtools_ref:
   type: str
-  default: "v1.22.0"
+  default: "v1.23.0"
   when: false

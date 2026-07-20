@@ -57,9 +57,10 @@ jobs:
       # Module shape — ast-grep: the SYNTACTIC axis ruff has no plugin API for (in-a-class house rule +
       # no import-time side effects). Rules are data under devtools/sg-rules/*.yml, severity=error (BLOCKS).
       # config lives in the INSTALLED devtools package (no vendored devtools/ dir) — `python -m
-      # devtools.config` prints the packaged path (`uv run` bootstraps the env with the devtools extra).
+      # `devtools.astgrep` locates the packaged config and runs the scan itself — one home for how the rule
+      # set is invoked, and no `$(…)` substitution, which is what kept this gate off Windows entirely.
       - name: "Module shape — enforced (ast-grep)"
-        run: uvx --from ast-grep-cli ast-grep scan -c "$(uv run -q --extra devtools python -m devtools.config sgconfig)" {{ pkgs }}
+        run: uv run --extra devtools python -m devtools.astgrep {{ pkgs }} --assert
       # Duplication — the DRY axis (jscpd) the coupling tools can't see. Threshold in devtools/jscpd.json.
       - uses: actions/setup-node@v4
         with:
@@ -128,12 +129,18 @@ jobs:
       # Contracts live in [[tool.arch.forbidden]]; empty by default, so a fresh gen is green.
       - name: Forbidden-use contracts — enforced (devtools/contracts.py --assert)
         run: uv run --extra devtools python -m devtools.contracts {{ pkgs }} --assert
-      # Law of Demeter — ENFORCED: a chain that reaches THROUGH a field into a stranger
-      # (`self.store.config.name`) couples this class to a type it never declared. Ceiling is
-      # [tool.structure] demeter_max_depth (2 = reach your own field, then talk to it). A fresh gen has no
-      # code so it starts clean and ratchets; raise the ceiling for data-navigation-heavy trees.
+      # Law of Demeter — ENFORCED: CALLING a method through a field into a stranger
+      # (`self.store.config.reload()`) couples this class to a type it never declared. Ceiling is
+      # [tool.structure] demeter_max_depth (2 = reach your own field, then talk to it). Only chains ending
+      # in a CALL count — reading `cfg.a.b.c` is data navigation. A fresh gen has no code so it starts
+      # clean and ratchets; raise the ceiling for data-navigation-heavy trees.
       - name: Law of Demeter — enforced (devtools/demeter.py --assert)
         run: uv run --extra devtools python -m devtools.demeter {{ pkgs }} --assert
+      # Property purity — ENFORCED: a `@property` that assigns to `self` makes every reader a writer
+      # without saying so. The setter is the declared exception. This is also the premise the Demeter gate
+      # rests on: skipping attribute chains is only honest while a property is a pure read.
+      - name: Property purity — enforced (devtools/purity.py --assert)
+        run: uv run --extra devtools python -m devtools.purity {{ pkgs }} --assert
       - name: Types — enforced (pyrefly strict)
         run: uv run --with pyrefly=={{ pyrefly_version }} pyrefly check {{ lint_paths }}
 {% if enable_ml %}      # Shape contracts — ENFORCED (GRADUATED advisory->blocking, bd vip.4): every public array/tensor

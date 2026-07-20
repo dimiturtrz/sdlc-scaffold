@@ -33,6 +33,7 @@ import inspect
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import cached_property
 from typing import cast
 
 from devtools import Engine, Gate
@@ -73,7 +74,6 @@ class Batch:
 
     def __init__(self, packages: list[str]) -> None:
         self.packages = packages
-        self._resolver: Resolver | None = None
 
     @staticmethod
     def engine_class(module_name: str) -> type:
@@ -94,13 +94,16 @@ class Batch:
         """A comma-separated engine list, empty when the flag was not passed."""
         return [n for n in (value or "").split(",") if n]
 
-    @property
+    @cached_property
     def resolver(self) -> Resolver:
         """Built once, and only if something asks for it — a run of purely line-level engines never pays
-        to parse the tree for name resolution it will not use."""
-        if self._resolver is None:
-            self._resolver = Resolver(self.packages)
-        return self._resolver
+        to parse the tree for name resolution it will not use.
+
+        `cached_property` rather than a hand-rolled `if self._resolver is None` memo: the lazy read was
+        the first thing `devtools.purity` flagged when it was written, and it was right. The descriptor
+        does the caching, so the property itself stays a pure read.
+        """
+        return Resolver(self.packages)
 
     def build(self, name: str) -> object:
         """Construct one engine, handing it the shared parse if its signature says it can use one.

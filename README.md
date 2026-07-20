@@ -8,11 +8,11 @@ one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved
 inherited call points at the base where the code actually lives. [Open the live viewer
 →](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
 
-**v1.22** — the guardrails now reach **below the import graph**. An import edge is the coarse OR of every
+**v1.23** — the guardrails now reach **below the import graph**. An import edge is the coarse OR of every
 reason one module needs another; it decomposes into typed class-level arrows (`inherits`, `holds`,
 `references`, `calls`, `construct`) that say *what kind* of dependency it is, which is what lets a rule
 forbid one kind of coupling without forbidding the file. That graph backs new gates — Law of Demeter,
-composition-cycle, feature-envy, directional use-contracts — and an interactive
+property-purity, composition-cycle, feature-envy, directional use-contracts — and an interactive
 [architecture viewer](https://dimiturtrz.github.io/sdlc-scaffold/) that folds from packages down to methods.
 
 The analyzers ship as a **pinned package** (`sdlc-devtools`), not vendored source: an engine update is a
@@ -97,7 +97,7 @@ and unit-tested alongside it, so a broken check can't pass silently.
 | **Correctness** | no construct is provably broken (bad reference, swallowed error, wrong shape); every logic module carries a test, exercised to a coverage floor | *repair / test* | ruff `F/B/BLE` · `pyrefly` (strict types) · `shape_contracts` (ML) · test-mirror (`graph.py`) · coverage | R1, R3 |
 | **Consistency** | one convention, no drift — formatting, import order, naming | *conform* | ruff `format`/`I`/`N`/`RUF` | R1 |
 | **Minimality** | nothing that shouldn't exist — no dead code, no duplication (each fact one home) | *delete / dedupe* | vulture · jscpd · `magic_literals` · ruff `F401` · deptry (unused/undeclared) | R1, R3 |
-| **Structure** | code is well-SHAPED at every radius — units right-sized + low-branching (not god-files), cohesive (one idea, no missing object), and the graph acyclic / directional / bounded-coupling / test-mirrored | *split / extract / redirect / flatten* | ruff `C901/PLR09xx` · `demeter` (reach-through) · god-file · `lcom` · `state_candidates` · `data_clumps` · `classes` (one subject/file) · `arrows` (inherits/holds/references) · `calls` (contract vs concrete) · `composition` (has-a cycles) · `envy` (method belongs elsewhere) · `contracts` (forbidden-USE) · ast-grep shape · `graph.py --assert` · import-linter · `archmap` (viz) | R1–R3 |
+| **Structure** | code is well-SHAPED at every radius — units right-sized + low-branching (not god-files), cohesive (one idea, no missing object), and the graph acyclic / directional / bounded-coupling / test-mirrored | *split / extract / redirect / flatten* | ruff `C901/PLR09xx` · `demeter` (calling through a field into a stranger) · `purity` (a @property must not mutate) · god-file · `lcom` · `state_candidates` · `data_clumps` · `classes` (one subject/file) · `arrows` (inherits/holds/references) · `calls` (contract vs concrete) · `composition` (has-a cycles) · `envy` (method belongs elsewhere) · `contracts` (forbidden-USE) · ast-grep shape · `graph.py --assert` · import-linter · `archmap` (viz) | R1–R3 |
 | **Security** (orthogonal) | no unsafe construct, no known-CVE dependency | *patch / pin* | ruff `S` · pip-audit | ⟂ |
 
 Four structural properties, fixed by *repair/test, conform, delete/dedupe, split/extract/redirect*. The

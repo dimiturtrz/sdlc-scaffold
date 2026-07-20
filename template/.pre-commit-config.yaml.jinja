@@ -51,9 +51,11 @@ repos:
 
       - id: astgrep-gate
         name: ast-grep — module shape
-        # config lives in the INSTALLED devtools package (no vendored devtools/ dir) — locate it via
-        # `python -m devtools.config`; bash -c so the `$(…)` substitution runs (CI/dev shells are POSIX).
-        entry: bash -c 'uvx --from ast-grep-cli ast-grep scan -c "$(uv run -q --extra devtools python -m devtools.config sgconfig)" {{ pkgs }}'
+        # NO SHELL. The config lives in the INSTALLED devtools package, and locating it used to need
+        # `bash -c` for a `$(python -m devtools.config sgconfig)` substitution — which meant this gate did
+        # not run on Windows at all, where the bash pre-commit picks cannot find uv. `devtools.astgrep`
+        # does that lookup in Python and runs the scan itself, so the hook is a plain entry like every other.
+        entry: uv run --extra devtools python -m devtools.astgrep {{ pkgs }} --assert
         language: system
         pass_filenames: false
         always_run: true
@@ -110,8 +112,14 @@ repos:
         pass_filenames: false
         always_run: true
       - id: demeter
-        name: law of demeter — enforced (no reaching through a field into a stranger)
+        name: law of demeter — enforced (no calling through a field into a stranger)
         entry: uv run --extra devtools python -m devtools.demeter {{ pkgs }} --assert
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: purity
+        name: property purity — enforced (a @property must not assign to self)
+        entry: uv run --extra devtools python -m devtools.purity {{ pkgs }} --assert
         language: system
         pass_filenames: false
         always_run: true
@@ -136,7 +144,14 @@ repos:
       # enforcement (import-linter is the directional gate; CI `archmap --check` is the backstop).
       - id: archmap
         name: architecture graph — regenerate docs/architecture/ at pre-push (commit the graph.json diff)
-        entry: bash -c 'uv run --extra devtools python -m devtools.archmap {{ pkgs }}; git diff --quiet -- docs/architecture/graph.json || { git add docs/architecture/graph.json; echo "graph.json was stale - regenerated & staged; commit it and push again."; exit 1; }'
+        # NO SHELL. This was `bash -c 'archmap ...; git diff --quiet || { git add ...; exit 1; }'` and had two
+        # faults. The `;` discarded the regen's exit code, so when archmap failed the following diff saw no
+        # change and the hook reported Passed — green precisely when its job did not happen (bd v3c.2). And
+        # `bash` cannot reliably find `uv` on Windows, so the one hook needing a shell was the one hook that
+        # did not run on the scaffold's own primary dev platform. `--regen` does both steps in the engine:
+        # regenerate, then exit 1 if the committed graph.json HAD been stale. It no longer `git add`s for
+        # you — the message tells you to — because staging would drag git into an engine kept git-free.
+        entry: uv run --extra devtools python -m devtools.archmap {{ pkgs }} --regen
         language: system
         pass_filenames: false
         always_run: true

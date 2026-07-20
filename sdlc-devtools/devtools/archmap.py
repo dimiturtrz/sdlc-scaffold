@@ -267,6 +267,24 @@ class Archmap:
             return [f"stale:    {_JSON.as_posix()}"]
         return []
 
+    def regen(self) -> list[str]:
+        """Regenerate, and report the drift that existed BEFORE the write (empty == was already current).
+
+        This is `--check` and a write in one call, and it exists so the pre-push hook needs no SHELL. The
+        hook used to be `bash -c 'archmap ...; git diff --quiet || { git add ...; exit 1; }'`, which had two
+        faults: the `;` discarded the regen's exit code so the hook reported Passed when archmap failed, and
+        `bash` is not reliably able to find `uv` on Windows — the scaffold's own primary dev platform — so
+        the one hook that needed a shell was the one hook that did not run there.
+
+        Drift is measured BEFORE writing because after the write there is nothing left to compare against.
+        No `git add`: staging would drag git into an engine whose diff/check surface is deliberately
+        git-free and unit-testable, to save the caller one command.
+        """
+        drift = self.check()
+        self.write_json()
+        self.write_viewer()
+        return drift
+
 
 def main():
     ap = argparse.ArgumentParser(
@@ -276,6 +294,12 @@ def main():
     ap.add_argument("packages", nargs="+", help="package dirs to map (>=1 required)")
     ap.add_argument(
         "--check", action="store_true", help="fail (exit 1) if the committed graph.json is out of date — do not write"
+    )
+    ap.add_argument(
+        "--regen",
+        action="store_true",
+        help="regenerate, then fail (exit 1) if the committed graph.json HAD been stale — the pre-push hook "
+        "form, so the hook needs no shell to sequence a write and a check",
     )
     ap.add_argument(
         "--diff",
@@ -301,6 +325,18 @@ def main():
             )
             raise SystemExit(1)
         log.info("archmap: graph.json in sync")
+        return
+    if args.regen:
+        drift = engine.regen()
+        log.info("archmap: wrote %s + %s", _JSON.as_posix(), _INDEX.as_posix())
+        if drift:
+            log.error(
+                "archmap: graph.json was stale and has been REGENERATED — `git add %s`, commit it and push "
+                "again (the diff is your reviewable architecture-erosion signal):\n%s",
+                _JSON.as_posix(),
+                "\n".join(drift),
+            )
+            raise SystemExit(1)
         return
     engine.write_json()
     engine.write_viewer()
