@@ -1,5 +1,13 @@
 # sdlc-scaffold
 
+[![The architecture viewer rendering sdlc-devtools' own tree — 25 modules, 35 classes and 214 methods as nested boxes, with dashed call and construct arrows running between individual methods](docs/images/architecture-viewer.png)](https://dimiturtrz.github.io/sdlc-scaffold/)
+
+<sub>**The analyzer package mapping itself** — method depth, behavioural arrows. Every box is a container in
+one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved* dependency, not an import. A
+`calls` edge lands on the method that **defines** what was invoked, found by walking the project MRO, so an
+inherited call points at the base where the code actually lives. [Open the live viewer
+→](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
+
 **v1.20** — the guardrails now reach **below the import graph**. An import edge is the coarse OR of every
 reason one module needs another; it decomposes into typed class-level arrows (`inherits`, `holds`,
 `references`, `calls`, `construct`) that say *what kind* of dependency it is, which is what lets a rule
