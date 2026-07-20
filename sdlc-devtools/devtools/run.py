@@ -41,12 +41,18 @@ from devtools.resolve import Resolver
 
 log = logging.getLogger("devtools.run")
 
-# Modules that ship a CLI without being report/gate engines: the shared plumbing, this runner, and the
-# three genuinely bespoke verbs — `config` prints a packaged path, `archmap` writes files, and `analytics`
-# takes (repo, areas) rather than packages, so none of them answers the interface a batch run needs.
-NOT_ENGINES = frozenset(
-    {"_common", "names", "trees", "pyproject", "resolve", "omit", "cli", "run", "config", "archmap", "analytics"}
-)
+# Shared machinery with no findings of its own — not an engine under ANY reading, which is why this half is
+# the one home (`test_engine_interface` imports it rather than keeping a copy).
+PLUMBING = frozenset({"_common", "names", "trees", "pyproject", "resolve", "omit", "cli"})
+
+# What this RUNNER cannot drive, which is deliberately NOT the same question the interface test asks. That
+# test excludes what is exempt from the `report()/run_assert()` CONTRACT; this excludes what cannot be
+# constructed as `Engine(packages)`. `analytics` is the case that separates them: it honours the contract
+# perfectly and the test rightly holds it to that, but its `__init__(repo, areas)` takes something else
+# entirely, so a batch run cannot build it. Collapsing the two lists into one silently dropped analytics
+# from the contract test — a duplication worth keeping, because the facts are only coincidentally similar.
+UNDRIVEABLE = frozenset({"config", "archmap", "analytics", "run"})
+NOT_ENGINES = PLUMBING | UNDRIVEABLE
 
 
 @dataclass(frozen=True)

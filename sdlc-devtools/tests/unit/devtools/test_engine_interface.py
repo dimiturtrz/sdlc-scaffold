@@ -18,19 +18,21 @@ import pkgutil
 import pytest
 
 import devtools
+from devtools.run import PLUMBING
 
-# Engines are the modules that expose a CLI. `config` prints a packaged path and `archmap` writes files —
-# both are genuinely bespoke verbs rather than report/gate engines, so they are named here as decisions.
-# `run` is the batch RUNNER, not an engine — it drives the others. It would pass the contract below by
-# coincidence (`Batch.report(name)` is callable and takes self, while the contract means `report() -> str`),
-# and a check that passes for the wrong reason is the thing this file exists to prevent.
+# PLUMBING is shared with run.py (one home — it is not an engine under any reading). This set is NOT:
+# it names what is exempt from the report()/run_assert() CONTRACT, which is a different question from
+# run.py's "what can I construct as Engine(packages)". `analytics` sits in that gap deliberately — the
+# runner cannot build it (its __init__ takes repo/areas) but it honours the contract, so it is held to it
+# HERE. `config` prints a packaged path and `archmap` writes files: genuinely different verbs. `run` is the
+# RUNNER, and it would pass by coincidence — `Batch.run_report(name)` is callable and takes self while the
+# contract means `report() -> str`, and a check that passes for the wrong reason is what this file prevents.
 BESPOKE = {"config", "archmap", "run"}
-_INTERNAL = {"_common", "names", "trees", "pyproject", "resolve", "omit", "cli"}
 
 
 def _engine_modules():
     for info in pkgutil.iter_modules(devtools.__path__):
-        if info.name in _INTERNAL or info.name in BESPOKE:
+        if info.name in PLUMBING or info.name in BESPOKE:
             continue
         module = importlib.import_module(f"devtools.{info.name}")
         if hasattr(module, "main"):
