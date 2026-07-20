@@ -59,28 +59,20 @@ to fire (R1 unit / R2 module / R3 system — the structural mirror of the test p
 Each tier sees things the tiers below it structurally cannot, and the gradient tracks cost-to-fix and
 blast-radius — a magic number is a local nit; an import cycle is architectural debt.
 
-```
-        ┌────────────────────────────────────────────────────┐
-  R3    │  ACROSS THE SYSTEM GRAPH    (whole corpus)          │
- system │  Structure  — cycles · fan-in/out · layering ·      │
-        │               test-mirror (Correctness) · god-file · │
-        │               data clumps                            │
-        │  Minimality — cross-file dup · vocab drift · dead    │
-        ├────────────────────────────────────────────────────┤
-  R2    │  WITHIN A MODULE / CLASS    (one file, self-cont.)  │
- module │  Structure  — LCOM cohesion · latent shared state ·  │
-        │               class roles (one subject / file)       │
-        ├────────────────────────────────────────────────────┤
-  R1    │  WITHIN A LINE / FUNCTION   (one construct)         │
-  unit  │  Correctness — real-bug lints · types · shapes      │
-        │  Structure   — cyclomatic complexity · demeter depth │
-        │  Minimality  — magic values                         │
-        │  Consistency — style / naming                       │
-        └────────────────────────────────────────────────────┘
-   ⟂  Security      (supply-chain): ruff S unsafe-construct · pip-audit known-CVE
-   ⟂  Completeness  (math: all required subcases) — ABSENT, no requirements spec; coverage floors
-                    test presence under Correctness, not requirement-completeness
-```
+Widest radius first, so the many-cheap base sits at the bottom:
+
+| Radius | Minimum it must read | Axis — and what only that radius can catch |
+|:--|:--|:--|
+| **R3** · system | across the system graph<br>*(whole corpus)* | **Structure** — cycles · fan-in/out · layering · test-mirror *(Correctness)* · god-file · data clumps<br>**Minimality** — cross-file dup · vocab drift · dead |
+| **R2** · module | within a module / class<br>*(one file, self-contained)* | **Structure** — LCOM cohesion · latent shared state · class roles *(one subject / file)* |
+| **R1** · unit | within a line / function<br>*(one construct)* | **Correctness** — real-bug lints · types · shapes<br>**Structure** — cyclomatic complexity · demeter depth<br>**Minimality** — magic values<br>**Consistency** — style / naming |
+
+Two axes are **orthogonal** to the radii — they cut across every tier instead of belonging to one:
+
+- **Security** *(supply-chain)* — ruff `S` · unsafe-construct · `pip-audit` known-CVE
+- **Completeness** *(math: all required subcases)* — **absent**, and deliberately named rather than quietly
+  omitted: there is no requirements spec to check against. Coverage floors test *presence* under
+  Correctness, which is a different claim from requirement-completeness.
 
 Running many small checks instead of one is the point: a linter reading a single line can't see an import
 cycle; a cycle-checker can't see a one-way forbidden dependency; neither sees a class whose methods split
