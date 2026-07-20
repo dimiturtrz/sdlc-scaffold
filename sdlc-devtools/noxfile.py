@@ -62,7 +62,7 @@ def lint(session: nox.Session) -> None:
     session.run(
         "uv", "run", "--group", "dev", "python", "-m", "devtools.run", LAYER,
         # god-module / import-cycle / god-file / test-mirror, then the arrow-level gates
-        "--gate", "graph,demeter,composition,contracts,envy",
+        "--gate", "graph,demeter,purity,composition,contracts,envy",
         # ADVISORY explorers — ranked reports that never fail. `classes` is here rather than under --gate
         # for the reason it is advisory everywhere: its survivors are genuine multi-abstraction files, i.e.
         # refactoring work rather than a classifier bug. It graduates when a real tree reaches zero.

@@ -126,6 +126,25 @@ def has_node():
     return NPX is not None
 
 
+def bash_sees_uv():
+    """Whether the `bash` pre-commit shells out to can find `uv` on its PATH.
+
+    The archmap hook is the one hook wrapped in `bash -c`, because it needs `&&`/`||` between the regen
+    and the staleness check. On Windows the bash pre-commit picks does not always inherit `uv` from the
+    Windows PATH, and the hook then dies with `uv: command not found`.
+
+    This is an ENVIRONMENT predicate, not a way to make a red test green: what it guards is a hook that
+    cannot execute here at all, and the hook itself now FAILS LOUDLY in that case rather than reporting
+    Passed while writing nothing (it used to join the two commands with `;`, discarding the regen's exit
+    code — a hook that went green precisely when its job did not happen).
+    """
+    try:
+        probe = subprocess.run(["bash", "-c", "command -v uv"], capture_output=True, check=False)  # noqa: S607
+    except OSError:
+        return False
+    return probe.returncode == 0
+
+
 def assert_bites(project, cmd, mutate):
     """Prove a gate BITES: `mutate(project)` injects a violation and returns a restore callable; run
     `cmd`; restore BEFORE asserting (so a failure can't leave a shared fixture dirty); assert non-zero."""

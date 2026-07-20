@@ -128,8 +128,12 @@ def lint(session: nox.Session) -> None:
     # engines that resolve names.
     #   graph       god-module / import-cycle / god-file / test-mirror. `--extra devtools` because it needs
     #               grimp+networkx (optional extra), same as CI's synced tests job.
-    #   demeter     a chain reaching THROUGH a field into a stranger couples this class to a type it never
-    #               declared. Ceiling: [tool.structure] demeter_max_depth (default 2).
+    #   demeter     CALLING a method through a field into a stranger couples this class to a type it never
+    #               declared. Ceiling: [tool.structure] demeter_max_depth (default 2). Only chains that end
+    #               in a call count — reading a deep config tree is data navigation, not coupling.
+    #   purity      a @property that assigns to self. A read dressed as an attribute has to BE a read, and
+    #               it is also what makes demeter's "an attribute chain is only data" true in a language
+    #               where a property is a method call spelled as attribute access.
     #   composition a `holds` cycle (A owns a B that owns an A) means neither can be built or tested alone.
     #               Catches the intra-file case the IMPORT cycle check cannot represent.
     #   envy        a METHOD more interested in one other class than its own object. Floor:
@@ -150,7 +154,7 @@ def lint(session: nox.Session) -> None:
         "devtools.run",
         *LAYERS,
         "--gate",
-        "graph,demeter,composition,envy,contracts{% if enable_ml %},shape_contracts{% endif %}",
+        "graph,demeter,purity,composition,envy,contracts{% if enable_ml %},shape_contracts{% endif %}",
         external=True,
     )
     # ENFORCED static type gate — pyrefly strict: every def annotated + the annotations check. `--with` adds

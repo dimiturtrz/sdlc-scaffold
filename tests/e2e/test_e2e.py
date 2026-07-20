@@ -22,6 +22,7 @@ from conftest import (
     SELECT,
     VULTURE,
     assert_bites,
+    bash_sees_uv,
     config_path,
     copier_cmd,
     copier_default,
@@ -645,6 +646,8 @@ def test_nox_gates(project):
 
 def test_precommit_all_hooks(project):
     # no node needed: jscpd is CI+nox only, never a commit hook; every pre-commit hook is uvx/uv-run
+    if not bash_sees_uv():
+        pytest.skip("the archmap hook runs through `bash -c` and this bash cannot find uv (Windows PATH)")
     _, path = project
     run(["uvx", PRECOMMIT, "run", "--all-files"], path)
 
@@ -706,6 +709,8 @@ def _add_module(root):
 def test_prepush_archmap_regenerates_and_blocks_on_drift(full_project):
     # c80: the pre-push archmap hook regenerates graph.json and BLOCKS the push if it drifted, so the committed
     # diff-truth (and the /architecture/ page it feeds) stays current without a manual `nox -s archmap`.
+    if not bash_sees_uv():
+        pytest.skip("the archmap hook runs through `bash -c` and this bash cannot find uv (Windows PATH)")
     run(PREPUSH_ARCHMAP, full_project, check=False)  # first run creates graph.json (was untracked)
     run(["git", "add", "docs/architecture/graph.json"], full_project)
     run(["git", "commit", "-m", "baseline graph.json", "--no-verify"], full_project)
@@ -863,18 +868,49 @@ DEMETER_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.
 
 
 def test_demeter_catches_a_reach_through(full_project):
-    # A5 (bd 4bl.5): walking THROUGH a field into a stranger (`r._store.config.namespace`, 3 hops) couples
+    # A5 (bd 4bl.5): CALLING through a field into a stranger (`r._store.config.reload()`, 3 hops) couples
     # this class to a type it never declared. Talking to your OWN field is 2 hops and stays clean.
     result = assert_bites(
         full_project,
         DEMETER_ASSERT,
         lambda p: _append(
             p / "full_pkg" / "repository.py",
-            "\n\nclass Wreck:\n    def go(self, r: Repository) -> str:\n        return r._store.config.namespace\n",
+            "\n\nclass Wreck:\n    def go(self, r: Repository) -> str:\n        return r._store.config.reload()\n",
         ),
     )
-    assert "reaches 3 deep" in (result.stdout + result.stderr), "the gate names the depth it found"
+    assert "calls 3 deep" in (result.stdout + result.stderr), "the gate names the depth it found"
     assert run(DEMETER_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+def test_demeter_does_not_fire_on_a_deep_read(full_project):
+    # The bd v3c.5 correction, proved end-to-end: the same chain depth that BITES as a call must stay
+    # green as a READ. Twenty of one consumer's twenty-two findings were exactly this shape.
+    restore = _append(
+        full_project / "full_pkg" / "repository.py",
+        "\n\nclass DeepRead:\n    def go(self, r: Repository) -> str:\n        return r._store.config.namespace\n",
+    )
+    try:
+        assert run(DEMETER_ASSERT, full_project).returncode == 0, "reading a deep chain is data navigation"
+    finally:
+        restore()
+
+
+PURITY_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.purity", "full_pkg", "--assert"]
+
+
+def test_purity_catches_a_mutating_property(full_project):
+    # bd v3c.4: a @property that assigns to self makes every reader a writer without saying so — and it is
+    # the premise the Demeter gate rests on, since a property is a method call spelled as attribute access.
+    result = assert_bites(
+        full_project,
+        PURITY_ASSERT,
+        lambda p: _append(
+            p / "full_pkg" / "repository.py",
+            "\n\nclass Counter:\n    @property\n    def n(self) -> int:\n        self._n = 1\n        return self._n\n",
+        ),
+    )
+    assert "cached_property" in (result.stdout + result.stderr), "the gate points at the fix, not just the fault"
+    assert run(PURITY_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
 def test_graph_assert_catches_two_primary_classes(full_project):

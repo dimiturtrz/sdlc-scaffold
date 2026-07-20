@@ -110,8 +110,14 @@ repos:
         pass_filenames: false
         always_run: true
       - id: demeter
-        name: law of demeter — enforced (no reaching through a field into a stranger)
+        name: law of demeter — enforced (no calling through a field into a stranger)
         entry: uv run --extra devtools python -m devtools.demeter {{ pkgs }} --assert
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: purity
+        name: property purity — enforced (a @property must not assign to self)
+        entry: uv run --extra devtools python -m devtools.purity {{ pkgs }} --assert
         language: system
         pass_filenames: false
         always_run: true
@@ -136,7 +142,11 @@ repos:
       # enforcement (import-linter is the directional gate; CI `archmap --check` is the backstop).
       - id: archmap
         name: architecture graph — regenerate docs/architecture/ at pre-push (commit the graph.json diff)
-        entry: bash -c 'uv run --extra devtools python -m devtools.archmap {{ pkgs }}; git diff --quiet -- docs/architecture/graph.json || { git add docs/architecture/graph.json; echo "graph.json was stale - regenerated & staged; commit it and push again."; exit 1; }'
+        # `&&`, not `;` — with a semicolon the regen's exit code was DISCARDED, so if archmap failed for any
+        # reason (missing tool, unparseable file) the next `git diff --quiet` saw no change and the hook
+        # reported Passed. A hook that goes green precisely when its job did not happen is the "test that
+        # cannot fail" shape (bd v3c.2), and it silently froze the committed architecture graph.
+        entry: bash -c 'uv run --extra devtools python -m devtools.archmap {{ pkgs }} && { git diff --quiet -- docs/architecture/graph.json || { git add docs/architecture/graph.json; echo "graph.json was stale - regenerated & staged; commit it and push again."; exit 1; }; }'
         language: system
         pass_filenames: false
         always_run: true

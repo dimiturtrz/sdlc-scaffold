@@ -1,0 +1,48 @@
+# getattr/setattr/hasattr with a COMPUTED name voids every static guarantee the scaffold sells, silently:
+# pyrefly cannot check the access, the arch graph cannot resolve the edge, and vulture cannot see the
+# attribute is used. The line still passes every gate, which is the problem — the guarantees are void and
+# nothing says so.
+#
+# ONLY THE NON-LITERAL CASE. `getattr(x, "name")` is already ruff B009/B010 (rewrite it as `x.name`), and
+# two gates saying one thing is worse than one. This is the half ruff has no rule for.
+#
+# WHAT TO REACH FOR INSTEAD — the legitimate needs all have typed forms, and devtools/run.py is the worked
+# example (it drives an engine it knows nothing about via inspect.signature plus a Protocol cast):
+#   "does this support X?"  -> a Protocol
+#   "name -> thing"         -> an explicit dispatch table
+#   a genuinely dynamic name -> irreducible; mark it and the void becomes visible instead of silent:
+#       value = getattr(obj, key)  # ast-grep-ignore: py-dynamic-attr
+#
+# Severity `warning` — ADVISORY, and the measurement is why. devtools itself is at 0, which is the
+# interesting number since it is the reflection-heavy tree (it drives engines by name and walks ASTs). But
+# the three consumer packages are NOT clean: 9 / 3 / 11, and the shapes are mostly honest —
+# `getattr(args, name)` argparse override plumbing, dotted-path config overrides, `getattr(
+# torchvision.models, backbone)` model-zoo lookup, and `setattr(module, name, LoraLinear(...))` torch
+# module surgery. Shipping this as `error` would fail three repos on merge for code that is largely
+# irreducible, which is precisely the "never ship a new blocking gate against unmeasured repos" rule.
+#
+# GRADUATION (bd bxc): it becomes `error` when a real tree reaches zero, the shape_contracts / pyrefly
+# precedent. The route is per-site: replace what has a typed form, mark what does not with the
+# rule-named ignore, and the count goes to zero honestly rather than by lowering the bar.
+#
+# Tests are a different regime and are out of scope by SCOPE, not by exception — ast-grep scans the root
+# packages, and pytest's own monkeypatch.setattr plus contract-checking hasattr are honest there.
+id: py-dynamic-attr
+language: python
+severity: warning
+message: "dynamic attribute access with a computed name — the type checker, the arch graph and vulture all go blind here; use a Protocol or an explicit dispatch table"
+rule:
+  # Each arity is spelled out. `getattr($OBJ, $NAME, $$$REST)` looks like it covers both shapes and does
+  # NOT — the trailing `$$$` will not match an empty argument list, so the plain two-argument `getattr`
+  # (the commonest form there is) silently passed. Verified against a probe file covering every shape.
+  any:
+    - pattern: getattr($OBJ, $NAME)
+    - pattern: getattr($OBJ, $NAME, $DEFAULT)
+    - pattern: setattr($OBJ, $NAME, $VALUE)
+    - pattern: hasattr($OBJ, $NAME)
+constraints:
+  NAME:
+    not:
+      any:
+        - kind: string
+        - kind: concatenated_string
