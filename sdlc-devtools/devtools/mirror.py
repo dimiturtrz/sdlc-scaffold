@@ -73,6 +73,7 @@ from __future__ import annotations
 import ast
 import logging
 from collections import Counter, defaultdict
+from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 
@@ -95,6 +96,21 @@ ASSERT_CALLS = ("raises", "assert")
 PROPERTIES = frozenset({"property", "cached_property", "setter", "deleter"})
 
 Function = ast.FunctionDef | ast.AsyncFunctionDef
+
+
+@dataclass
+class Coverage:
+    """What each test in one mirror file reaches: {test name: names it CALLS} and {test name: names it
+    ACCESSES}, both resolved transitively through the helpers the test delegates to.
+
+    Two maps rather than one union, because the member kinds are reached by different syntax and the check
+    must demand the RIGHT one. A union read as harmless — the test still has to be named `test_<member>` and
+    assert — but it weakened the method rule to "mentions it", and a gate whose message says "calls it and
+    asserts" has to mean it.
+    """
+
+    called: dict[str, set[str]]
+    accessed: dict[str, set[str]]
 
 
 class MethodMirror:
@@ -391,15 +407,17 @@ class MethodMirror:
         """The uncovered methods of ONE module, against its mirror file."""
         helpers = self.functions(ast.parse(mirror.read_text(encoding=ENCODING)))
         shared = {m for m, n in Counter(fn.name for _cls, fn in members).items() if n > 1}
-        covered, asserting = self._coverage(helpers)
+        coverage, asserting = self._coverage(helpers)
         out = []
         for cls, fn in members:
             if self.ignored(fn, lines):
                 continue
             names = self.expected(cls, fn.name, shared=fn.name in shared)
-            if any(name in asserting and fn.name in covered.get(name, set()) for name in names):
+            # The member KIND picks the syntax: a method must be CALLED, a property must be ACCESSED.
+            reached = coverage.accessed if self.is_property(fn) else coverage.called
+            if any(name in asserting and fn.name in reached.get(name, set()) for name in names):
                 continue
-            elsewhere = any(fn.name in covered.get(name, set()) for name in asserting)
+            elsewhere = any(fn.name in reached.get(name, set()) for name in asserting)
             out.append(self._finding(path, (cls, fn), mirror, names, covers=elsewhere))
         return out
 
@@ -413,27 +431,25 @@ class MethodMirror:
         """
         return {node.attr for node in ast.walk(fn) if isinstance(node, ast.Attribute)}
 
-    def _coverage(self, helpers: dict[str, Function]) -> tuple[dict[str, set[str]], set[str]]:
-        """({test name: names it exercises transitively}, {test names that assert}) for one mirror file.
+    def _coverage(self, helpers: dict[str, Function]) -> tuple[Coverage, set[str]]:
+        """(what each test exercises transitively, the tests that assert) for one mirror file.
 
-        "Exercises" is the union of CALLED and ACCESSED, because the two member kinds are reached by
-        different syntax and the caller should not have to know which it is asking about. The union is safe
-        in the direction that matters: a method the test merely names without calling would be credited, but
-        the test must ALSO be named `test_<method>` and assert, and a test named after a method it only
-        mentions is not a shape anyone writes by accident.
+        CALLED and ACCESSED are kept APART rather than unioned. Unioning them was simpler and read as safe —
+        the test still has to be named `test_<member>` and assert — but it quietly weakened the method rule
+        to "mentions it", and a gate that says "calls it and asserts" has to mean it. Measured at the time of
+        the split: 0 methods in this package were credited by mention alone, so precision here is free.
         """
-        exercised: dict[str, set[str]] = {}
+        coverage = Coverage({}, {})
         asserting: set[str] = set()
         for name, fn in helpers.items():
             if not name.startswith("test"):
                 continue
             bodies = self.reachable(fn, helpers)
-            exercised[name] = {
-                touched for body in bodies for touched in self.called_names(body) | self.accessed_names(body)
-            }
+            coverage.called[name] = {n for body in bodies for n in self.called_names(body)}
+            coverage.accessed[name] = {n for body in bodies for n in self.accessed_names(body)}
             if self.asserts(bodies):
                 asserting.add(name)
-        return exercised, asserting
+        return coverage, asserting
 
     def report(self) -> str:
         """The findings as one text block — the explorer view, paired with run_assert's gate view."""

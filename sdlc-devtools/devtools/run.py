@@ -77,17 +77,24 @@ class Batch:
 
     @staticmethod
     def engine_class(module_name: str) -> type:
-        """The engine class a devtools module owns — the one DEFINED there, not one imported into it.
+        """The engine class a devtools module owns — the one DEFINED there that answers the ENGINE CONTRACT.
 
-        `graph` imports several sibling engine classes, so taking the first class found would drive the
-        wrong one.
+        Two filters, and the second was missing. `graph` imports several sibling engine classes, so the
+        class must be defined HERE. But a module also legitimately defines SATELLITES — `calls` has
+        `CallEdge` and `CallSite` beside `CallArrows` — and `getmembers` returns them sorted by NAME, so
+        "the first one defined here" was really "the alphabetically first one". `calls` resolved correctly
+        only because `CallArrows` happens to sort before `CallEdge`; adding a `Coverage` dataclass to
+        `mirror` made the runner pick it over `MethodMirror` and the whole gate silently stopped being an
+        engine. Selecting on the CONTRACT — it answers `report` — is what the runner actually means, and it
+        does not depend on what anyone names a value object next year.
         """
         module = importlib.import_module(f"devtools.{module_name}")
-        return next(
+        defined = [
             obj
             for _, obj in inspect.getmembers(module, inspect.isclass)
             if obj.__module__ == module.__name__ and not obj.__name__.startswith("_")
-        )
+        ]
+        return next((obj for obj in defined if callable(getattr(obj, "report", None))), defined[0])
 
     @staticmethod
     def names(value: str | None) -> list[str]:

@@ -18,7 +18,7 @@ import pkgutil
 import pytest
 
 import devtools
-from devtools.run import PLUMBING
+from devtools.run import PLUMBING, Batch
 
 # PLUMBING is shared with run.py (one home — it is not an engine under any reading). This set is NOT:
 # it names what is exempt from the report()/run_assert() CONTRACT, which is a different question from
@@ -40,12 +40,17 @@ def _engine_modules():
 
 
 def _engine_class(module):
-    """The module's engine class — the one defined HERE, not imported into it."""
-    return next(
-        obj
-        for _, obj in inspect.getmembers(module, inspect.isclass)
-        if obj.__module__ == module.__name__ and not obj.__name__.startswith("_")
-    )
+    """The module's engine class, resolved by the RUNNER's own rule (`Batch.engine_class`).
+
+    This used to be a second copy of that logic, and the copies disagreed the moment `mirror` grew a
+    `Coverage` dataclass: both picked "the alphabetically first class defined here", so both picked the
+    value object, and this file then reported that `mirror` had no `report()`. The runner would have driven
+    the wrong class in production for the same reason.
+
+    Shared for the same reason `PLUMBING` is: "which class is the engine" is ONE question, and a test that
+    answers it differently from the runner is testing something the runner does not do.
+    """
+    return Batch.engine_class(module.__name__.removeprefix("devtools."))
 
 
 ENGINES = sorted(_engine_modules())
