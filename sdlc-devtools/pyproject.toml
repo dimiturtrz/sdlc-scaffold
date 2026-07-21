@@ -29,6 +29,20 @@ dev = ["pytest>=8", "pytest-cov>=5"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-p no:cacheprovider -ra"
+# REQUIRED by test_layout = "bare" below (bd 1a8). pytest collects `test_*.py` by default, so a bare mirror
+# tree is not collected at all without this — and an uncollected suite is greener than a red one, which is
+# the worst failure mode available. devtools.mirror's `misconfigured` check fails the gate if these two
+# settings ever disagree, because a silently-uncollected suite must not be able to look clean.
+python_files = ["*.py"]
+
+# The analyzer package holds itself to the gate set it ships (bd iv5), so its structural config lives here
+# by hand rather than being rendered from the template — it cannot be a copier consumer of itself.
+[tool.structure]
+# BARE mirror (bd 1a8): `devtools/purity.py` is covered by `tests/unit/devtools/purity.py`. Same name, so
+# the mirror is VISIBLE in the path instead of reconstructed by the reader; `test_` was a pytest discovery
+# mechanism wearing a convention's clothes. The shipped DEFAULT stays "mirror" — this migration costs a
+# consumer a red gate on every module at once, and that is not a cost the scaffold gets to spend for anyone.
+test_layout = "bare"
 
 # Dependency hygiene (bd 85l.2): deptry flags imported-but-undeclared (DEP001), declared-but-unused
 # (DEP002), and transitive (DEP003). noxfile.py imports the `nox` runner (invoked via uvx, intentionally

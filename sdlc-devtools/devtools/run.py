@@ -44,7 +44,7 @@ log = logging.getLogger("devtools.run")
 
 # Shared machinery with no findings of its own — not an engine under ANY reading, which is why this half is
 # the one home (`test_engine_interface` imports it rather than keeping a copy).
-PLUMBING = frozenset({"_common", "names", "trees", "pyproject", "resolve", "omit", "cli"})
+PLUMBING = frozenset({"_common", "names", "trees", "pyproject", "resolve", "omit", "cli", "layout"})
 
 # What this RUNNER cannot drive, which is deliberately NOT the same question the interface test asks. That
 # test excludes what is exempt from the `report()/run_assert()` CONTRACT; this excludes what cannot be

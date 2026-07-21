@@ -91,5 +91,10 @@ def test_the_gate_flag_only_exists_when_a_gate_is_declared():
 
 def test_prog_names_the_documented_invocation():
     """Resolved from the engine's FILE: under `python -m devtools.x` the module is re-loaded as `__main__`,
-    so deriving this from `__module__` would advertise an invocation that does not exist."""
-    assert Cli(Fake, "d").prog == "python -m devtools.test_cli"
+    so deriving this from `__module__` would advertise an invocation that does not exist.
+
+    The expected value is `devtools.cli` because `Fake` is defined in THIS file, and under the bare mirror
+    layout (bd 1a8) this file is `cli.py`. It used to read `devtools.test_cli` — a module that has never
+    existed, asserted as correct only because the prefix made the mirror's name differ from its subject's.
+    """
+    assert Cli(Fake, "d").prog == "python -m devtools.cli"
