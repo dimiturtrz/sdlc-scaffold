@@ -37,6 +37,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from functools import cached_property
 from pathlib import Path
+from typing import override
 
 from devtools.omit import Omit
 
@@ -116,9 +117,11 @@ class _Mirror(TestLayout):
         super().__init__(test_root)
         self.prefix = prefix
 
+    @override
     def mirror_of(self, module: Path) -> Path:
         return self.test_root / module.parent / f"{self.prefix}{module.name}"
 
+    @override
     def missing(self, module: Path) -> str | None:
         mirror = self.mirror_of(module)
         return None if mirror.exists() else f"{module.as_posix()} — no mirrored {mirror.as_posix()}"
@@ -133,9 +136,11 @@ class _Flat(TestLayout):
     def _names(self) -> set[str]:
         return {p.name for p in Path("tests").rglob("test_*.py")}
 
+    @override
     def mirror_of(self, module: Path) -> Path | None:
         return None
 
+    @override
     def missing(self, module: Path) -> str | None:
         if f"test_{module.name}" in self._names:
             return None
@@ -145,9 +150,11 @@ class _Flat(TestLayout):
 class _Off(TestLayout):
     """No test-existence gate. The null object, so "the gate is off" costs no branch at either call site."""
 
+    @override
     def mirror_of(self, module: Path) -> Path | None:
         return None
 
+    @override
     def missing(self, module: Path) -> str | None:
         return None
 

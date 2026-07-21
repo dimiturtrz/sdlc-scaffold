@@ -45,3 +45,76 @@ files and ruff self-verifies each step:
 
 **Result.** The compliant op-namespace idiom is `@classmethod` + `cls._helper`; SLF001 stays fully enforced;
 the only surviving hits are deliberate `# noqa`. See [`SPEC.md`](SPEC.md) for why SLF001 is a gate.
+
+---
+
+## v1.24.0 — the method-level test mirror, unit-test size, and the `bare` layout
+
+Two new **blocking** gates ship in `nox -s lint`, in CI, and in the batch runner. Both are clean on a fresh
+generation, so a new project ratchets from day one. An **existing** repo will very likely open red — that is
+the point of the gate, and the paragraph below is how to land it without a big-bang conversion.
+
+The convention, the trade-off, and the case *against* it are in [`UNIT_TESTS.md`](UNIT_TESTS.md).
+
+### `mirror.py` — every public method has a `test_<method>` that calls it and asserts
+
+`graph.py`'s existing mirror asks whether a module **has a test file**. One smoke test satisfies that for a
+module of twenty methods. `mirror.py` asks the question people mean, per method.
+
+Findings come in three kinds and cost wildly different amounts, so the message tells you which:
+
+| the message says | what it is | the fix |
+|---|---|---|
+| `...is not named 'test_x'; rename it` | a test already calls it and asserts | rename (and merge, if several) |
+| `reached by N other module(s)` | a contract with no test | write the test |
+| `called only inside its own file` | public by naming accident | add the underscore |
+
+The third is not noise — on this repo 15 of 119 findings were methods that were never meant to be public.
+
+**Landing it on an existing repo.** Do not convert everything at once. In order of preference:
+
+1. Set `test_layout = "off"` in `[tool.structure]`, land the update, then turn it back on and work the list
+   down. This is the honest temporary state and it disables **both** mirrors, so say so in a ticket.
+2. Take the `rename it` findings first — they are mechanical and usually most of the list. On this repo they
+   were 60 of 119.
+3. Use `# devtools-ignore: test-mirror` on individual methods for the genuine residue. **The list is the
+   signal**: short is fine, growing means the convention is pointing at something.
+
+**Ambiguity.** Two classes in one module can share a method name. The gate then demands the qualified
+`test_<class>_<method>` and names the exact function in the message. The qualified form is always accepted.
+
+**Exempt by kind:** `main()`, `@property` (read as an attribute, so a call cannot be demanded), private
+methods, and methods of private classes. An override of a same-module base is one polymorphic contract
+covered by the base's test, not a second obligation.
+
+### `small.py` — a unit test touches nothing it did not create
+
+No external data root, no network, no sleep, no unseeded RNG. **Unit tests only** — an integration test
+SHOULD read a real fixture and an e2e SHOULD shell out; the gate reads the unit tree and nothing else.
+
+Absolute paths are only flagged when passed to something that opens them, so a `"/mod.py"` substring
+assertion or a `/*...*/` marker in generated HTML is not a finding.
+
+The usual fixes: `tmp_path` instead of a data root, a fake at the I/O boundary instead of the network,
+removing the race instead of sleeping through it, and `random.seed(0)` / `np.random.default_rng(0)` once per
+file (the seed rule is per-file, so a seed in a fixture covers the module).
+
+### `test_layout = "bare"` — optional, and not the default
+
+A fourth layout: `tests/unit/<pkg>/store.py` mirrors `<pkg>/store.py` — the same name, so the mirror is
+visible in the path rather than reconstructed by the reader. `test_` is a pytest discovery mechanism, not a
+convention.
+
+**The default stays `"mirror"`.** Switching costs a red file-level gate on every module at once, and that is
+not a cost the scaffold gets to spend for you. If you want it:
+
+1. `test_layout = "bare"` in `[tool.structure]`
+2. `python_files = ["*.py"]` under `[tool.pytest.ini_options]` — **required**. Without it pytest collects
+   nothing and the suite reports green while running zero tests. `mirror.py` fails on this config rather
+   than passing, because an uncollected suite must not be able to look clean.
+3. Consider `python_classes = []` if you have no test classes — otherwise pytest tries to collect any
+   imported `Test*` production class.
+4. Drop the prefix from every mirror file.
+
+`sdlc-devtools` itself made this move; the conversion immediately caught a test asserting
+`python -m devtools.test_cli`, a module that has never existed.

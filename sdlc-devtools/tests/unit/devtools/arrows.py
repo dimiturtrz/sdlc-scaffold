@@ -1,16 +1,18 @@
-"""Unit tests for devtools/arrows.py — typed class->class arrow extraction (inherits / holds / references)."""
+"""Unit tests for devtools/arrows.py — typed class->class arrow extraction (inherits / holds / references).
+
+Written in the method-mirror convention (docs/UNIT_TESTS.md): one `test_<method>` per public method, each a
+dense container of parameter combinations rather than one case per behaviour.
+"""
 
 import ast
+
+import pytest
 
 from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
 
 
-def _held(src: str) -> set[str]:
-    return ClassArrows.field_types(next(n for n in ast.parse(src).body if isinstance(n, ast.ClassDef)))
-
-
-def _referenced(src: str) -> set[str]:
-    return ClassArrows.signature_types(next(n for n in ast.parse(src).body if isinstance(n, ast.ClassDef)))
+def _cls(src: str) -> ast.ClassDef:
+    return next(n for n in ast.parse(src).body if isinstance(n, ast.ClassDef))
 
 
 def _kinds(monkeypatch, tmp_path, write_pkg, name: str, src: str) -> set[tuple[str, str, str]]:
@@ -21,86 +23,94 @@ def _kinds(monkeypatch, tmp_path, write_pkg, name: str, src: str) -> set[tuple[s
     return set(ClassArrows([name]).edges())
 
 
-# ---- HOLDS: every way a field's type is declared ------------------------------------------------------
+@pytest.mark.parametrize(
+    ("case", "src", "held"),
+    [
+        ("class-body annotation", "class A:\n    store: Store\n", True),
+        ("self-annotated assignment", "class A:\n    def __init__(self):\n        self.store: Store = None\n", True),
+        # The DI shape: an annotated parameter KEPT as state — the annotation is the field's type.
+        (
+            "init param kept as a field",
+            "class A:\n    def __init__(self, store: Store):\n        self._store = store\n",
+            True,
+        ),
+        ("direct construction", "class A:\n    def __init__(self):\n        self._store = Store()\n", True),
+        # A parameter the class never keeps is a signature REFERENCE, not composition — this row is the
+        # boundary between the two kinds, and getting it wrong collapses `references` into `holds`.
+        ("unassigned param", "class A:\n    def __init__(self, store: Store):\n        pass\n", False),
+    ],
+)
+def test_field_types(case, src, held):
+    assert ("Store" in ClassArrows.field_types(_cls(src))) is held, case
 
 
-def test_holds_from_a_class_body_annotation():
-    assert "Store" in _held("class A:\n    store: Store\n")
+@pytest.mark.parametrize(
+    ("case", "src", "referenced"),
+    [
+        ("parameter type", "class A:\n    def run(self, r: Report) -> None: ...\n", True),
+        ("return type", "class A:\n    def build(self) -> Report: ...\n", True),
+        ("keyword-only parameter", "class A:\n    def run(self, *, r: Report) -> None: ...\n", True),
+        # An unannotated signature names no type at all — the API surface is what is DECLARED, and guessing
+        # from a parameter's name would invent edges the code never states.
+        ("unannotated parameter", "class A:\n    def run(self, r) -> None: ...\n", False),
+    ],
+)
+def test_signature_types(case, src, referenced):
+    assert ("Report" in ClassArrows.signature_types(_cls(src))) is referenced, case
 
 
-def test_holds_from_a_self_annotated_assignment():
-    assert "Store" in _held("class A:\n    def __init__(self):\n        self.store: Store = None\n")
+def test_edges(monkeypatch, tmp_path, write_pkg):
+    """Every arrow kind, plus the two rules about which kind wins and what is emitted at all.
 
-
-def test_holds_from_an_init_parameter_assigned_to_a_field():
-    """The DI shape: an annotated parameter kept as state — the annotation IS the field's type."""
-    assert "Store" in _held("class A:\n    def __init__(self, store: Store):\n        self._store = store\n")
-
-
-def test_holds_from_a_direct_construction():
-    assert "Store" in _held("class A:\n    def __init__(self):\n        self._store = Store()\n")
-
-
-def test_an_unassigned_parameter_is_not_held():
-    """A parameter the class never keeps is a signature REFERENCE, not composition."""
-    assert "Store" not in _held("class A:\n    def __init__(self, store: Store):\n        pass\n")
-
-
-# ---- REFERENCES: signature types that are not held ----------------------------------------------------
-
-
-def test_references_a_parameter_type():
-    assert "Report" in _referenced("class A:\n    def run(self, r: Report) -> None: ...\n")
-
-
-def test_references_a_return_type():
-    assert "Report" in _referenced("class A:\n    def build(self) -> Report: ...\n")
-
-
-# ---- resolution + edges ------------------------------------------------------------------------------
-
-
-def test_same_file_base_resolves(monkeypatch, tmp_path, write_pkg):
-    src = "class Base: ...\n\n\nclass Sub(Base): ...\n"
-    edges = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_res", src)
-    assert ("arrows_res.mod.Sub", "arrows_res.mod.Base", INHERITS) in edges, "same-file base resolves"
-
-
-def test_unresolvable_names_are_dropped_not_guessed(monkeypatch, tmp_path, write_pkg):
-    """A builtin / third-party base is not a class we own — emit nothing rather than a wrong edge."""
-    edges = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_ext", "class Boom(ValueError): ...\n")
-    assert edges == set(), "no edge to a type outside the graphed packages"
-
-
-def test_a_class_holding_its_own_type_is_an_arrow(monkeypatch, tmp_path, write_pkg):
-    """SUPERSEDES "a class never points at itself" (bd a0a). Self-arrows were filtered out, so a tree node
-    owning a child of its own type produced no `holds` edge at all — self-composition was invisible in the
-    object graph rather than excluded on purpose, and could never form an SCC for the cycle gate to see.
-
-    An arrow is a FACT about the source. Whether the shape is a defect belongs to a gate, and
-    `composition.py` now states its boundary explicitly: a recursive type can be built alone, so a
-    self-loop does not block; a mutually-owning PAIR cannot, so it does.
+    The self-arrow row SUPERSEDES "a class never points at itself" (bd a0a). Self-arrows were filtered out,
+    so a tree node owning a child of its own type produced no `holds` edge — self-composition was invisible
+    in the object graph rather than excluded on purpose, and could never form an SCC for the cycle gate to
+    see. An arrow is a FACT about the source; whether the shape is a defect belongs to a gate, and
+    `composition.py` states its boundary: a recursive type can be built alone so a self-loop does not block,
+    a mutually-owning PAIR cannot so it does.
     """
-    src = "class Node:\n    def __init__(self, child: Node):\n        self._child = child\n"
-    edges = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_self", src)
-    assert ("arrows_self.mod.Node", "arrows_self.mod.Node", HOLDS) in edges
+    base = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_res", "class Base: ...\n\n\nclass Sub(Base): ...\n")
+    assert ("arrows_res.mod.Sub", "arrows_res.mod.Base", INHERITS) in base, "a same-file base resolves"
+
+    # A builtin / third-party base is not a class we own — emit nothing rather than a wrong edge.
+    external = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_ext", "class Boom(ValueError): ...\n")
+    assert external == set(), "no edge to a type outside the graphed packages"
+
+    recursive = "class Node:\n    def __init__(self, child: Node):\n        self._child = child\n"
+    loops = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_self", recursive)
+    assert ("arrows_self.mod.Node", "arrows_self.mod.Node", HOLDS) in loops, "self-composition is a real arrow"
+
+    # A type both HELD and named in a signature is composition, not double-counted as an API reference.
+    both = "class Dep: ...\n\n\nclass A:\n    def __init__(self, d: Dep):\n        self._d = d\n\n    def use(self, d: Dep) -> None: ...\n"
+    assert {k for _, d, k in _kinds(monkeypatch, tmp_path, write_pkg, "arrows_dedup", both) if d.endswith(".Dep")} == {
+        HOLDS
+    }, "holds wins over references for the same type"
+
+    ref_only = "class Dep: ...\n\n\nclass A:\n    def use(self, d: Dep) -> None: ...\n"
+    assert {
+        k for _, d, k in _kinds(monkeypatch, tmp_path, write_pkg, "arrows_refonly", ref_only) if d.endswith(".Dep")
+    } == {REFERENCES}, "a type only ever named in a signature stays a reference"
 
 
-def test_holds_wins_over_references_for_the_same_type(monkeypatch, tmp_path, write_pkg):
-    """A type both held and named in a signature is COMPOSITION — not double-counted as an API reference."""
-    src = "class Dep: ...\n\n\nclass A:\n    def __init__(self, d: Dep):\n        self._d = d\n\n    def use(self, d: Dep) -> None: ...\n"
-    edges = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_dedup", src)
-    kinds = {k for _, d, k in edges if d.endswith(".Dep")}
-    assert kinds == {HOLDS}, f"expected holds only, got {kinds}"
+def test_report(monkeypatch, tmp_path, write_pkg):
+    """The explorer view: a count, then one SECTION PER KIND, present even when a kind is empty.
 
+    An absent section and a section reading `(0)` are different messages — the first looks like the engine
+    forgot to look, the second says it looked and found nothing. A reader diffing two reports needs the
+    stable shape, so the empty section is the contract rather than an accident of formatting.
+    """
+    src = "class Base: ...\n\n\nclass Sub(Base):\n    def __init__(self, b: Base):\n        self._b = b\n"
+    write_pkg(tmp_path, "arrows_report", src)
+    monkeypatch.chdir(tmp_path)
+    engine = ClassArrows(["arrows_report"])
+    text = engine.report()
 
-def test_reference_only_type_stays_a_reference(monkeypatch, tmp_path, write_pkg):
-    src = "class Dep: ...\n\n\nclass A:\n    def use(self, d: Dep) -> None: ...\n"
-    edges = _kinds(monkeypatch, tmp_path, write_pkg, "arrows_refonly", src)
-    assert {k for _, d, k in edges if d.endswith(".Dep")} == {REFERENCES}
-
-
-# ---- the ROLL-UP invariant ---------------------------------------------------------------------------
+    assert text.startswith(f"class arrows: {len(engine.edges())}"), "the headline counts the arrows emitted"
+    for kind in (INHERITS, HOLDS, REFERENCES):
+        assert f"{kind} (" in text, f"{kind} has a section even when it is empty"
+    assert f"{REFERENCES} (0):" in text, "nothing is referenced-not-held here, and the section still says so"
+    assert "  arrows_report.mod.Sub -> arrows_report.mod.Base" in text, "each row names both endpoints"
+    assert text.count("arrows_report.mod.Sub -> arrows_report.mod.Base") == 2, "listed once per kind it carries"
 
 
 def test_arrows_roll_up_to_the_real_import_graph(monkeypatch, tmp_path):

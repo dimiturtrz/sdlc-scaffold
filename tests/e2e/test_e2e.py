@@ -198,6 +198,12 @@ def test_select_and_ci_wiring(project):
     assert '"SLF001"' in enforced_select, "SLF001 must be in the enforced select (graduated to gate — 8ex)"
     # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
     assert "main_sequence_max" in pyproject_text, "the instability/main-sequence gate threshold ships (x3b)"
+    # mjo: BOTH mirror gates read one [tool.structure] test_layout, so they cannot disagree about coverage.
+    # The shipped default stays "mirror" — "bare" is a migration whose cost (a red gate on every module at
+    # once) is the consumer's to spend, not the scaffold's.
+    assert 'test_layout = "mirror"' in pyproject_text, "the shipped default layout stays prefixed (mjo)"
+    for layout in ("bare", "flat", "off"):
+        assert f'"{layout}"' in pyproject_text, f"the {layout} layout is documented where it is configured"
     # 0sx: magic_literals + complexity ship NO config — they are advisory explorers, not ratcheted gates.
     # No legislated knob is added until a repo needs one (the ratchet was removed as the wrong mechanism).
     assert "[tool.magic_literals]" not in pyproject_text, "magic-literals is advisory — no config knob (0sx)"
@@ -948,6 +954,65 @@ def test_graph_assert_catches_unmirrored(full_project):
     result = assert_bites(full_project, GRAPH_ASSERT, mutate)
     assert "test mirror" in (result.stdout + result.stderr)
     assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+MIRROR_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.mirror", "full_pkg", "--assert"]
+SMALL_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.small", "full_pkg", "--assert"]
+
+
+def test_mirror_catches_a_public_method_with_no_named_test(full_project):
+    """bd c6b: graph's file-level mirror only asks whether a module HAS a test file, which one smoke test
+    satisfies for a module of twenty methods. This asks for `test_<method>` per public method.
+
+    The seeded project passes, so the gate ships green and ratchets from the first method added — the
+    shape_contracts precedent. What must BITE is a new public method with no correspondingly-named test.
+    """
+    result = assert_bites(
+        full_project,
+        MIRROR_ASSERT,
+        lambda p: _append(
+            p / "full_pkg" / "repository.py", "\n\nclass Untested:\n    def compute(self) -> int:\n        return 1\n"
+        ),
+    )
+    output = result.stdout + result.stderr
+    assert "test_compute" in output, "the gate names the exact function to write, not just the fault"
+    assert run(MIRROR_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+def test_mirror_names_the_rename_remedy_separately(full_project):
+    """"Nothing tests this" has two costs, and the gate must not charge the expensive one for the cheap
+    case: a test that already calls the method and asserts, under the wrong name, is a RENAME."""
+
+    def mutate(p):
+        restore_src = _append(
+            p / "full_pkg" / "repository.py", "\n\nclass Renamed:\n    def compute(self) -> int:\n        return 1\n"
+        )
+        restore_test = _append(
+            p / "tests" / "unit" / "full_pkg" / "test_repository.py",
+            "\n\ndef test_some_other_name():\n    from full_pkg.repository import Renamed\n\n"
+            "    assert Renamed().compute() == 1\n",
+        )
+        return lambda: (restore_test(), restore_src())
+
+    result = assert_bites(full_project, MIRROR_ASSERT, mutate)
+    output = result.stdout + result.stderr
+    assert "rename it" in output, "a covered-but-misnamed method is a rename, not a missing test"
+    assert run(MIRROR_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+def test_small_catches_a_unit_test_that_leaves_the_process(full_project):
+    """bd ar6/1j3: a unit test touches nothing it did not create. Each of these makes a test able to fail
+    for a reason unrelated to the code, and a suite that fails for unrelated reasons stops being read."""
+    result = assert_bites(
+        full_project,
+        SMALL_ASSERT,
+        lambda p: _append(
+            p / "tests" / "unit" / "full_pkg" / "test_repository.py",
+            "\n\ndef test_reaches_out():\n    import time\n\n    time.sleep(0)\n    assert 1\n",
+        ),
+    )
+    assert "sleep" in (result.stdout + result.stderr)
+    assert run(SMALL_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
 def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):

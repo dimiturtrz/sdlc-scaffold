@@ -212,8 +212,17 @@ demeter_max_depth = 2    # Law of Demeter ceiling: attribute hops in one chain. 
                          # then talk to it" (`self.store.get(k)`); 3 reaches THROUGH it
                          # (`self.store.config.name`). Raise it for data-navigation-heavy trees (AST/JSON
                          # walking), where a deep chain is reading a structure, not coupling to a stranger.
-test_layout = "mirror"   # every logic module needs a unit test: "mirror" = tests/unit/<pkg>/<path>/test_<name>.py
-                         # (strict, one home); "flat" = test_<name>.py anywhere under tests/; "off" = no check
+test_layout = "mirror"   # WHERE a module's unit test lives — read by BOTH mirror gates (file-level, in
+                         # devtools/graph.py, and method-level, in devtools/mirror.py), so they cannot
+                         # disagree about what is covered. See docs/UNIT_TESTS.md.
+                         #   "mirror" tests/unit/<pkg>/<path>/test_<name>.py — strict, one home per module
+                         #   "bare"   tests/unit/<pkg>/<path>/<name>.py — the same mirror without the prefix,
+                         #            so the mirror is VISIBLE in the path rather than reconstructed by the
+                         #            reader. REQUIRES python_files = ["*.py"] above, or pytest collects
+                         #            nothing at all; the gate fails on that config rather than passing.
+                         #   "flat"   a test_<name>.py anywhere under tests/ — lenient, and the METHOD-level
+                         #            gate stands down because it has no single file to read
+                         #   "off"    no test-existence gate, and no method-level gate either
 # <<< LOCAL-SLOT: arch-thresholds
 
 # magic-literals + complexity are ADVISORY explorers (devtools/magic_literals.py, devtools/complexity.py) —

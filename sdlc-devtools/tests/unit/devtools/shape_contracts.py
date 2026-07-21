@@ -1,4 +1,8 @@
-"""Unit tests for devtools/shape_contracts.py — jaxtyping boundary gate (ML domain)."""
+"""Unit tests for devtools/shape_contracts.py — jaxtyping boundary gate (ML domain).
+
+Written in the method-mirror convention (docs/UNIT_TESTS.md): one `test_<method>` per public method, each a
+dense container of parameter combinations rather than one case per behaviour.
+"""
 
 import ast
 import sys
@@ -51,7 +55,13 @@ def test_shape_contracts_analyze_covers_private_and_module_level(make_cls):
     assert found == {"C._h", "top"}, "private method + module-level func flagged; the exempt run() handler is not"
 
 
-def test_shape_contracts_alias_config_from_pyproject(make_cls, tmp_path):
+def test_array_names(make_cls, tmp_path):
+    """What counts as an array is HALF the gate's meaning, and a repo extends it without forking the tool.
+
+    The absent-file arm is load-bearing: a repo with no `[tool.shape_contracts]` must still get the builtin
+    array types. Falling back to an EMPTY set instead would flag nothing and read as a clean tree — the
+    silent-pass failure mode, where a gate that cannot fire looks exactly like a gate with nothing to say.
+    """
     pp = tmp_path / "pyproject.toml"
     pp.write_text('[tool.shape_contracts]\narray_aliases = ["Volume", "Mask"]\n')
     names = ShapeContracts.array_names(str(pp))
@@ -61,13 +71,67 @@ def test_shape_contracts_alias_config_from_pyproject(make_cls, tmp_path):
     assert ShapeContracts.array_names(str(tmp_path / "none.toml")) == {"ndarray", "Tensor"}, "absent -> builtins"
 
 
-def test_shape_contracts_scan_and_assert(write_pkg, tmp_path):
+def test_scan(write_pkg, tmp_path, monkeypatch):
+    """The package-wide walk, and the row shape every consumer (report, run_assert) reads.
+
+    The default-`names` arm matters as much as the explicit one: `scan()` with no argument resolves the
+    array names from the repo's own pyproject, which is how the CLI actually calls it — passing them in
+    every test would leave that resolution path unexercised.
+    """
     names = {"ndarray", "Tensor"}
     pkg = write_pkg(tmp_path, "shp", "class S:\n    def go(self, x: np.ndarray): ...\n")
     rows = ShapeContracts([pkg]).scan(names)
-    assert len(rows) == 1 and rows[0][2] == "S.go", "the bare boundary surfaces in a package scan"
+    assert len(rows) == 1, rows
+    path, lineno, qual, slots = rows[0]
+    assert (qual, lineno, slots) == ("S.go", 2, ["x"]), "the row carries where, what, and which slots"
+    assert path.endswith("mod.py"), "...and the file it came from, so a finding is navigable"
+
     clean = write_pkg(tmp_path, "shp_ok", "class S:\n    def go(self, x: Float[Tensor, 'n']): ...\n")
-    assert ShapeContracts([clean]).scan(names) == []
+    assert ShapeContracts([clean]).scan(names) == [], "a satisfied contract is not a finding"
+
+    # No `names` argument -> resolved from the cwd's pyproject, which is the CLI's actual call.
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "pyproject.toml").write_text('[tool.shape_contracts]\narray_aliases = ["Volume"]\n')
+    alias_pkg = write_pkg(tmp_path, "shp_alias", "class S:\n    def go(self, v: Volume): ...\n")
+    assert [r[2] for r in ShapeContracts([alias_pkg]).scan()] == ["S.go"], "the alias slot reaches the scan"
+
+
+def test_report(write_pkg, tmp_path, monkeypatch):
+    """The explorer view: the count line, then one navigable line per boundary.
+
+    A boundary's line must name the file, the line number, the qualname AND the slots — a shape rollout is
+    worked through this list, and a finding you cannot navigate to is a finding nobody fixes.
+    """
+    monkeypatch.chdir(tmp_path)
+    pkg = write_pkg(tmp_path, "shp_rep", "class S:\n    def go(self, x: np.ndarray) -> Tensor: ...\n")
+    text = ShapeContracts([pkg]).report()
+    assert text.splitlines()[0].startswith("1 bare-array boundaries")
+    assert "S.go" in text and "[x, ->return]" in text, "both bare slots are named, not just the count"
+    assert "mod.py:2" in text
+
+    clean = write_pkg(tmp_path, "shp_rep_ok", "class S:\n    def go(self, n: int): ...\n")
+    assert ShapeContracts([clean]).report().startswith("0 bare-array boundaries"), "a clean tree is the header"
+
+
+def test_run_assert(write_pkg, tmp_path, monkeypatch, caplog):
+    """The gate view (bd 0y9) — this engine had `--assert` but gated INLINE in main(), so the one thing
+    every other gate engine exposes as a method was here reachable only by running the CLI.
+
+    Note the exit code is asserted on a tree that HAS a boundary and one that does not: the engine ships
+    ADVISORY, and a repo only opts into blocking once clean, so a clean tree returning anything but 0 would
+    make the ratchet impossible to ever switch on.
+    """
+    monkeypatch.chdir(tmp_path)
+    dirty = write_pkg(tmp_path, "shp_gate", "class S:\n    def go(self, x: np.ndarray): ...\n")
+    with caplog.at_level("INFO"):
+        assert ShapeContracts([dirty]).run_assert() == 1
+    assert "S.go" in caplog.text, "the boundaries are logged, not merely counted into an exit code"
+
+    caplog.clear()
+    clean = write_pkg(tmp_path, "shp_gate_ok", "class S:\n    def go(self, x: Float[Tensor, 'n']): ...\n")
+    with caplog.at_level("INFO"):
+        assert ShapeContracts([clean]).run_assert() == 0
+    assert "0 bare-array boundaries" in caplog.text
 
 
 def test_shape_contracts_main_requires_packages(monkeypatch):

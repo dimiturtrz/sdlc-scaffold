@@ -1,8 +1,17 @@
-"""Unit tests for devtools/demeter.py — calling a method on a stranger (Law of Demeter)."""
+"""Unit tests for devtools/demeter.py — calling a method on a stranger (Law of Demeter).
+
+Written in the method-mirror convention (docs/UNIT_TESTS.md): one `test_<method>` per public method, each a
+dense container of parameter combinations rather than one case per behaviour.
+"""
 
 import ast
 
+import pytest
+
 from devtools.demeter import Demeter
+
+# A chain that trips the default ceiling of 2, used wherever a test needs a package that HAS a finding.
+_WRECK = "class A:\n    def go(self):\n        return self.store.config.reload()\n"
 
 
 def _hits(src: str, max_depth: int = 2) -> list[str]:
@@ -36,7 +45,7 @@ def test_calling_through_a_field_is_a_violation():
 
 
 def test_the_finding_names_the_friend_to_ask_not_the_root():
-    """"Ask `self`" is not advice. The friend is the field that was walked through."""
+    """ "Ask `self`" is not advice. The friend is the field that was walked through."""
     hits = _hits("class A:\n    def go(self):\n        return self._client.session.close()\n")
     assert "ask `self._client`" in hits[0]
 
@@ -116,12 +125,69 @@ def test_the_ceiling_is_configurable():
     assert _hits(src, max_depth=3) == [], "the same chain passes a raised ceiling (data-heavy repos)"
 
 
-def test_default_ceiling_is_two(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("pyproject_text", "expected"),
+    [
+        # No pyproject at all -> the LEGISLATED default. 2 is "use your own field", 3 is already reaching
+        # past it, and a repo that never states a ceiling still gets gated at the doctrine's number.
+        (None, 2),
+        ("[tool.structure]\ndemeter_max_depth = 4\n", 4),
+        # A [tool.structure] that exists but is silent on this key must still default rather than blow up —
+        # every other structure gate shares this section, so its presence says nothing about ours.
+        ('[tool.structure]\ntest_layout = "bare"\n', 2),
+    ],
+)
+def test_load_max_depth(tmp_path, monkeypatch, pyproject_text, expected):
+    """The ceiling is config, and where it comes from is the whole contract of this method."""
     monkeypatch.chdir(tmp_path)
-    assert Demeter.load_max_depth() == 2, "no [tool.structure] -> the legislated default"
+    if pyproject_text is not None:
+        (tmp_path / "pyproject.toml").write_text(pyproject_text)
+    assert Demeter.load_max_depth() == expected
 
 
-def test_ceiling_reads_the_structure_section(tmp_path, monkeypatch):
-    (tmp_path / "pyproject.toml").write_text("[tool.structure]\ndemeter_max_depth = 4\n")
-    monkeypatch.chdir(tmp_path)
-    assert Demeter.load_max_depth() == 4
+# ---- the whole-package surface: violations / report / run_assert -------------------------------------
+
+
+def _pkg(tmp_path, write_pkg, name: str, src: str) -> Demeter:
+    """A Demeter over a real one-module package. `max_depth` is passed explicitly so these tests exercise
+    the WALK, not the config load — `test_load_max_depth` owns that half."""
+    return Demeter([write_pkg(tmp_path, name, src)], max_depth=2)
+
+
+def test_violations(tmp_path, write_pkg):
+    """The package-wide walk: `_violations_in` finds a wreck in one tree, this finds them across the tree
+    set and stamps each with the file it came from. The clean arm is load-bearing — a gate that cannot
+    return an empty list cannot ever pass."""
+    found = _pkg(tmp_path, write_pkg, "dem_bad", _WRECK).violations()
+    assert len(found) == 1
+    assert "mod.py:3" in found[0], "the finding carries the real path, not the in-memory label"
+    assert "calls 3 deep (> 2)" in found[0] and "ask `self.store`" in found[0]
+
+    clean = "class A:\n    def go(self):\n        return self.store.get(1)\n"
+    assert _pkg(tmp_path, write_pkg, "dem_ok", clean).violations() == []
+
+
+def test_report(tmp_path, write_pkg):
+    """The explorer view. The header states the CEILING as well as the count, because "3 findings" means
+    nothing without the number they were measured against — a raised ceiling changes what the list is."""
+    text = _pkg(tmp_path, write_pkg, "dem_rep", _WRECK).report()
+    assert text.splitlines()[0] == "law of demeter (max depth 2): 1"
+    assert "calls 3 deep" in text, "the header is followed by the findings themselves, not just a count"
+
+    clean = _pkg(tmp_path, write_pkg, "dem_rep_ok", "class A:\n    def go(self): ...\n").report()
+    assert clean == "law of demeter (max depth 2): 0", "a clean run is the header alone, with no trailing blank"
+
+
+def test_run_assert(tmp_path, write_pkg, caplog):
+    """The gate view: an exit CODE, and the findings logged where CI will show them.
+
+    Asserting the code and the log together is the point — a gate that returned 1 silently would fail the
+    build with no way to see why, and one that logged without returning 1 would never block at all.
+    """
+    with caplog.at_level("ERROR"):
+        assert _pkg(tmp_path, write_pkg, "dem_gate", _WRECK).run_assert() == 1
+    assert "BLOCKING" in caplog.text and "calls 3 deep" in caplog.text
+
+    caplog.clear()
+    assert _pkg(tmp_path, write_pkg, "dem_gate_ok", "class A:\n    def go(self): ...\n").run_assert() == 0
+    assert "BLOCKING" not in caplog.text

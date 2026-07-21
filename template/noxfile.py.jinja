@@ -119,6 +119,16 @@ def lint(session: nox.Session) -> None:
     #   envy        a METHOD more interested in one other class than its own object. Floor:
     #               [tool.structure] feature_envy_min (default 4); value objects are never the target.
     #   contracts   directional forbidden-USE rules over the decomposed arrows. Empty by default.
+    #   mirror      the METHOD-level test mirror: for each public method A.a, the module's mirror test file
+    #               holds a `test_a` that CALLS it and ASSERTS. graph's file-level mirror only asks whether a
+    #               module has a test FILE, which one smoke test satisfies for a module of twenty methods.
+    #               Resolved through [tool.structure] test_layout, so `off` turns both mirrors off together;
+    #               per-method escape is `# devtools-ignore: test-mirror`. See docs/UNIT_TESTS.md, which also
+    #               states the case AGAINST the convention. A fresh gen has no methods and passes.
+    #   small       a unit test touches nothing it did not create: no external data root, no network, no
+    #               sleep, no unseeded RNG. UNIT ONLY — an integration test SHOULD read a real fixture and an
+    #               e2e SHOULD shell out, so holding those to this rule would be the gate misreading its own
+    #               subject. A fresh gen has no tests and passes.
 {% if enable_ml %}    #   shape_contracts  ML-only (bd vip.4): every public array/tensor boundary carries a jaxtyping shape,
     #               not a bare np.ndarray/Tensor (aliases in [tool.shape_contracts]). A fresh gen has 0
     #               boundaries and passes; a bare boundary then fails. It BLOCKS — no success_codes swallow.
@@ -134,7 +144,7 @@ def lint(session: nox.Session) -> None:
         "devtools.run",
         *LAYERS,
         "--gate",
-        "graph,demeter,purity,composition,envy,contracts,astgrep{% if enable_ml %},shape_contracts{% endif %}",
+        "graph,demeter,purity,composition,envy,contracts,astgrep,mirror,small{% if enable_ml %},shape_contracts{% endif %}",
         external=True,
     )
     # ENFORCED static type gate — pyrefly strict: every def annotated + the annotations check. `--with` adds

@@ -1,23 +1,39 @@
+"""The method-mirror convention (docs/UNIT_TESTS.md): one `test_<method>` per public method of `Service`,
+each a dense CONTAINER of cases rather than one test per behaviour."""
+
 import pytest
 
 from __PKG__.errors import KeyMissingError
 from __PKG__.service import Service
 
 
-def test_record_then_fetch_roundtrips():
-    service = Service(capacity=2, namespace="ns")
+def _service(capacity: int = 2) -> Service:
+    """A fixture produces INPUTS, never expected outputs — an expected value computed here would agree with
+    the code by construction and the test would prove nothing."""
+    return Service(capacity=capacity, namespace="ns")
+
+
+def test_record():
+    """`record` stores a value the matching `fetch` returns, and honours the configured capacity."""
+    service = _service()
+    service.record("a", 1.5)
+    assert service.fetch("a") == 1.5, "a recorded value reads back"
+
+    # Capacity is wired through to the store: recording past it drops the oldest key.
+    small = _service(capacity=1)
+    small.record("a", 1.0)
+    small.record("b", 2.0)
+    assert small.fetch("b") == 2.0, "the newest survives"
+    with pytest.raises(KeyMissingError):
+        small.fetch("a")
+
+
+def test_fetch():
+    """`fetch` returns the recorded value, and raises the DOMAIN error for a key that was never recorded —
+    the store's `None` is translated at this boundary rather than leaking outward."""
+    service = _service()
     service.record("a", 1.5)
     assert service.fetch("a") == 1.5
 
-
-def test_fetch_unrecorded_key_raises():
     with pytest.raises(KeyMissingError):
-        Service(capacity=2, namespace="ns").fetch("absent")
-
-
-def test_wiring_honours_the_configured_capacity():
-    service = Service(capacity=1, namespace="ns")
-    service.record("a", 1.0)
-    service.record("b", 2.0)
-    with pytest.raises(KeyMissingError):
-        service.fetch("a")
+        _service().fetch("absent")

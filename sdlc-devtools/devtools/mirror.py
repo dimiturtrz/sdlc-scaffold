@@ -123,13 +123,39 @@ class MethodMirror:
         ]
 
     @staticmethod
+    def is_declaration(fn: Function) -> bool:
+        """Is this a method SIGNATURE with no behaviour — a `Protocol` member or an abstract method?
+
+        Its body is a docstring and/or `...` / `pass` / `raise NotImplementedError`. There is nothing to
+        call and nothing that could be asserted about the result, so demanding a test would be demanding a
+        test of a no-op. The IMPLEMENTATIONS are covered by their own mirrors, which is where the behaviour
+        actually is.
+
+        Detected by BODY rather than by base class or decorator, because the three spellings that produce a
+        declaration — `Protocol`, `ABC` + `@abstractmethod`, and a plain base raising NotImplementedError —
+        agree on exactly this and on nothing else.
+        """
+        body = [node for node in fn.body if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant))]
+        return all(
+            isinstance(node, ast.Pass)
+            or (isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant))
+            or (isinstance(node, ast.Raise) and "NotImplementedError" in ast.dump(node))
+            for node in body
+        )
+
+    @staticmethod
     def is_public(fn: Function) -> bool:
-        """A method this rule applies to: not private, not `main`, not a `@property`.
+        """A method this rule applies to: not private, not `main`, not a `@property`, not a declaration.
 
         A property is read as an ATTRIBUTE. Demanding a CALL to one is demanding something the language does
         not let a caller write, so it is exempt by kind rather than by convention.
         """
-        return not fn.name.startswith("_") and fn.name not in EXEMPT and not PropertyPurity.is_property(fn)
+        return (
+            not fn.name.startswith("_")
+            and fn.name not in EXEMPT
+            and not PropertyPurity.is_property(fn)
+            and not MethodMirror.is_declaration(fn)
+        )
 
     @staticmethod
     def ignored(fn: Function, lines: list[str]) -> bool:
@@ -215,9 +241,7 @@ class MethodMirror:
     def called_names(fn: Function) -> set[str]:
         """Every name called in this body, however the callee is spelled (`x.y.a()`, `a()`)."""
         return {
-            name
-            for node in ast.walk(fn)
-            if isinstance(node, ast.Call) and (name := MethodMirror.name_of(node.func))
+            name for node in ast.walk(fn) if isinstance(node, ast.Call) and (name := MethodMirror.name_of(node.func))
         }
 
     @staticmethod
@@ -263,7 +287,7 @@ class MethodMirror:
         return False
 
     @staticmethod
-    def expected(cls: str, method: str, shared: bool) -> list[str]:
+    def expected(cls: str, method: str, *, shared: bool) -> list[str]:
         """The test function name(s) that satisfy this method — qualified when the bare name is ambiguous.
 
         The qualified form is ALWAYS accepted, so a repo that prefers `test_<Class>_<method>` everywhere is
@@ -272,12 +296,18 @@ class MethodMirror:
         qualified = f"test_{MethodMirror.snake(cls)}_{method}"
         return [qualified] if shared else [f"test_{method}", qualified]
 
-    def _finding(self, path: Path, cls: str, fn: Function, mirror: Path, names: list[str], covers: bool) -> str:
+    def _finding(
+        self, path: Path, member: tuple[str, Function], mirror: Path, names: list[str], *, covers: bool
+    ) -> str:
         """The message for one uncovered method — a RENAME when a test already covers it under another name,
         otherwise the missing test plus the remedy its call sites point at."""
+        cls, fn = member
         where = f"{path.as_posix()}:{fn.lineno}: `{cls}.{fn.name}`"
         if covers:
-            return f"{where} — a test in {mirror.as_posix()} calls it and asserts, but is not named `{names[0]}`; rename it"
+            return (
+                f"{where} — a test in {mirror.as_posix()} calls it and asserts, but is not named "
+                f"`{names[0]}`; rename it"
+            )
         reached = self.callers[fn.name] - {path}
         remedy = (
             f"reached by {len(reached)} other module(s) — a contract with no test; write `{names[0]}`"
@@ -290,7 +320,7 @@ class MethodMirror:
     def violations(self) -> list[str]:
         """Every public method whose mirror file holds no correctly-named test that calls it and asserts."""
         convention = self.layout()
-        out = []
+        out: list[str] = []
         for path, members in self.methods().items():
             mirror = convention.mirror_of(path)
             # A layout naming no single file (`flat`, `off`) leaves this gate nowhere to look, and a module
@@ -313,16 +343,17 @@ class MethodMirror:
         for cls, fn in members:
             if self.ignored(fn, lines):
                 continue
-            names = self.expected(cls, fn.name, fn.name in shared)
+            names = self.expected(cls, fn.name, shared=fn.name in shared)
             if any(name in asserting and fn.name in covered.get(name, set()) for name in names):
                 continue
             elsewhere = any(fn.name in covered.get(name, set()) for name in asserting)
-            out.append(self._finding(path, cls, fn, mirror, names, elsewhere))
+            out.append(self._finding(path, (cls, fn), mirror, names, covers=elsewhere))
         return out
 
     def _coverage(self, helpers: dict[str, Function]) -> tuple[dict[str, set[str]], set[str]]:
         """({test name: names it calls transitively}, {test names that assert}) for one mirror file."""
-        calls, asserting = {}, set()
+        calls: dict[str, set[str]] = {}
+        asserting: set[str] = set()
         for name, fn in helpers.items():
             if not name.startswith("test"):
                 continue

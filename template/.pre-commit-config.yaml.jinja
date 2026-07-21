@@ -123,6 +123,18 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: test-mirror
+        name: test mirror — enforced (every public method has a test_<method> that calls it and asserts)
+        entry: uv run --extra devtools python -m devtools.mirror {{ pkgs }} --assert
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: unit-test-size
+        name: unit test size — enforced (no external data, network, sleep, or unseeded RNG)
+        entry: uv run --extra devtools python -m devtools.small {{ pkgs }} --assert
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: arrows
         name: class arrows — advisory (inherits / holds / references; the import edge decomposed by WHY)
         entry: uv run --extra devtools python -m devtools.arrows {{ pkgs }}

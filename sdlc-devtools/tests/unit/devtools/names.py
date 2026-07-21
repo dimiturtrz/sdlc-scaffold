@@ -1,42 +1,69 @@
-"""Unit tests for devtools/names.py — dotted-name reduction over AST expressions."""
+"""Unit tests for devtools/names.py — dotted-name reduction over AST expressions.
+
+Written in the method-mirror convention (docs/UNIT_TESTS.md): one `test_<method>` per public method, each a
+dense container of parameter combinations rather than one case per behaviour.
+"""
 
 import ast
 
+import pytest
+
 from devtools.names import Names
+
+
+def _expr(src: str) -> ast.expr:
+    return ast.parse(src, mode="eval").body
 
 
 def _bases_of(src: str) -> set[str]:
     return Names.bases(next(n for n in ast.parse(src).body if isinstance(n, ast.ClassDef)))
 
 
-def test_trailing_reduces_a_bare_name():
-    assert Names.trailing(ast.parse("ABC", mode="eval").body) == "ABC"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("ABC", "ABC"),
+        # The dotted form is the whole reason this exists: `abc.ABC` and `ABC` must compare EQUAL against a
+        # vocabulary, so an engine matching bases against {"ABC"} works whichever way the import was spelled.
+        ("abc.ABC", "ABC"),
+        ("a.b.c.Deep", "Deep"),
+        # Anything that is not a Name/Attribute has no trailing identifier — None, never a guess. A call, a
+        # subscript (`Generic[T]`) and a literal all reach this via decorator/base lists in real code.
+        ("f()", None),
+        ("Generic[T]", None),
+        ("1", None),
+    ],
+)
+def test_trailing(source, expected):
+    assert Names.trailing(_expr(source)) == expected
 
 
-def test_trailing_reduces_a_dotted_attribute():
-    assert Names.trailing(ast.parse("abc.ABC", mode="eval").body) == "ABC", "dotted reduces to the trailing name"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("class A(x.B, C): ...", {"B", "C"}),  # bare and dotted bases reduce into the same set
+        ("class A: ...", set()),
+        ("class A(object): ...", {"object"}),
+        # A base with no trailing name (a subscripted generic) is DROPPED, not carried through as None — the
+        # set is a vocabulary of names, and a None in it would poison every membership test downstream.
+        ("class A(Generic[T], B): ...", {"B"}),
+    ],
+)
+def test_bases(source, expected):
+    assert _bases_of(source) == expected
 
 
-def test_trailing_is_none_for_a_non_name_expression():
-    assert Names.trailing(ast.parse("f()", mode="eval").body) is None
-
-
-def test_bases_mixes_bare_and_dotted():
-    assert _bases_of("class A(x.B, C): ...") == {"B", "C"}
-
-
-def test_bases_of_a_baseless_class_is_empty():
-    assert _bases_of("class A: ...") == set()
-
-
-def test_decorator_reduces_the_bare_form():
-    assert Names.decorator(ast.parse("dataclass", mode="eval").body) == "dataclass"
-
-
-def test_decorator_unwraps_the_factory_call():
-    """`@dataclass(frozen=True)` must reduce to the same name as `@dataclass` — a factory is still it."""
-    assert Names.decorator(ast.parse("dataclass(frozen=True)", mode="eval").body) == "dataclass"
-
-
-def test_decorator_unwraps_a_dotted_factory_call():
-    assert Names.decorator(ast.parse("dataclasses.dataclass(frozen=True)", mode="eval").body) == "dataclass"
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        ("dataclass", "dataclass"),
+        # A decorator FACTORY is still that decorator: `@dataclass(frozen=True)` must reduce to the same name
+        # as `@dataclass`, or a detector keyed on the name sees two different decorators and misses one form.
+        ("dataclass(frozen=True)", "dataclass"),
+        ("dataclasses.dataclass(frozen=True)", "dataclass"),
+        ("abc.abstractmethod", "abstractmethod"),
+        ("(lambda: None)()", None),  # a callee with no name at all still answers None rather than raising
+    ],
+)
+def test_decorator(source, expected):
+    assert Names.decorator(_expr(source)) == expected

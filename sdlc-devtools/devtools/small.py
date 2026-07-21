@@ -105,10 +105,12 @@ class SmallTests:
 
     @staticmethod
     def is_absolute(value: object) -> bool:
-        """Does this literal name an absolute location — a POSIX root or a Windows drive?"""
-        return isinstance(value, str) and (
-            value.startswith("/") or (len(value) > 2 and value[1:3] in (":/", ":\\"))
-        )
+        """Does this literal name an absolute location — a POSIX root or a Windows drive?
+
+        No length guard on the drive test: a slice is already safe on a short string, so `"C:"[1:3]` is
+        `":"` and simply does not match. The guard read as necessary and was only noise.
+        """
+        return isinstance(value, str) and (value.startswith("/") or value[1:3] in (":/", ":\\"))
 
     def absolute_paths(self, calls: list[tuple[ast.Call, str, str]]) -> list[ast.Constant]:
         """Absolute literals passed to something that OPENS them.
@@ -129,26 +131,37 @@ class SmallTests:
         ]
 
     def _findings_in(self, path: Path, tree: ast.Module) -> list[str]:
-        """The four smallness defects in one unit test module."""
+        """The four smallness defects in one unit test module, in LINE order.
+
+        Sorted because `ast.walk` is breadth-first: `Path('/data/x').read_text()` yields the outer call
+        before the inner one, so an unsorted report walks a reader's eye backwards up the file for no reason
+        the file itself explains.
+        """
         calls = self.calls(tree)
         out = [
-            f"{path.as_posix()}:{node.lineno}: `{chain}` — a unit test must not {why}"
+            (node.lineno, f"{path.as_posix()}:{node.lineno}: `{chain}` — a unit test must not {why}")
             for node, name, chain in calls
             for why in self._why(name, chain)
         ]
         out += [
-            f"{path.as_posix()}:{node.lineno}: absolute path {node.value!r} — a unit test may read only data "
-            f"it created during this test run; use `tmp_path`"
+            (
+                node.lineno,
+                f"{path.as_posix()}:{node.lineno}: absolute path {node.value!r} — a unit test may read only "
+                f"data it created during this test run; use `tmp_path`",
+            )
             for node in self.absolute_paths(calls)
         ]
-        sampled = [(node, chain) for node, name, chain in calls if name in SAMPLERS]
+        sampled = sorted((node.lineno, chain) for node, name, chain in calls if name in SAMPLERS)
         if sampled and not any(name in SEEDS for _node, name, _chain in calls):
-            node, chain = sampled[0]
+            lineno, chain = sampled[0]
             out.append(
-                f"{path.as_posix()}:{node.lineno}: `{chain}` samples but nothing in this file seeds — a "
-                f"failure here cannot be reproduced; seed it (`random.seed(0)`, `np.random.default_rng(0)`)"
+                (
+                    lineno,
+                    f"{path.as_posix()}:{lineno}: `{chain}` samples but nothing in this file seeds — a "
+                    f"failure here cannot be reproduced; seed it (`random.seed(0)`, `np.random.default_rng(0)`)",
+                )
             )
-        return out
+        return [msg for _lineno, msg in sorted(out)]
 
     @staticmethod
     def _why(name: str, chain: str) -> list[str]:
