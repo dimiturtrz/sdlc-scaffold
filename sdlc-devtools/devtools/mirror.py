@@ -141,19 +141,51 @@ class MethodMirror:
         first = min([fn.lineno, *(d.lineno for d in fn.decorator_list)])
         return any(IGNORE in lines[i - 1] for i in range(first, fn.lineno + 1) if 0 < i <= len(lines))
 
+    @staticmethod
+    def overrides(cls: ast.ClassDef, classes: dict[str, ast.ClassDef]) -> set[str]:
+        """Method names this class inherits from an ancestor DEFINED IN THE SAME MODULE.
+
+        An override is not a second obligation. `_Mirror.mirror_of` and `_Off.mirror_of` are one polymorphic
+        contract declared by `TestLayout.mirror_of`, and the base's `test_mirror_of` — driven over every
+        strategy, which is what a dense container test is FOR — covers all of them. Counting them separately
+        did two wrong things at once: it demanded a test per strategy, and it made the name look ambiguous,
+        so the gate asked for `test___mirror_mirror_of`.
+        """
+        seen: set[str] = set()
+        queue = [base.id for base in cls.bases if isinstance(base, ast.Name)]
+        while queue:
+            ancestor = classes.get(queue.pop())
+            if ancestor is None or ancestor.name in seen:
+                continue
+            seen.add(ancestor.name)
+            queue += [base.id for base in ancestor.bases if isinstance(base, ast.Name)]
+        return {
+            fn.name
+            for name in seen
+            for fn in classes[name].body
+            if isinstance(fn, ast.FunctionDef | ast.AsyncFunctionDef)
+        }
+
     def methods(self) -> dict[Path, list[tuple[str, Function]]]:
-        """{module: [(class, method)]} — every public method the rule covers, by the module that owns it."""
+        """{module: [(class, method)]} — every public method the rule covers, by the module that owns it.
+
+        A PRIVATE class is skipped whole. `_Mirror.mirror_of` is not a public seam however public the method
+        name looks — the class is the API boundary, and nothing outside the module can reach it.
+        """
         covered = set(TestLayout.testable(self.packages))
         out: dict[Path, list[tuple[str, Function]]] = {}
         for path, tree in self.trees:
             if path not in covered:
                 continue
+            classes = {c.name: c for c in ast.walk(tree) if isinstance(c, ast.ClassDef)}
             out[path] = [
                 (cls.name, fn)
-                for cls in ast.walk(tree)
-                if isinstance(cls, ast.ClassDef)
+                for cls in classes.values()
+                if not cls.name.startswith("_")
                 for fn in cls.body
-                if isinstance(fn, ast.FunctionDef | ast.AsyncFunctionDef) and self.is_public(fn)
+                if isinstance(fn, ast.FunctionDef | ast.AsyncFunctionDef)
+                and self.is_public(fn)
+                and fn.name not in self.overrides(cls, classes)
             ]
         return out
 

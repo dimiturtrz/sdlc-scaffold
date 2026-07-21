@@ -34,6 +34,10 @@ addopts = "-p no:cacheprovider -ra"
 # the worst failure mode available. devtools.mirror's `misconfigured` check fails the gate if these two
 # settings ever disagree, because a silently-uncollected suite must not be able to look clean.
 python_files = ["*.py"]
+# The convention is `test_<method>` FUNCTIONS (docs/UNIT_TESTS.md) — there are no test classes. Left at the
+# default, pytest tries to collect any imported `Test*` class as one: `TestLayout` is a production class and
+# collecting it is meaningless. Empty says what is true here rather than warning about it on every run.
+python_classes = []
 
 # The analyzer package holds itself to the gate set it ships (bd iv5), so its structural config lives here
 # by hand rather than being rendered from the template — it cannot be a copier consumer of itself.
