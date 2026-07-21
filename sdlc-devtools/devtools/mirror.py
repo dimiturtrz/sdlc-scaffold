@@ -37,7 +37,8 @@ TWO REMEDIES, and the message names both, because "nothing tests this" has two c
     called only in its own file -> public by naming accident. Add the underscore.
 
 The second is not noise. It is a real defect of a different kind, and the gate finding it is the gate
-working — 17 of devtools' own 76 public methods were this.
+working — 15 of the 119 findings on this package's first run were this, and every one of them turned out to
+be a method that was genuinely worth testing rather than hiding, so all 15 got tests instead.
 
 THE ASSERT HALF resolves DELEGATION transitively. A test that calls a local `_assert_wiring(...)` helper
 which asserts, asserts. Without that, the gate over-fires on exactly the extraction that the complexity

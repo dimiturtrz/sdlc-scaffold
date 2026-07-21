@@ -38,9 +38,9 @@ for three reasons:
 
 - A positional check passes a file where one broad test happens to touch nine methods on its way somewhere
   else. That file has one test and nine methods, and the gate would call it covered.
-- It leaves the naming as an unenforced preference, and an unenforced convention drifts. This repo measured
-  **0% naming compliance** across every tree before the gate existed — including trees whose authors
-  believed they followed the convention.
+- It leaves the naming as an unenforced preference, and an unenforced convention drifts. Measured before the
+  gate existed: **0% naming compliance** — not one test in any of the four trees surveyed was named
+  `test_<method>`.
 - The name is the cheap lookup. "What covers `A.a`?" is answered by reading one function name.
 
 A test that calls the method and asserts but is named something else produces a **different message** — a
