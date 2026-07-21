@@ -157,6 +157,68 @@ Reference: Meszaros, Gerard. *xUnit Test Patterns: Refactoring Test Code*. Addis
 
 ---
 
+### 4b. Fixture Strategy, and Where Expected Values Legitimately Come From
+
+Added 2026-07-21 on read-back. Sources fetched directly [S30-S33]; the taxonomy below is Meszaros'.
+
+**THE FIXTURE TENSION IS NAMED ON BOTH SIDES, and Meszaros states it himself.**
+
+- **Standard Fixture** [S30]: "deciding ahead of time that we will design a Standard Fixture that can be
+  used by several or many tests rather than mining a common fixture out of tests that were designed
+  independently." A PATTERN, not a smell.
+- **Minimal Fixture** [S31]: "use the smallest and simplest fixture possible for each test", because such
+  a test "will always be easier to understand than one which uses a fixture that contains unnecessary or
+  irrelevant information."
+- The conflict, verbatim [S30]: Standard Fixture "can be at odds with Minimal Test Fixture because the
+  more broadly you plan to share the fixture, the larger it tends to get."
+
+**THE DISTINCTION THAT DECIDES SAFETY** -- and it is the one people conflate:
+
+    Standard Fixture   a shared DESIGN     -- fine
+    Shared Fixture     a shared INSTANCE   -- "lead to Erratic Tests if tests modify" it and "violate the
+                                             principle of Independent Test" [S32]
+    Fresh Fixture      per-test instance   -- "prevents Erratic Tests" [S33]
+
+They are ORTHOGONAL: "We can use a Standard Fixture as either a Fresh Fixture or a Shared Fixture" [S30].
+So one canonical data story is legitimate PROVIDED every test constructs its own instance. The reconciling
+form is a BUILDER whose defaults are the canonical example: one story to learn, fresh instance per test,
+and only the varied axis visible in the test body.
+
+**FIXTURES PRODUCE INPUTS, NEVER EXPECTED OUTPUTS.** A builder that computes what production computes
+makes the fixture and the code agree by construction -- which is bd acq's oracle collapse (a numpy
+reference DRY'd onto the same coefficients as the torch path it checked, passing with a 1% error
+injected), merely arriving through the fixture instead of the test. Where domain invariants force real
+construction, CALL production's constructor rather than reimplementing it. Carve-out: tests OF the
+construction path must use literals, or they verify nothing.
+
+**WHERE EXPECTED VALUES COME FROM**, ordered by trust:
+
+| source | what | trust |
+|---|---|---|
+| hand-derived literal | inputs small enough that a human computes the answer (Dice of two identical masks = 1.0) | highest |
+| independent oracle | computed a genuinely different way -- closed form vs iterative | high IF it shares no inputs or intermediates |
+| invariant / property | assert what must hold: shape, range, monotonicity, idempotence, round-trip | high, often the only honest option |
+| metamorphic relation | f(rotate(x)) == rotate(f(x)) -- a relation, no expected value needed (Chen et al.) | high |
+| recorded golden | regression only; encodes current behaviour INCLUDING bugs | lowest -- detects change, not correctness |
+
+This is what Minimal Fixture is actually for: not speed, DERIVABILITY. Shrink the input until the oracle
+can be a literal. For ML the middle two rows are the workhorses, since most numbers have no hand-derivable
+value but strong invariants. Note rows 3-4 also dissolve the reimplementation worry -- an invariant is not
+a second implementation ("Dice in [0,1]" does not restate Dice).
+
+**CHAINS ARE TESTED AT THREE GRANULARITIES**, which is what keeps a canonical example non-tautological --
+the same data flows through every level but WHAT IS ASSERTED CHANGES:
+
+    per link    value assertions, only where the oracle is hand-derivable
+    per joint   CONTRACT assertions -- A's output is valid input to B (shape/dtype/range/schema). No
+                value, so nothing to reimplement. Already the house rule in CLAUDE.md.
+    end to end  INVARIANTS, not values -- labels preserved, no NaN introduced, deterministic under seed
+
+SCOPE NOTE: only the per-link row is unit-level and in scope for bd mjo. The joint and end-to-end rows are
+recorded here but PARKED -- see the epic.
+
+---
+
 ### 5. Mutation Testing – Tools, Adoption, Equivalent Mutants (2024–2026)
 
 #### Maintained Tools by Language
@@ -363,6 +425,17 @@ Adding a new assertion to an existing test instead of writing a dedicated test c
 - [S26] QABash. pytest Default Naming Conventions. [https://www.qabash.com/pytest-default-naming-conventions-guide/](https://www.qabash.com/pytest-default-naming-conventions-guide/) — Accessed 2026-07-21.
 
 - [S27] Ruff. Rules: flake8-pytest-style (PT). [https://docs.astral.sh/ruff/rules/pytest-incorrect-mark-parentheses-style/](https://docs.astral.sh/ruff/rules/pytest-incorrect-mark-parentheses-style/) — Accessed 2026-07-21.
+
+- [S30-S33] Gerard Meszaros, xunitpatterns.com — the companion site to *xUnit Test Patterns* (2007).
+  [Standard Fixture](http://xunitpatterns.com/Standard%20Fixture.html) ·
+  [Minimal Fixture](http://xunitpatterns.com/Minimal%20Fixture.html) ·
+  [Shared Fixture](http://xunitpatterns.com/Shared%20Fixture.html) ·
+  [Fresh Fixture](http://xunitpatterns.com/Fresh%20Fixture.html) — 2026-07-21.
+  **PROVENANCE CAVEAT**: a direct fetch of these pages FAILED (the site is HTTP-only and the fetch upgrades
+  to HTTPS — `ECONNREFUSED`). The quoted text was retrieved through a search engine's rendering of those
+  URLs, not read off the site. The wording is almost certainly faithful — it is an author's own pattern
+  site, and the quotes are internally consistent — but this is one retrieval hop weaker than [S29], which
+  was fetched directly. Re-verify verbatim before quoting any of it in shipped documentation.
 
 - [S29] Google. *Software Engineering at Google*, Ch. 11 "Testing Overview" — test sizes (small/medium/large), the size-vs-scope distinction, and the 80/15/5 mix. [https://abseil.io/resources/swe-book/html/ch11.html](https://abseil.io/resources/swe-book/html/ch11.html) — Fetched directly 2026-07-21 (PRIMARY, quotes verbatim).
 
