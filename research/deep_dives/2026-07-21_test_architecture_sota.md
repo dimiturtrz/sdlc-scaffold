@@ -101,6 +101,40 @@ What are the current best practices, standards requirements, and tooling ecosyst
 
 ---
 
+### 3b. The Test Pyramid Is Not Dead — and Google Runs TWO Axes
+
+Added 2026-07-21 on read-back, because §3 as written leaves the impression that the behaviour-over-method
+position implies fewer unit tests. It does not. Fetched directly from the primary source [S29].
+
+**Recommended mix, verbatim**: "around 80% of our tests being narrow-scoped unit tests… 15% medium-scoped
+integration tests… and 5% end-to-end tests" — qualified as "a very rough guideline", and "every team's mix
+will be a little different" [S29].
+
+So the same source that says "test behaviors, not methods" [S11] wants **80% unit tests**. The
+behaviour-vs-method argument is about what a unit test TARGETS, not about relocating work up the pyramid.
+
+**Two orthogonal axes**, and the book uses both vocabularies, "noting these describe different
+dimensions—size versus scope" [S29]:
+
+| axis | values | criterion |
+|---|---|---|
+| SIZE | small / medium / large | resources |
+| SCOPE | narrow / medium / broad | how much code is under test |
+
+- **Small**: "run in a single process"; "aren't allowed to sleep, perform I/O operations, or make any other
+  blocking calls. This means that small tests aren't allowed to access the network or disk." [S29]
+- **Medium**: "can span multiple processes, use threads, and can make blocking calls, including network
+  calls, to `localhost`… aren't allowed to make network calls to any system other than `localhost`." [S29]
+- **Large**: "remove the `localhost` restriction… allowing the test and the system being tested to span
+  across multiple machines." [S29]
+
+**Relevance to bd mjo**: the unit/integration/e2e directory tiers are the SCOPE axis and remain standard.
+The SIZE axis is an independently useful, MECHANICALLY CHECKABLE property that the scaffold does not
+currently express — a test under tests/unit/** that opens a socket, reads a file, or sleeps is misfiled,
+and that is detectable without any of the mjo machinery.
+
+---
+
 ### 4. Test Double Taxonomy – Definitions & Attribution
 
 **Gerard Meszaros (xUnit Test Patterns, 2007):**
@@ -329,5 +363,7 @@ Adding a new assertion to an existing test instead of writing a dedicated test c
 - [S26] QABash. pytest Default Naming Conventions. [https://www.qabash.com/pytest-default-naming-conventions-guide/](https://www.qabash.com/pytest-default-naming-conventions-guide/) — Accessed 2026-07-21.
 
 - [S27] Ruff. Rules: flake8-pytest-style (PT). [https://docs.astral.sh/ruff/rules/pytest-incorrect-mark-parentheses-style/](https://docs.astral.sh/ruff/rules/pytest-incorrect-mark-parentheses-style/) — Accessed 2026-07-21.
+
+- [S29] Google. *Software Engineering at Google*, Ch. 11 "Testing Overview" — test sizes (small/medium/large), the size-vs-scope distinction, and the 80/15/5 mix. [https://abseil.io/resources/swe-book/html/ch11.html](https://abseil.io/resources/swe-book/html/ch11.html) — Fetched directly 2026-07-21 (PRIMARY, quotes verbatim).
 
 - [S28] Codepipes Blog. Software Testing Anti-patterns. [https://blog.codepipes.com/testing/software-testing-antipatterns.html](https://blog.codepipes.com/testing/software-testing-antipatterns.html) — Accessed 2026-07-21.
