@@ -198,21 +198,19 @@ def test_overrides():
 
 
 def test_methods(tmp_path, monkeypatch):
-    """Which members the rule covers.
+    """Which members the rule covers — decided by the METHOD, never by its class.
 
-    A private CLASS is NOT skipped. It was, once, on the theory that the class is the API boundary — but a
-    leading underscore blocks nothing, the code inside can be wrong exactly like any other, and the
-    qualified name it produced was broken anyway (`_Private.compute` asked for `test__private_compute`).
-    Private METHODS are still out, and so are declarations.
+    The second class is named with a leading underscore to pin exactly that: the spelling of a class name
+    changes nothing about which of its methods need tests. Private METHODS are out, in both classes alike.
     """
     monkeypatch.chdir(tmp_path)
     src = (
-        "class Public:\n    def a(self):\n        return 1\n    def _b(self):\n        return 2\n"
-        "class _Private:\n    def c(self):\n        return 3\n    def _d(self):\n        return 4\n"
+        "class Alpha:\n    def a(self):\n        return 1\n    def _b(self):\n        return 2\n"
+        "class _Beta:\n    def c(self):\n        return 3\n    def _d(self):\n        return 4\n"
     )
     engine = _mirror(tmp_path, src, "")
     found = {(cls, fn.name) for members in engine.methods().values() for cls, fn in members}
-    assert found == {("Public", "a"), ("_Private", "c")}, "a private class is still code that can be wrong"
+    assert found == {("Alpha", "a"), ("_Beta", "c")}, "the class name is a label, not a filter"
 
 
 def test_callers(monkeypatch, tmp_path):
@@ -265,8 +263,8 @@ def test_name_of(expr, expected):
         ("Cli", "cli"),
         ("AstGrep", "ast_grep"),
         ("A", "a"),
-        # Leading underscores are stripped: a private class is still a class, but `test__mirror_mirror_of`
-        # is not a name anyone would choose to write.
+        # Leading underscores are stripped so the generated name reads like a hand-written one —
+        # `test__mirror_mirror_of` is not something anyone would type.
         ("_Mirror", "mirror"),
         ("__Dunderish", "dunderish"),
     ],

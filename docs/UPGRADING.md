@@ -91,8 +91,8 @@ member, so one `test_total` covers all three.
 body is `...`, so there is nothing to call and nothing to assert), and an override of a same-module base
 (one polymorphic contract, covered by the base's test).
 
-A private **class** is *not* exempt. Its methods still need tests: the underscore is a naming convention
-that blocks nothing, and the code inside can be wrong exactly like any other.
+Every class in the module is in scope. Whether a method needs a test is a question about the method; the
+class only supplies the name the finding is reported under.
 
 ### `small.py` — a unit test touches nothing it did not create
 

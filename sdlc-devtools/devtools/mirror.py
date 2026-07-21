@@ -35,10 +35,8 @@ Nothing can satisfy that. So the member kind picks the SYNTAX the matching site 
 method, an attribute touch for a property — and the message says "calls" or "reads" to match.
 
 EXEMPT: `main()` (argparse plumbing exercised by the e2e), private methods, declarations (below), and a
-method a same-module base already declares. There is deliberately NO exemption for a private CLASS: the
-underscore is a naming convention that blocks nothing, the code inside is as able to be wrong as any other,
-and the qualified name it produced was broken anyway (`_Private.compute` asked for `test__private_compute`).
-The strategy subclasses that motivated it are covered by the override rule, which is the honest reason.
+method a same-module base already declares. Every class in the module is in scope — the rule is about the
+METHOD, and where it happens to be defined is not a second question.
 
 TWO REMEDIES, and the message names both, because "nothing tests this" has two correct fixes:
 
@@ -188,7 +186,7 @@ class MethodMirror:
 
     @staticmethod
     def is_public(fn: Function) -> bool:
-        """A method this rule applies to: not private, not `main`, not a declaration.
+        """A method this rule applies to: not a private METHOD, not `main`, not a declaration.
 
         PROPERTIES ARE IN. They were exempt, on the grounds that a Call-node counter reports every property
         as untested — but that was a statement about the DETECTOR, not about properties. A property is
@@ -197,11 +195,9 @@ class MethodMirror:
         a `@x.setter` is not a pure read, so it was never exempt, and the gate asked for a `test_x` that
         CALLS `x()` — which nothing can satisfy.
 
-        There is no exemption for a private CLASS. It never blocked anything (the underscore is a naming
-        convention, not enforcement), a private class's methods are still code that can be wrong, and the
-        qualified name it produced was broken anyway — `_Private.compute` asked for `test__private_compute`.
-        The strategy subclasses it was introduced for are already covered by `overrides`, which is the honest
-        reason they need no test of their own.
+        The question is asked of the METHOD alone. Its class is not a second filter: a strategy whose methods
+        need no test of their own is already answered by `overrides`, which says so for a reason that is
+        about the code rather than about how anyone spelled a name.
         """
         return not fn.name.startswith("_") and fn.name not in EXEMPT and not MethodMirror.is_declaration(fn)
 
@@ -243,10 +239,8 @@ class MethodMirror:
     def methods(self) -> dict[Path, list[tuple[str, Function]]]:
         """{module: [(class, method)]} — every public method the rule covers, by the module that owns it.
 
-        EVERY class counts, private or not. A leading underscore on a class is a naming convention that
-        blocks nothing, and the code inside such a class can be wrong exactly like any other. The strategy
-        subclasses that first motivated skipping them need no test for a better reason — `overrides` already
-        says so, because their methods are one polymorphic contract declared by the base.
+        Every class in the module, without qualification. The class contributes the NAME a finding is
+        reported under and nothing else; whether a method needs a test is decided by the method.
         """
         covered = set(TestLayout.testable(self.packages))
         out: dict[Path, list[tuple[str, Function]]] = {}
@@ -315,9 +309,9 @@ class MethodMirror:
     def snake(name: str) -> str:
         """`CallEdge` -> `call_edge` — the class half of a qualified test name, in test-function casing.
 
-        Leading underscores are stripped: `_Mirror` gives `test_mirror_of`, not `test__mirror_mirror_of`.
-        A private class is still a class, but a doubled underscore in the middle of a test name is not a
-        convention anyone would choose to write.
+        Leading underscores are stripped, because a doubled underscore inside a generated name is not
+        something anyone would write by hand: `_Mirror` gives `test_mirror_of`, not `test__mirror_mirror_of`.
+        Purely how the name READS — it changes nothing about which methods are in scope.
         """
         bare = name.lstrip("_")
         return "".join(f"_{c.lower()}" if c.isupper() and i else c.lower() for i, c in enumerate(bare))
