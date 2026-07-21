@@ -13,8 +13,12 @@ from devtools.layout import DEFAULT_TEST_ROOT, STRUCTURAL, TestLayout
 
 def test_names():
     """The advertised value set IS the dispatch table — a value that resolves but is not listed would be
-    undiscoverable, and one that is listed but does not resolve would be a lie in an error message."""
-    assert TestLayout.names() == ["bare", "flat", "mirror", "off"]
+    undiscoverable, and one that is listed but does not resolve would be a lie in an error message.
+
+    TWO values, and the count is the assertion: a lenient third that let a repo satisfy the gate without
+    adopting the convention would be the RULE varying per repo, which the o70 union law rejects.
+    """
+    assert TestLayout.names() == ["mirror", "off"]
     for name in TestLayout.names():
         assert TestLayout.of(name) is not None, f"{name} is advertised, so it must resolve"
 
@@ -22,29 +26,32 @@ def test_names():
 def test_of():
     """Each value resolves to something answering the whole contract, and an unknown one is a HARD error.
 
-    The last case is the load-bearing one: a typo'd layout quietly falling back to `mirror` would gate a
-    bare tree against the prefixed convention and report every module in the repo as untested — a config
-    error must never be able to masquerade as a finding.
+    The last case is the load-bearing one. A typo'd layout falling back to the mirror would gate a tree it
+    was never meant to gate; falling back to `off` would turn two gates off and report clean. A config error
+    must never be able to look like an answer.
     """
-    for name in ("mirror", "bare", "flat", "off"):
+    for name in ("mirror", "off"):
         layout = TestLayout.of(name)
         assert hasattr(layout, "mirror_of") and hasattr(layout, "missing"), f"{name} answers the contract"
     assert TestLayout.of("mirror", "custom/root").test_root.as_posix() == "custom/root"
     assert TestLayout.of("mirror").test_root.as_posix() == DEFAULT_TEST_ROOT
     with pytest.raises(SystemExit, match="unknown test_layout"):
         TestLayout.of("mirrror")
+    # The layouts that USED to exist must not silently resolve — a repo carrying an old value in its
+    # pyproject has to be told, not quietly re-gated against a different rule.
+    for gone in ("bare", "flat"):
+        with pytest.raises(SystemExit, match="unknown test_layout"):
+            TestLayout.of(gone)
 
 
 @pytest.mark.parametrize(
     ("layout", "module", "expected"),
     [
-        ("mirror", "pkg/store.py", "tests/unit/pkg/test_store.py"),
-        ("mirror", "pkg/deep/nested.py", "tests/unit/pkg/deep/test_nested.py"),
-        ("bare", "pkg/store.py", "tests/unit/pkg/store.py"),
-        ("bare", "pkg/deep/nested.py", "tests/unit/pkg/deep/nested.py"),
-        # `flat` accepts any path and `off` demands nothing, so neither names a single file — which is
-        # exactly when the METHOD-level gate has nowhere to look and must stand down rather than guess.
-        ("flat", "pkg/store.py", None),
+        # The test file carries the MODULE's name — that is what makes the path a mirror.
+        ("mirror", "pkg/store.py", "tests/unit/pkg/store.py"),
+        ("mirror", "pkg/deep/nested.py", "tests/unit/pkg/deep/nested.py"),
+        # `off` demands nothing and so names no file — exactly when the METHOD-level gate has nowhere to
+        # look and must stand down rather than guess.
         ("off", "pkg/store.py", None),
     ],
 )
@@ -54,7 +61,7 @@ def test_mirror_of(layout, module, expected):
 
 
 def test_missing(tmp_path, monkeypatch):
-    """The file-level finding, over both mirror spellings and both outcomes.
+    """The file-level finding, over both outcomes.
 
     Driven through a real tree rather than a stubbed `exists`, because the thing under test IS a filesystem
     question — a double here would be asserting that our arithmetic matches itself.
@@ -63,19 +70,20 @@ def test_missing(tmp_path, monkeypatch):
     (tmp_path / "pkg").mkdir()
     (tmp_path / "pkg" / "store.py").write_text("")
     (tmp_path / "pkg" / "lonely.py").write_text("")
-    for layout, name in (("mirror", "test_store.py"), ("bare", "store.py")):
-        mirrors = tmp_path / "tests" / "unit" / "pkg"
-        mirrors.mkdir(parents=True, exist_ok=True)
-        (mirrors / name).write_text("")
-        convention = TestLayout.of(layout)
-        assert convention.missing(Path("pkg/store.py")) is None, f"{layout}: a present mirror is covered"
-        finding = convention.missing(Path("pkg/lonely.py"))
-        assert finding is not None and "lonely.py" in finding, f"{layout}: the finding names the module"
+    (tmp_path / "tests" / "unit" / "pkg").mkdir(parents=True)
+    (tmp_path / "tests" / "unit" / "pkg" / "store.py").write_text("")
 
-    # `flat` is lenient by design — ANY test_<name>.py under tests/ counts, wherever it sits.
+    convention = TestLayout.of("mirror")
+    assert convention.missing(Path("pkg/store.py")) is None, "a present mirror is covered"
+    finding = convention.missing(Path("pkg/lonely.py"))
+    assert finding is not None and "lonely.py" in finding, "the finding names the module"
+
+    # One home per module: a same-purpose test under another name, or at another path, does not count.
+    (tmp_path / "tests" / "unit" / "pkg" / "test_lonely.py").write_text("")
     (tmp_path / "tests" / "somewhere").mkdir(parents=True)
-    (tmp_path / "tests" / "somewhere" / "test_lonely.py").write_text("")
-    assert TestLayout.of("flat").missing(Path("pkg/lonely.py")) is None
+    (tmp_path / "tests" / "somewhere" / "lonely.py").write_text("")
+    assert convention.missing(Path("pkg/lonely.py")) is not None, "neither the prefix nor a stray path counts"
+
     assert TestLayout.of("off").missing(Path("pkg/lonely.py")) is None, "off demands nothing"
 
 

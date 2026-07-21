@@ -19,7 +19,7 @@ def _engine(tmp_path, monkeypatch, **files: str) -> SmallTests:
     """A repo whose unit tree contains the given `name: source` modules."""
     tmp_path.mkdir(parents=True, exist_ok=True)
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "pyproject.toml").write_text('[tool.structure]\ntest_layout = "bare"\n')
+    (tmp_path / "pyproject.toml").write_text('[tool.structure]\ntest_layout = "mirror"\n')
     unit = tmp_path / "tests" / "unit"
     unit.mkdir(parents=True, exist_ok=True)
     for name, source in files.items():

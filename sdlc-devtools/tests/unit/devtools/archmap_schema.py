@@ -234,7 +234,9 @@ def test_no_edge_dangles_off_a_node_that_does_not_exist(monkeypatch, tmp_path):
     the method tier trustworthy now that arrows terminate there."""
     data = _data(monkeypatch, tmp_path)
     known = {n["id"] for n in data["nodes"]}
-    dangling = [(e["source"], e["target"]) for e in data["edges"] if e["source"] not in known or e["target"] not in known]
+    dangling = [
+        (e["source"], e["target"]) for e in data["edges"] if e["source"] not in known or e["target"] not in known
+    ]
     assert dangling == [], f"every endpoint must be a node: {dangling}"
 
 

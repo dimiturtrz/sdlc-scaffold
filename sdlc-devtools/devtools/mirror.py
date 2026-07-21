@@ -129,23 +129,26 @@ class MethodMirror:
     def misconfigured(pyproject: str = "pyproject.toml") -> list[str]:
         """Config errors that would make this gate lie, reported as ERRORS rather than passing quietly.
 
-        `test_layout = "bare"` needs `[tool.pytest.ini_options] python_files` to collect unprefixed files;
-        pytest's default is `test_*.py`, so a bare tree without it is not collected AT ALL. That is the worst
-        failure available here — an uncollected suite reports green, and this gate would agree with it,
-        because every method's mirror file exists and is full of tests that never run.
+        The mirror names a test file after the module it covers, and pytest collects `test_*.py` by default —
+        so without `[tool.pytest.ini_options] python_files` the suite is not collected AT ALL. That is the
+        worst failure available here: an uncollected suite reports green, and this gate would agree with it,
+        because every mirror file exists and is full of tests that never run.
+
+        UNCONDITIONAL while the gate is on. It used to fire only for the unprefixed layout, back when a
+        prefixed one existed beside it; with one mirror meaning, the setting is simply part of the layout and
+        checking it sometimes was the leftover of a distinction that is gone.
 
         Same reasoning as `contracts.malformed`: something that cannot fire looks exactly like something
         clean, so the config error has to be louder than the finding it suppresses.
         """
-        cfg = Pyproject.structure_cfg(pyproject)
-        if str(cfg["test_layout"]) != "bare":
+        if str(Pyproject.structure_cfg(pyproject)["test_layout"]) == "off":
             return []
         ini = Pyproject.table(Pyproject.tool_section("pytest", pyproject).get("ini_options"))
         if any(not p.startswith("test") for p in Pyproject.str_list(ini.get("python_files"))):
             return []
         return [
-            'test_layout = "bare" but [tool.pytest.ini_options] python_files does not collect unprefixed '
-            'files — the suite is not collected at all. Set python_files = ["*.py"]'
+            "the mirror names a test file after its module, but [tool.pytest.ini_options] python_files does "
+            'not collect those — the suite is not collected at all. Set python_files = ["*.py"]'
         ]
 
     @staticmethod

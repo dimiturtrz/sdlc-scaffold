@@ -32,7 +32,7 @@ include = [{% for p in packages.split(",") %}"{{ p | trim }}*"{% if not loop.las
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "--import-mode=importlib"
-# REQUIRED by [tool.structure] test_layout = "bare". pytest collects `test_*.py` by default, so a bare
+# REQUIRED by [tool.structure] test_layout = "mirror". pytest collects `test_*.py` by default, so a
 # mirror tree is not collected AT ALL without this — and an uncollected suite reports green while running
 # zero tests, which is worse than a red one. `devtools.mirror --assert` fails on the CONFIG if these two
 # settings ever disagree, so the failure mode cannot hide. Switch both together, or neither.
@@ -220,17 +220,18 @@ demeter_max_depth = 2    # Law of Demeter ceiling: attribute hops in one chain. 
                          # then talk to it" (`self.store.get(k)`); 3 reaches THROUGH it
                          # (`self.store.config.name`). Raise it for data-navigation-heavy trees (AST/JSON
                          # walking), where a deep chain is reading a structure, not coupling to a stranger.
-test_layout = "bare"     # WHERE a module's unit test lives — read by BOTH mirror gates (file-level, in
+test_layout = "mirror"   # WHERE a module's unit test lives — read by BOTH mirror gates (file-level, in
                          # devtools/graph.py, and method-level, in devtools/mirror.py), so they cannot
                          # disagree about what is covered. See docs/UNIT_TESTS.md.
-                         #   "bare"   tests/unit/<pkg>/<path>/<name>.py — the mirror is a PATH mirror, so the
-                         #            names match and it is visible in the path rather than reconstructed by
-                         #            the reader. REQUIRES python_files = ["*.py"] (set above) — `test_` is a
-                         #            pytest discovery mechanism, not a convention.
-                         #   "mirror" tests/unit/<pkg>/<path>/test_<name>.py — the prefixed spelling
-                         #   "flat"   a test_<name>.py anywhere under tests/ — lenient, and the METHOD-level
-                         #            gate stands down because it has no single file to read
+                         #   "mirror" tests/unit/<pkg>/<path>/<name>.py — a PATH mirror, so the names match
+                         #            and what a test covers is visible in its path rather than
+                         #            reconstructed by the reader. REQUIRES python_files = ["*.py"] (set
+                         #            above): `test_` is how pytest FINDS files, not a convention, and
+                         #            without that setting nothing is collected at all.
                          #   "off"    no test-existence gate, and no method-level gate either
+                         # There is deliberately no lenient value. A mode accepting a test "anywhere" is not
+                         # a threshold, it is the RULE meaning something else here — see the o70 union law
+                         # in the scaffold's docs/RULE_INVENTORY.md. Turn it off or meet it.
 # <<< LOCAL-SLOT: arch-thresholds
 
 # magic-literals + complexity are ADVISORY explorers (devtools/magic_literals.py, devtools/complexity.py) —

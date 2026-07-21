@@ -201,11 +201,12 @@ def test_select_and_ci_wiring(project):
     # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
     assert "main_sequence_max" in pyproject_text, "the instability/main-sequence gate threshold ships (x3b)"
     # mjo: BOTH mirror gates read one [tool.structure] test_layout, so they cannot disagree about coverage.
-    # The shipped default is "bare" — the mirror is a PATH mirror, and `test_` breaks it for a pytest
-    # discovery reason rather than a convention one.
-    assert 'test_layout = "bare"' in pyproject_text, "the shipped default layout is the bare mirror (mjo)"
-    for layout in ("mirror", "flat", "off"):
-        assert f'"{layout}"' in pyproject_text, f"the {layout} layout is documented where it is configured"
+    # TWO values only — a lenient third would be the RULE varying per repo, which the o70 union law rejects,
+    # and it also silently disabled the method-level gate for anyone who chose it.
+    assert 'test_layout = "mirror"' in pyproject_text, "the shipped layout is the path mirror (mjo)"
+    assert '"off"' in pyproject_text, "the off switch is documented where it is configured"
+    for gone in ('"bare"', '"flat"'):
+        assert gone not in pyproject_text, f"{gone} was collapsed away; the template must not still offer it"
     # `bare` without these two is the worst failure available: pytest collects nothing and the suite reports
     # green while running zero tests. They ship TOGETHER or the default is a trap.
     assert 'python_files = ["*.py"]' in pyproject_text, "bare layout requires python_files, or nothing collects"

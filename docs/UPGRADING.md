@@ -106,21 +106,35 @@ The usual fixes: `tmp_path` instead of a data root, a fake at the I/O boundary i
 removing the race instead of sleeping through it, and `random.seed(0)` / `np.random.default_rng(0)` once per
 file (the seed rule is per-file, so a seed in a fixture covers the module).
 
-### `test_layout = "bare"` — the new default
+### `test_layout` — two values now, and `mirror` changed meaning
 
-`tests/unit/<pkg>/store.py` mirrors `<pkg>/store.py` — the same name, so the mirror is visible in the path
-rather than reconstructed by the reader. `test_` is a pytest discovery mechanism, not a convention.
+`tests/unit/<pkg>/store.py` mirrors `<pkg>/store.py`. **The test file carries its module's name** — so what
+a test covers is visible in its path rather than reconstructed by the reader. `test_` is how pytest *finds*
+files, not a convention, and a path mirror whose path doesn't match the name isn't one.
 
-**This is a change of default, so `copier update` will move you.** The rename is the small half of adopting
-the convention above, and doing both in one pass is the point: the alternative is converting your suite to a
-spelling the scaffold itself rejected, leaving the two permanently different.
+**Two breaking changes to the setting:**
 
-The template ships all three settings together, because `bare` without the pytest ones is a trap — pytest
-would collect nothing and the suite would report green while running zero tests:
+| was | now |
+|---|---|
+| `"mirror"` = `tests/unit/<pkg>/test_store.py` | `"mirror"` = `tests/unit/<pkg>/store.py` |
+| `"flat"` = a `test_store.py` anywhere under `tests/` | **removed** |
+| `"off"` | unchanged |
+
+An old value left in your `pyproject.toml` fails loudly (`unknown test_layout`) rather than resolving to
+something else — a config error must not be able to look like an answer.
+
+**Why `flat` is gone.** It wasn't a threshold, it was a *different predicate*: "a file with this name exists
+somewhere" instead of "this module's test is at its mirror path." `RULE_INVENTORY.md`'s union law says a
+universal rule never varies per repo — only thresholds and vocabulary move. It was also quietly worthless:
+with no single file to read, the method-level gate stood down, so a repo on `flat` got the *appearance* of
+the mirror convention.
+
+The template ships all three settings together, because the layout without the pytest ones is a trap —
+pytest would collect nothing and the suite would report green while running zero tests:
 
 ```toml
 [tool.structure]
-test_layout = "bare"
+test_layout = "mirror"
 
 [tool.pytest.ini_options]
 python_files = ["*.py"]     # REQUIRED — without it nothing is collected
@@ -129,16 +143,19 @@ python_classes = []         # the convention is test_<method> functions; no test
 
 `mirror.py --assert` fails on that config rather than passing, so the failure mode cannot hide.
 
-Then drop the prefix from every mirror file — one `git mv` per file, and the mirror gate tells you
-immediately if you miss one:
+Then drop the prefix from every mirror file — one `git mv` per file, and the gate tells you immediately if
+you miss one:
 
 ```bash
 cd tests/unit/<pkg> && for f in test_*.py; do git mv "$f" "${f#test_}"; done
 ```
 
-**If you need time**, `test_layout = "mirror"` is still a supported value and keeps your existing filenames.
-It is a real option, not a deprecation — but note it does not spare you the method-mirror gate above, which
-is the actual work.
+**There is no partial escape, and that is deliberate.** `off` turns off *both* mirror gates — including the
+file-level "every module has a test" check you are passing today. So a repo with a large method-mirror
+backlog has two honest options: work the list down with per-method `# devtools-ignore: test-mirror`, or set
+`off` and accept that it drops a gate too. A knob whose only purpose is to make a rule optional is the thing
+the union law rejects; if the ignore list runs to hundreds of lines, that is the convention telling you
+something rather than a case for a third setting.
 
 `sdlc-devtools` made this move first; the conversion immediately caught a test asserting
 `python -m devtools.test_cli`, a module that has never existed and read as correct only because the prefix

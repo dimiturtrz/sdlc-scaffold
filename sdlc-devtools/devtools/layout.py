@@ -1,45 +1,41 @@
 """Where a module's unit test lives — the mirror convention, as ONE strategy both mirror gates resolve
 through (bd 1a8).
 
-Two gates now ask the same question about the same path. `graph.unmirrored` asks "does a test file EXIST
-for this module"; `mirror.MethodMirror` asks "does a test IN THAT FILE call this method and assert". If
-each spelled the path itself, the convention would have two homes — and worse, the two gates could
-disagree, which reads as a clean tree from one and a broken one from the other.
+Two gates ask the same question about the same path. `graph.unmirrored` asks "does a test file EXIST for
+this module"; `mirror.MethodMirror` asks "does a test IN THAT FILE reach this member and assert". If each
+spelled the path itself, the convention would have two homes — and worse, the two gates could disagree,
+which reads as a clean tree from one and a broken one from the other.
 
-THE CONVENTION IS CONFIG, not imposed architecture. `[tool.structure] test_layout`:
+TWO VALUES, `[tool.structure] test_layout`:
 
-    bare    tests/unit/<pkg>/<path>/<name>.py        strict path mirror, one home per module — the DEFAULT
-    mirror  tests/unit/<pkg>/<path>/test_<name>.py   the same mirror, prefixed
-    flat    a test_<name>.py ANYWHERE under tests/   lenient; a flat repo passes without restructuring
+    mirror  tests/unit/<pkg>/<path>/<name>.py   the module's test carries the module's name — the DEFAULT
     off     nothing is demanded
 
-`mirror` and `bare` are the SAME strategy with a different prefix, not two — the mirror is the path rule,
-the prefix is a spelling. Splitting them into two classes would duplicate the path arithmetic and invite
-them to drift.
+THE MIRROR IS A PATH MIRROR, so the path has to mirror. `<pkg>/store.py` is covered by
+`tests/unit/<pkg>/store.py`: the same name, so what a test file covers is visible in its path rather than
+reconstructed by the reader. `test_` is how PYTEST FINDS FILES, not a convention — a prefixed variant was
+shipped briefly beside this one and it was the same rule with a discovery mechanism baked into it, which is
+a fork, not a choice.
 
-`bare` COSTS A PYTEST SETTING and the gate says so rather than letting it fail silently: pytest collects
-`test_*.py` by default, so a bare tree needs `python_files = ["*.py"]` under `[tool.pytest.ini_options]`.
-Without it the suite is not collected at all — and an uncollected suite is greener than a red one, which is
-the worst failure mode available here.
+IT COSTS A PYTEST SETTING, and the gate says so rather than letting it fail silently: pytest collects
+`test_*.py` by default, so this layout needs `python_files = ["*.py"]` under `[tool.pytest.ini_options]`.
+Without it the suite is not collected at all — and an uncollected suite reports green while running zero
+tests, which is the worst failure mode available here. `mirror.misconfigured` fails the gate on that config
+rather than passing.
 
-WHY BARE IS WORTH THE SETTING: the mirror is a path mirror, and `test_` breaks it. `<pkg>/store.py` is
-covered by `tests/unit/<pkg>/store.py` under `bare` — the same name, so the mirror is visible in the path
-rather than reconstructed by the reader. The prefix is a discovery mechanism wearing a convention's
-clothes.
+THERE IS NO LENIENT VALUE. A `flat` mode once accepted a `test_<name>.py` anywhere under `tests/`, so a repo
+could satisfy the gate without adopting the convention. That is not a threshold, it is a DIFFERENT
+PREDICATE — the o70 union law in docs/RULE_INVENTORY.md says a universal rule never varies per repo, and
+only thresholds and vocabulary move. It was also quietly worthless: with no single file to read, the
+method-level gate stood down, so a repo on `flat` got the APPEARANCE of the mirror convention.
 
-`bare` IS THE DEFAULT, and the reasoning that first held it back was incoherent. The argument was that
-switching costs an existing consumer a red gate on every module at once — true, but the METHOD-level mirror
-already goes red on all three consumers the moment they update, because they have untested public methods.
-Holding the prefix back spared them the rename script inside a change that hands them the conversion. The
-prefix is a trivial part of adopting the convention, so the only real question is which spelling a consumer
-converts TO — and converting to the one the scaffold itself rejected would leave the two permanently
-different. One conversion, one convention.
+`off` is categorically different and stays. It is the gate not running, which is ordinary ratchet posture —
+not the rule meaning something else here.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from functools import cached_property
 from pathlib import Path
 from typing import override
 
@@ -56,8 +52,8 @@ class TestLayout:
     """Where a module's unit test lives, per `[tool.structure] test_layout`.
 
     Three questions, because the gates need different parts of one answer: `testable` says WHICH modules the
-    rule covers at all, `mirror_of` names the ONE file that must hold a module's tests (None when the layout
-    names no single file), and `missing` is the file-level gate's finding when nothing covers the module.
+    rule covers at all, `mirror_of` names the ONE file that must hold a module's tests (None when nothing is
+    demanded), and `missing` is the file-level gate's finding when nothing covers the module.
     """
 
     def __init__(self, test_root: str = DEFAULT_TEST_ROOT) -> None:
@@ -94,8 +90,8 @@ class TestLayout:
         """The layout a `test_layout` value names.
 
         An unknown value is a HARD error, not a fallback to the default. A typo'd layout that quietly
-        degraded to `mirror` would gate a bare tree against the prefixed convention and report every module
-        as untested — a config error must not be able to masquerade as a finding.
+        degraded to the mirror would gate a tree it was never meant to gate; one that degraded to `off`
+        would turn two gates off and report clean. A config error must not be able to look like an answer.
         """
         build = _LAYOUTS.get(name)
         if build is None:
@@ -103,9 +99,9 @@ class TestLayout:
         return build(test_root)
 
     def mirror_of(self, module: Path) -> Path | None:
-        """The one file that must hold this module's unit tests, or None when the layout names no single
-        file — `flat` accepts any path and `off` demands nothing, and in both cases the METHOD-level gate
-        has nowhere to look and stands down rather than guessing."""
+        """The one file that must hold this module's unit tests, or None when nothing is demanded — and
+        `off` is exactly when the METHOD-level gate has nowhere to look and stands down rather than
+        guessing."""
         raise NotImplementedError
 
     def missing(self, module: Path) -> str | None:
@@ -114,41 +110,17 @@ class TestLayout:
 
 
 class _Mirror(TestLayout):
-    """The strict path mirror: `<pkg>/<path>/foo.py` is covered iff `<test_root>/<pkg>/<path>/<prefix>foo.py`
+    """The strict path mirror: `<pkg>/<path>/foo.py` is covered iff `<test_root>/<pkg>/<path>/foo.py`
     exists. A same-purpose test under a different name or path does not count — one home per module."""
-
-    def __init__(self, test_root: str = DEFAULT_TEST_ROOT, prefix: str = "test_") -> None:
-        super().__init__(test_root)
-        self.prefix = prefix
 
     @override
     def mirror_of(self, module: Path) -> Path:
-        return self.test_root / module.parent / f"{self.prefix}{module.name}"
+        return self.test_root / module.parent / module.name
 
     @override
     def missing(self, module: Path) -> str | None:
         mirror = self.mirror_of(module)
         return None if mirror.exists() else f"{module.as_posix()} — no mirrored {mirror.as_posix()}"
-
-
-class _Flat(TestLayout):
-    """Lenient: a `test_<name>.py` exists ANYWHERE under `tests/`. Lets a flat-layout repo satisfy the
-    file-level gate without restructuring its test tree — at the price of the method-level gate, which
-    needs a known file to read and therefore does not run here."""
-
-    @cached_property
-    def _names(self) -> set[str]:
-        return {p.name for p in Path("tests").rglob("test_*.py")}
-
-    @override
-    def mirror_of(self, module: Path) -> Path | None:
-        return None
-
-    @override
-    def missing(self, module: Path) -> str | None:
-        if f"test_{module.name}" in self._names:
-            return None
-        return f"{module.as_posix()} — no test_{module.name} anywhere under tests/"
 
 
 class _Off(TestLayout):
@@ -163,11 +135,5 @@ class _Off(TestLayout):
         return None
 
 
-# Declaration-only dispatch: a value -> the layout it names. `mirror` and `bare` differ ONLY in the prefix,
-# which is the whole argument for one strategy rather than two.
-_LAYOUTS: dict[str, Callable[[str], TestLayout]] = {
-    "mirror": lambda test_root: _Mirror(test_root, "test_"),
-    "bare": lambda test_root: _Mirror(test_root, ""),
-    "flat": _Flat,
-    "off": _Off,
-}
+# Declaration-only dispatch: a value -> the layout it names.
+_LAYOUTS: dict[str, Callable[[str], TestLayout]] = {"mirror": _Mirror, "off": _Off}

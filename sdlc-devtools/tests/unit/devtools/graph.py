@@ -162,8 +162,9 @@ def test_main_sequence_distance(tmp_path, monkeypatch):
 def test_unmirrored(tmp_path, monkeypatch):
     """The file-level test-mirror finding across every layout, plus the two exemptions.
 
-    Layout is the whole point: the SAME tree is a finding under `mirror` and clean under `flat`, so a repo
-    declaring the wrong one gets a wrong answer rather than a loud one — which is why each is pinned here.
+    ONE HOME per module, which is what makes this checkable: the test file carries the module's name at the
+    mirror path, and nothing else counts. A lenient "a test named for it exists somewhere" mode used to sit
+    beside this and was removed — that is not a threshold, it is the rule meaning something else per repo.
     """
     monkeypatch.chdir(tmp_path)
     pkg = tmp_path / "pkg"
@@ -176,19 +177,17 @@ def test_unmirrored(tmp_path, monkeypatch):
     assert all("__init__" not in m for m in engine.unmirrored()), "package plumbing is never a finding"
     assert engine.unmirrored("off") == [], "off = no test-existence gate"
 
-    (tmp_path / "tests").mkdir()
-    assert engine.unmirrored("flat"), "flat: no test anywhere -> still flagged"
-    (tmp_path / "tests" / "test_foo.py").write_text("def test_foo(): pass\n")
-    assert engine.unmirrored("flat") == [], "flat: a test_foo.py anywhere under tests/ satisfies it"
-    assert engine.unmirrored("mirror"), "mirror still wants the strict path, wherever flat was happy"
+    # Neither a stray path nor the pytest prefix satisfies the mirror — one home, and it is this one.
+    (tmp_path / "tests" / "unit" / "pkg").mkdir(parents=True)
+    (tmp_path / "tests" / "foo.py").write_text("def test_go(): pass\n")
+    (tmp_path / "tests" / "unit" / "pkg" / "test_foo.py").write_text("def test_go(): pass\n")
+    assert engine.unmirrored(), "a test elsewhere, or under the old prefix, is not the mirror"
 
-    mirror = tmp_path / "tests" / "unit" / "pkg"
-    mirror.mkdir(parents=True)
-    (mirror / "test_foo.py").write_text("def test_foo(): pass\n")
+    (tmp_path / "tests" / "unit" / "pkg" / "foo.py").write_text("def test_go(): pass\n")
     assert engine.unmirrored() == [], "a module with its strict path-mirror test is satisfied"
     # test_root moves where the mirror is LOOKED FOR, so the same satisfied tree is a finding again under a
     # different root — the root is part of the convention, not a search path that falls back to the default.
-    assert engine.unmirrored("mirror", "tests/other") == ["pkg/foo.py — no mirrored tests/other/pkg/test_foo.py"]
+    assert engine.unmirrored("mirror", "tests/other") == ["pkg/foo.py — no mirrored tests/other/pkg/foo.py"]
 
     # A coverage-omitted shell is out of the population entirely — the same exemption the method-level gate
     # reads, so the two mirrors cannot disagree about what is covered.
@@ -326,7 +325,7 @@ def test_run_assert(monkeypatch, tmp_path):
     assert engine.run_assert() == 1, "with the mirror check on, two untested modules block"
 
     (tmp_path / "tests" / "unit" / "usage_pkg").mkdir(parents=True)
-    for name in ("test_dep.py", "test_user.py"):
+    for name in ("dep.py", "user.py"):
         (tmp_path / "tests" / "unit" / "usage_pkg" / name).write_text("def test_x(): pass\n")
     assert engine.run_assert() == 0, "once every module has its mirror test the same tree passes"
 

@@ -134,7 +134,7 @@ def test_the_ceiling_is_configurable():
         ("[tool.structure]\ndemeter_max_depth = 4\n", 4),
         # A [tool.structure] that exists but is silent on this key must still default rather than blow up —
         # every other structure gate shares this section, so its presence says nothing about ours.
-        ('[tool.structure]\ntest_layout = "bare"\n', 2),
+        ('[tool.structure]\ntest_layout = "off"\n', 2),
     ],
 )
 def test_load_max_depth(tmp_path, monkeypatch, pyproject_text, expected):

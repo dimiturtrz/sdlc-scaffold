@@ -101,9 +101,10 @@ def test_structure_cfg(tmp_path):
 
     assert Pyproject.structure_cfg(str(tmp_path / "none.toml")) == STRUCTURE_DEFAULTS, "no file is all defaults"
 
-    pp.write_text("[tool.structure]\nfile_max = 500\ntest_layout = 'bare'\n")
+    # `off` rather than `mirror`: the DEFAULT is `mirror`, so overriding to it would assert nothing.
+    pp.write_text("[tool.structure]\nfile_max = 500\ntest_layout = 'off'\n")
     cfg = Pyproject.structure_cfg(str(pp))
-    assert cfg["file_max"] == 500 and cfg["test_layout"] == "bare", "overrides land"
+    assert cfg["file_max"] == 500 and cfg["test_layout"] == "off", "overrides land"
     assert cfg["demeter_max_depth"] == STRUCTURE_DEFAULTS["demeter_max_depth"], "unset keys keep their default"
     assert set(cfg) == set(STRUCTURE_DEFAULTS), "the key space is closed — an override never ADDS a key"
 

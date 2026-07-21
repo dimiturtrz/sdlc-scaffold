@@ -150,7 +150,7 @@ def test_tool():
     properties by kind; it no longer does — a property is public API, matched by attribute ACCESS — so the
     pair is split into one test per member.
 
-    The expected value is `cli` because `Fake` is defined in THIS file, and under the bare mirror layout
+    The expected value is `cli` because `Fake` is defined in THIS file, and under the mirror layout
     (bd 1a8) this file is `cli.py`.
     """
     assert Cli(Fake, "d").tool == "cli"

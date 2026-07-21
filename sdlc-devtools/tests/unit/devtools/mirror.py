@@ -21,7 +21,7 @@ def _fn(src: str) -> ast.FunctionDef:
     return next(n for n in ast.walk(ast.parse(src)) if isinstance(n, ast.FunctionDef))
 
 
-def _mirror(tmp_path, source: str, test_source: str, layout: str = "bare") -> MethodMirror:
+def _mirror(tmp_path, source: str, test_source: str, layout: str = "mirror") -> MethodMirror:
     """A repo with one module and its mirror, wired through a real pyproject.
 
     Built on disk rather than injected because the gate's whole job is a question ABOUT the filesystem —
@@ -34,34 +34,35 @@ def _mirror(tmp_path, source: str, test_source: str, layout: str = "bare") -> Me
     (tmp_path / "pkg").mkdir(exist_ok=True)
     (tmp_path / "pkg" / "__init__.py").write_text("")
     (tmp_path / "pkg" / "mod.py").write_text(source)
-    name = "mod.py" if layout == "bare" else "test_mod.py"
     mirrors = tmp_path / "tests" / "unit" / "pkg"
     mirrors.mkdir(parents=True, exist_ok=True)
-    (mirrors / name).write_text(test_source)
+    (mirrors / "mod.py").write_text(test_source)
     return MethodMirror(["pkg"], trees=[(Path("pkg/mod.py"), ast.parse(source))])
 
 
 def test_layout(tmp_path, monkeypatch):
     """The convention comes from config, so this gate and the file-level one cannot drift apart."""
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "pyproject.toml").write_text('[tool.structure]\ntest_layout = "bare"\n')
-    assert MethodMirror([]).layout().mirror_of(Path("pkg/a.py")).as_posix() == "tests/unit/pkg/a.py"
     (tmp_path / "pyproject.toml").write_text('[tool.structure]\ntest_layout = "mirror"\n')
-    assert MethodMirror([]).layout().mirror_of(Path("pkg/a.py")).as_posix() == "tests/unit/pkg/test_a.py"
+    assert MethodMirror([]).layout().mirror_of(Path("pkg/a.py")).as_posix() == "tests/unit/pkg/a.py"
+    (tmp_path / "pyproject.toml").write_text('[tool.structure]\ntest_layout = "off"\n')
+    assert MethodMirror([]).layout().mirror_of(Path("pkg/a.py")) is None, "off leaves this gate nowhere to look"
 
 
 @pytest.mark.parametrize(
     ("layout", "python_files", "expected"),
     [
-        # The failure this exists to prevent: a bare tree with pytest's DEFAULT discovery is not collected
-        # at all, so the suite reports green and this gate agrees with it — every mirror file exists and is
-        # full of tests that never run.
-        ("bare", None, 1),
-        ("bare", '["test_*.py"]', 1),
-        ("bare", '["*.py"]', 0),
-        # A prefixed tree never has the problem, whatever python_files says.
-        ("mirror", None, 0),
-        ("mirror", '["test_*.py"]', 0),
+        # The failure this exists to prevent: a mirror tree under pytest's DEFAULT discovery is not
+        # collected at all, so the suite reports green and this gate agrees with it — every mirror file
+        # exists and is full of tests that never run.
+        ("mirror", None, 1),
+        ("mirror", '["test_*.py"]', 1),
+        ("mirror", '["*.py"]', 0),
+        # `off` demands no mirror, so there is no discovery to get wrong. The check is UNCONDITIONAL while
+        # the gate is on — it used to fire for one layout of two, which was a leftover of a distinction
+        # that no longer exists.
+        ("off", None, 0),
+        ("off", '["test_*.py"]', 0),
     ],
 )
 def test_misconfigured(tmp_path, monkeypatch, layout, python_files, expected):
@@ -78,10 +79,6 @@ def test_misconfigured(tmp_path, monkeypatch, layout, python_files, expected):
         ("def _helper(self):\n    return 1", False),
         ("def __init__(self):\n    self.n = 1", False),
         ("def main(self):\n    return 1", False),
-        # A property is READ as an attribute. Demanding a CALL to one demands something the language does
-        # not let a caller write — this exemption is why the scoping measurement had 11 phantom findings.
-        ("@property\ndef total(self): ...", False),
-        ("@cached_property\ndef total(self): ...", False),
         # PROPERTIES ARE IN. They were exempt because a Call-node counter reports every one as untested —
         # a fact about the detector, not about properties, which are public API like any other member.
         # They are matched by attribute ACCESS instead; see test_accessed_names.
@@ -384,7 +381,7 @@ def test_run_assert(tmp_path, monkeypatch):
     dirty = _mirror(tmp_path, "class A:\n    def bare(self):\n        return 1\n", "def test_other():\n    assert 1\n")
     assert dirty.run_assert() == 1
 
-    # A bare tree without `python_files` is not collected at all, so every mirror file is full of tests that
-    # never run — the gate must fail on the CONFIG rather than pass on the findings it can no longer trust.
-    (tmp_path / "pyproject.toml").write_text('[tool.structure]\ntest_layout = "bare"\n')
+    # A mirror tree without `python_files` is not collected at all, so every mirror file is full of tests
+    # that never run — the gate must fail on the CONFIG rather than pass on findings it can no longer trust.
+    (tmp_path / "pyproject.toml").write_text('[tool.structure]\ntest_layout = "mirror"\n')
     assert clean.run_assert() == 1

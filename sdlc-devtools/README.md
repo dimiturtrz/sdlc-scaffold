@@ -25,7 +25,7 @@ The import name stays `devtools`, so every gate invocation is unchanged.
   (`main_sequence_max`, OFF at 0). Drop `--assert` for ranked fan-in/out/bottleneck/chokepoint tables;
   `--assert --no-test-mirror` gates structure only, for a legitimately test-less tree.
 - **test-mirror rule** (in graph.py) — every logic module needs a unit test. `[tool.structure] test_layout`
-  sets *where*: `"mirror"` (strict path-mirror, default), `"flat"`, or `"off"`. `__init__`/`__main__` and
+  sets *where*: `"mirror"` (strict path-mirror, default — the test carries its module's name) or `"off"`. `__init__`/`__main__` and
   coverage-**omitted** shells (via **omit.py**) are exempt.
 - **lcom.py** — LCOM4 cohesion: ranks concrete stateful classes whose methods split into disjoint-state
   groups. `python -m devtools.lcom <packages>`.
