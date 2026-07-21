@@ -1,0 +1,52 @@
+"""The method-mirror convention (docs/UNIT_TESTS.md): one `test_<method>` per public method of
+`MemoryStore`, each a dense CONTAINER of cases rather than one test per behaviour."""
+
+import pytest
+
+from __PKG__.memory_store import CapacityError, MemoryStore
+from __PKG__.types import StoreConfig
+
+
+def _store(capacity: int = 2, namespace: str = "ns") -> MemoryStore:
+    """A fixture produces INPUTS, never expected outputs. It is also SMALL — nothing here reaches outside
+    the process, which is what `devtools.small` enforces."""
+    return MemoryStore(StoreConfig(capacity=capacity, namespace=namespace))
+
+
+def test_put():
+    """`put` stores under the namespace and evicts the oldest once capacity is reached."""
+    store = _store()
+    store.put("a", 1.5)
+    assert store.get("a") == 1.5, "a put value reads back"
+
+    # A namespace is a separate keyspace: the same key in two stores must not collide.
+    one, two = _store(namespace="one"), _store(namespace="two")
+    one.put("k", 1.0)
+    assert one.get("k") == 1.0
+    assert two.get("k") is None
+
+    # Capacity is a ring — the third put into a two-slot store drops the FIRST, not the newest.
+    ring = _store(capacity=2)
+    for key, value in (("a", 1.0), ("b", 2.0), ("c", 3.0)):
+        ring.put(key, value)
+    assert ring.get("a") is None, "the oldest was evicted"
+    assert ring.get("c") == 3.0, "the newest is kept"
+
+
+def test_get():
+    """`get` returns the stored value, or None for a key this namespace never held.
+
+    A miss is None rather than an exception: translating it into a domain error is the REPOSITORY's job, so
+    the store stays a dumb container. That split is what lets `Repository` be tested against a fake store.
+    """
+    store = _store()
+    assert store.get("nope") is None
+    store.put("a", 1.5)
+    assert store.get("a") == 1.5
+
+
+def test_a_non_positive_capacity_is_rejected():
+    """`__init__` is not a public METHOD, so the mirror gate demands no `test___init__` — but the validation
+    is worth pinning anyway: a zero-capacity store would silently evict everything handed to it."""
+    with pytest.raises(CapacityError, match="must be positive"):
+        _store(capacity=0)

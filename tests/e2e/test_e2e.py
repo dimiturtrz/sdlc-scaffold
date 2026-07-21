@@ -63,10 +63,12 @@ def test_no_leftover_jinja(project):
 def test_expected_layout(project):
     name, path = project
     pkg = example_pkg(name)
-    # every seeded module ships, each at its STRICT mirror path (tests/unit/<pkg>/test_<name>.py)
+    # every seeded module ships, each at its STRICT mirror path. Under the shipped `bare` layout that path
+    # carries the SAME name as the module — the mirror is visible rather than reconstructed by the reader.
     for module in ("math_ops", "pipeline", "types", "errors", "memory_store", "repository", "service"):
         assert (path / pkg / f"{module}.py").exists(), f"seed module {module} missing"
-        assert (path / "tests" / "unit" / pkg / f"test_{module}.py").exists(), f"mirror for {module} missing"
+        assert (path / "tests" / "unit" / pkg / f"{module}.py").exists(), f"mirror for {module} missing"
+        assert not (path / "tests" / "unit" / pkg / f"test_{module}.py").exists(), "the prefix is gone"
     # the analyzers are an INSTALLED package now (sdlc-devtools, pinned by tag) — not vendored source,
     # and neither is the ast-grep/jscpd config (located from the install via `python -m devtools.config`).
     pyproject_dep = (path / "pyproject.toml").read_text()
@@ -198,6 +200,17 @@ def test_select_and_ci_wiring(project):
     assert '"SLF001"' in enforced_select, "SLF001 must be in the enforced select (graduated to gate — 8ex)"
     # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
     assert "main_sequence_max" in pyproject_text, "the instability/main-sequence gate threshold ships (x3b)"
+    # mjo: BOTH mirror gates read one [tool.structure] test_layout, so they cannot disagree about coverage.
+    # TWO values only — a lenient third would be the RULE varying per repo, which the o70 union law rejects,
+    # and it also silently disabled the method-level gate for anyone who chose it.
+    assert 'test_layout = "mirror"' in pyproject_text, "the shipped layout is the path mirror (mjo)"
+    assert '"off"' in pyproject_text, "the off switch is documented where it is configured"
+    for gone in ('"bare"', '"flat"'):
+        assert gone not in pyproject_text, f"{gone} was collapsed away; the template must not still offer it"
+    # `bare` without these two is the worst failure available: pytest collects nothing and the suite reports
+    # green while running zero tests. They ship TOGETHER or the default is a trap.
+    assert 'python_files = ["*.py"]' in pyproject_text, "bare layout requires python_files, or nothing collects"
+    assert "python_classes = []" in pyproject_text, "the convention is test_<method> functions, not classes"
     # 0sx: magic_literals + complexity ship NO config — they are advisory explorers, not ratcheted gates.
     # No legislated knob is added until a repo needs one (the ratchet was removed as the wrong mechanism).
     assert "[tool.magic_literals]" not in pyproject_text, "magic-literals is advisory — no config knob (0sx)"
@@ -939,7 +952,7 @@ def test_graph_assert_catches_two_primary_classes(full_project):
 
 
 def test_graph_assert_catches_unmirrored(full_project):
-    # a new LOGIC module with no tests/unit/full_pkg/test_<name>.py mirror must block
+    # a new LOGIC module with no tests/unit/full_pkg/<name>.py mirror must block
     def mutate(p):
         orphan = p / "full_pkg" / "orphan.py"
         orphan.write_text("class Orphan:\n    @staticmethod\n    def go():\n        return 1\n")
@@ -948,6 +961,65 @@ def test_graph_assert_catches_unmirrored(full_project):
     result = assert_bites(full_project, GRAPH_ASSERT, mutate)
     assert "test mirror" in (result.stdout + result.stderr)
     assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+MIRROR_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.mirror", "full_pkg", "--assert"]
+SMALL_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.small", "full_pkg", "--assert"]
+
+
+def test_mirror_catches_a_public_method_with_no_named_test(full_project):
+    """bd c6b: graph's file-level mirror only asks whether a module HAS a test file, which one smoke test
+    satisfies for a module of twenty methods. This asks for `test_<method>` per public method.
+
+    The seeded project passes, so the gate ships green and ratchets from the first method added — the
+    shape_contracts precedent. What must BITE is a new public method with no correspondingly-named test.
+    """
+    result = assert_bites(
+        full_project,
+        MIRROR_ASSERT,
+        lambda p: _append(
+            p / "full_pkg" / "repository.py", "\n\nclass Untested:\n    def compute(self) -> int:\n        return 1\n"
+        ),
+    )
+    output = result.stdout + result.stderr
+    assert "test_compute" in output, "the gate names the exact function to write, not just the fault"
+    assert run(MIRROR_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+def test_mirror_names_the_rename_remedy_separately(full_project):
+    """"Nothing tests this" has two costs, and the gate must not charge the expensive one for the cheap
+    case: a test that already calls the method and asserts, under the wrong name, is a RENAME."""
+
+    def mutate(p):
+        restore_src = _append(
+            p / "full_pkg" / "repository.py", "\n\nclass Renamed:\n    def compute(self) -> int:\n        return 1\n"
+        )
+        restore_test = _append(
+            p / "tests" / "unit" / "full_pkg" / "repository.py",
+            "\n\ndef test_some_other_name():\n    from full_pkg.repository import Renamed\n\n"
+            "    assert Renamed().compute() == 1\n",
+        )
+        return lambda: (restore_test(), restore_src())
+
+    result = assert_bites(full_project, MIRROR_ASSERT, mutate)
+    output = result.stdout + result.stderr
+    assert "rename it" in output, "a covered-but-misnamed method is a rename, not a missing test"
+    assert run(MIRROR_ASSERT, full_project).returncode == 0, "passes again once reverted"
+
+
+def test_small_catches_a_unit_test_that_leaves_the_process(full_project):
+    """bd ar6/1j3: a unit test touches nothing it did not create. Each of these makes a test able to fail
+    for a reason unrelated to the code, and a suite that fails for unrelated reasons stops being read."""
+    result = assert_bites(
+        full_project,
+        SMALL_ASSERT,
+        lambda p: _append(
+            p / "tests" / "unit" / "full_pkg" / "repository.py",
+            "\n\ndef test_reaches_out():\n    import time\n\n    time.sleep(0)\n    assert 1\n",
+        ),
+    )
+    assert "sleep" in (result.stdout + result.stderr)
+    assert run(SMALL_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
 def test_import_linter_catches_upward_import(scaffold, tmp_path_factory):

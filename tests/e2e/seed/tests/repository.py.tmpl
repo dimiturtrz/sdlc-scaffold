@@ -1,0 +1,49 @@
+"""The method-mirror convention (docs/UNIT_TESTS.md): one `test_<method>` per public method of
+`Repository`, each a dense CONTAINER of cases rather than one test per behaviour."""
+
+import pytest
+
+from __PKG__.errors import KeyMissingError
+from __PKG__.repository import Repository
+
+
+class FakeStore:
+    """A test double satisfying `Store` STRUCTURALLY — no subclassing, the Protocol's whole point.
+
+    A FAKE, not a mock: it has a real working implementation, so the tests below can assert on STATE (what
+    ended up in the store) rather than on which calls were made. That is the convention's rule 6, and it is
+    why these tests survive a refactor of how `Repository` talks to its store.
+    """
+
+    def __init__(self) -> None:
+        self.items: dict[str, float] = {}
+
+    def get(self, key: str) -> float | None:
+        return self.items.get(key)
+
+    def put(self, key: str, value: float) -> None:
+        self.items[key] = value
+
+
+def test_save():
+    """`save` puts the value into the backing store, under the key it was given."""
+    store = FakeStore()
+    Repository(store).save("a", 2.0)
+    assert store.items == {"a": 2.0}, "the STATE of the store is the observable outcome, not the call"
+
+    Repository(store).save("b", 3.0)
+    assert store.items == {"a": 2.0, "b": 3.0}, "a second save adds rather than replacing"
+
+
+def test_load():
+    """`load` returns a stored value, and raises the DOMAIN error when the store has nothing.
+
+    Translating the store's `None` into `KeyMissingError` is the behaviour this class exists for, so both
+    halves belong in one container test.
+    """
+    store = FakeStore()
+    store.put("a", 2.0)
+    assert Repository(store).load("a") == 2.0
+
+    with pytest.raises(KeyMissingError, match="no value stored"):
+        Repository(FakeStore()).load("missing")

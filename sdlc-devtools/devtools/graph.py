@@ -12,7 +12,8 @@ metric arch axis import-linter's categorical layer contracts can't express):
 
 `report` is the one-shot EXPLORER (ranked tables). `--assert` is the GATE: it fails when a module is a
 god-module (fan-in AND fan-out BOTH over a degree), a new import cycle appears, a file blows the line
-ceiling, or a logic module has no strict path-mirror test (`tests/unit/<pkg>/<path>/test_foo.py`) — plus
+ceiling, or a logic module has no strict path-mirror test (`tests/unit/<pkg>/<path>/foo.py` under the
+default `bare` layout; `devtools/layout.py` owns the convention) — plus
 an advisory chokepoint warning that never blocks. Thresholds live in `pyproject
 [tool.structure]`, defaulted when absent. IMPORT-level only. Packages to graph are the positional argv
 (default `src`). Run: `python -m devtools.graph [pkgs...]` | `python -m devtools.graph --assert [pkgs...]`.
@@ -34,8 +35,8 @@ from devtools.arrows import ClassArrows
 from devtools.calls import CONSTRUCT, CallArrows
 from devtools.classes import ClassIndex
 from devtools.cli import Cli, Flag, Switch
+from devtools.layout import DEFAULT_TEST_ROOT, STRUCTURAL, TestLayout
 from devtools.names import Names
-from devtools.omit import Omit
 from devtools.pyproject import Pyproject
 from devtools.resolve import Resolver
 from devtools.trees import Trees
@@ -55,7 +56,6 @@ class StructureCfg(TypedDict):
     test_layout: str
 
 
-_STRUCTURAL = ("__init__.py", "__main__.py")  # package plumbing — exempt from the test-mirror rule + line floor
 _ADVISORY_PREVIEW = 15  # advisory lines shown before "… +N more" (avoid log spam)
 # Martin's stability metrics (bd x3b). Edges are importer -> imported, so in_degree = afferent coupling Ca
 # (who depends on me) and out_degree = efferent Ce (who I depend on). Instability I = Ce/(Ce+Ca) and
@@ -121,40 +121,13 @@ class ImportGraph:
     def _oversized(files: list[tuple[str, int]], mx: int) -> list[str]:
         return [f"{f}: {n} lines > {mx} — god-file, split" for f, n in files if n > mx]
 
-    def unmirrored(self, layout: str = "mirror", test_root: str = "tests/unit") -> list[str]:
-        """LOGIC source modules with no unit test — the universal rule is "every logic module HAS a test";
-        WHERE it lives is `layout` (a `[tool.structure]` choice, so it's config, not imposed architecture):
-          - "mirror" (default): STRICT path-mirror, one home per module — `<pkg>/<path>/foo.py` is covered iff
-            `tests/unit/<pkg>/<path>/test_foo.py` exists (a same-purpose test under a different name/path doesn't
-            count). The cardiac/mindscape discipline.
-          - "flat": lenient — a `test_foo.py` exists ANYWHERE under `tests/`. Lets a flat-layout repo satisfy the
-            gate without restructuring its test tree.
-          - "off": no test-existence gate.
-        `__init__`/`__main__` are plumbing, exempt; coverage-OMITTED shells (runners/adapters/GPU/download/viz glue,
-        read from `[tool.coverage] omit`) are exempt too — a non-unit-testable shell isn't forced to carry a stub."""
-        if layout == "off":
-            return []
-        omit = Omit.coverage_omit()
-        flat_names = {p.name for p in Path("tests").rglob("test_*.py")} if layout == "flat" else set()
-        out = []
-        for pkg in self.packages:
-            for f in sorted(Path(pkg).rglob("*.py")):
-                if f.name in _STRUCTURAL or Omit.matches_omit(f.as_posix(), omit):
-                    continue
-                if msg := self._missing_test(f, layout, test_root, flat_names):
-                    out.append(msg)
-        return out
-
-    @staticmethod
-    def _missing_test(f: Path, layout: str, test_root: str, flat_names: set[str]) -> str | None:
-        """The 'no unit test' message for logic module `f` under `layout`, or None if it's covered — `flat`:
-        a `test_<name>.py` exists anywhere under tests/; `mirror`: the strict path-mirror test exists."""
-        if layout == "flat":
-            if f"test_{f.name}" in flat_names:
-                return None
-            return f"{f.as_posix()} — no test_{f.name} anywhere under tests/"
-        mirror = Path(test_root) / f.parent / f"test_{f.name}"
-        return None if mirror.exists() else f"{f.as_posix()} — no mirrored {mirror.as_posix()}"
+    def unmirrored(self, layout: str = "mirror", test_root: str = DEFAULT_TEST_ROOT) -> list[str]:
+        """LOGIC source modules with no unit test. The universal rule is "every logic module HAS a test";
+        WHERE it lives is `test_layout`, and `devtools.layout` owns that convention for every gate that
+        reads it (bd 1a8) — this one and the method-level mirror both resolve through the same strategy,
+        over the same population, so they cannot disagree about what is covered."""
+        convention = TestLayout.of(layout, test_root)
+        return [msg for f in convention.testable(self.packages) if (msg := convention.missing(f))]
 
     @staticmethod
     def _undersized(files: list[tuple[str, int]], mn: int) -> list[str]:
@@ -165,7 +138,7 @@ class ImportGraph:
         return [
             f"{f}: {n} lines < {mn} — earn its keep? (fold, or accept a small leaf)"
             for f, n in files
-            if n < mn and not f.endswith(_STRUCTURAL)
+            if n < mn and not f.endswith(STRUCTURAL)
         ]
 
     @staticmethod

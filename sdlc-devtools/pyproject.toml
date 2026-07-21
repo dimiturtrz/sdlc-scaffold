@@ -7,7 +7,7 @@
 # by path, so they stay vendored in the scaffold template.
 [project]
 name = "sdlc-devtools"
-version = "1.23.0"
+version = "1.24.0"
 description = "Structural-guardrail analyzers (import-graph arch-fitness, LCOM4, data-clumps, magic-literals, shape-contracts, archmap interactive autoviz) for the sdlc-scaffold stack."
 requires-python = ">=3.12"
 # graph.py builds the honest import graph on grimp + ranks it with networkx; the other engines are
@@ -29,6 +29,24 @@ dev = ["pytest>=8", "pytest-cov>=5"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-p no:cacheprovider -ra"
+# REQUIRED by the mirror layout (bd 1a8). A mirror test file carries its MODULE's name, and pytest collects
+# `test_*.py` by default — so without this the suite is not collected at all, and an uncollected suite is
+# greener than a red one, which is the worst failure mode available. devtools.mirror's `misconfigured` check
+# fails the gate whenever these two disagree, because a silently-uncollected suite must not look clean.
+python_files = ["*.py"]
+# The convention is `test_<method>` FUNCTIONS (docs/UNIT_TESTS.md) — there are no test classes. Left at the
+# default, pytest tries to collect any imported `Test*` class as one: `TestLayout` is a production class and
+# collecting it is meaningless. Empty says what is true here rather than warning about it on every run.
+python_classes = []
+
+# The analyzer package holds itself to the gate set it ships (bd iv5), so its structural config lives here
+# by hand rather than being rendered from the template — it cannot be a copier consumer of itself.
+[tool.structure]
+# The mirror (bd 1a8): `devtools/purity.py` is covered by `tests/unit/devtools/purity.py`. Same name, so
+# what a test file covers is VISIBLE in its path instead of reconstructed by the reader. The only other
+# value is "off" — a lenient variant would be the rule meaning something different here, which the o70 union
+# law rejects.
+test_layout = "mirror"
 
 # Dependency hygiene (bd 85l.2): deptry flags imported-but-undeclared (DEP001), declared-but-unused
 # (DEP002), and transitive (DEP003). noxfile.py imports the `nox` runner (invoked via uvx, intentionally

@@ -39,6 +39,8 @@ a fresh gen.
 | no god-module (high `Ca` **and** `Ce`) | `graph.py` | yes | degree is decided ↓ |
 | no god-file | `graph.py` | yes | line ceiling is decided ↓ |
 | every logic module has a test | `graph.py` test-mirror | yes | `test_layout` mode (authored) |
+| every public method has a `test_<method>` that calls + asserts | `mirror.py --assert` | yes | `test_layout` mode (shared with the row above); per-method `# devtools-ignore: test-mirror` |
+| a unit test uses no external data / network / sleep / unseeded RNG | `small.py --assert` | yes | none (each is binary) |
 | helpers in a class, no import-time side effects | ast-grep `sg-rules` | yes | none |
 | no dead code | vulture | yes | confidence is decided ↓ |
 | complexity under the ceiling | ruff `C901`/`PLR09xx` | yes | CC 10 is decided ↓ |

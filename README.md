@@ -8,11 +8,21 @@ one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved
 inherited call points at the base where the code actually lives. [Open the live viewer
 →](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
 
-**v1.23** — the guardrails now reach **below the import graph**. An import edge is the coarse OR of every
-reason one module needs another; it decomposes into typed class-level arrows (`inherits`, `holds`,
-`references`, `calls`, `construct`) that say *what kind* of dependency it is, which is what lets a rule
-forbid one kind of coupling without forbidding the file. That graph backs new gates — Law of Demeter,
-property-purity, composition-cycle, feature-envy, directional use-contracts — and an interactive
+**v1.24** — the guardrails now reach **into the test suite**. "Is this module tested?" was answered by
+whether a test *file* existed, which one smoke test satisfies for a module of twenty methods. The new mirror
+gate asks it per method: each public `A.a` needs a `test_a` that calls it and asserts. Nothing else surveyed
+enforces test-to-code traceability, and the honest counter-argument — that the field has moved toward
+behaviour-first, integration-heavy suites — is written up beside the convention in
+[`docs/UNIT_TESTS.md`](docs/UNIT_TESTS.md) rather than left out of it. A second gate holds unit tests to
+Google's *small* definition: no external data, no network, no sleep, no unseeded randomness. Converting the
+analyzer's own suite took it from 0% naming compliance and 82% coverage to clean at 97%, and surfaced 15
+methods that were public by accident.
+
+Below that sits **the typed class graph** (v1.23). An import edge is the coarse OR of every reason one
+module needs another; it decomposes into typed class-level arrows (`inherits`, `holds`, `references`,
+`calls`, `construct`) that say *what kind* of dependency it is, which is what lets a rule forbid one kind of
+coupling without forbidding the file. That graph backs the Law of Demeter, property-purity,
+composition-cycle, feature-envy and directional use-contract gates — plus an interactive
 [architecture viewer](https://dimiturtrz.github.io/sdlc-scaffold/) that folds from packages down to methods.
 
 The analyzers ship as a **pinned package** (`sdlc-devtools`), not vendored source: an engine update is a

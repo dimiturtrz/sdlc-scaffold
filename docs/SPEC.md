@@ -237,7 +237,9 @@ bottleneck_degree = 8    # fan-in AND fan-out both over this = god-module
 file_max = 750           # god-file line ceiling
 file_min = 0             # advisory line floor — 0 = OFF (no honest universal floor)
 betweenness_max = 0.10   # advisory chokepoint threshold
-test_layout = "mirror"   # test-existence layout: "mirror" (strict path-mirror) | "flat" (anywhere under tests/) | "off"
+test_layout = "mirror"   # test layout: "mirror" (tests/unit/<pkg>/<name>.py — the test carries its
+                         # MODULE's name; needs python_files = ["*.py"]) | "off". No lenient value: a
+                         # mode accepting a test "anywhere" is the rule varying per repo (o70 union law).
 ```
 
 ## LOCAL-SLOT convention (the seam)
