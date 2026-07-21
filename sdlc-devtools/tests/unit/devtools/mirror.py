@@ -82,7 +82,11 @@ def test_misconfigured(tmp_path, monkeypatch, layout, python_files, expected):
         # not let a caller write — this exemption is why the scoping measurement had 11 phantom findings.
         ("@property\ndef total(self): ...", False),
         ("@cached_property\ndef total(self): ...", False),
-        # A setter is not a property read, so it stays in scope.
+        # PROPERTIES ARE IN. They were exempt because a Call-node counter reports every one as untested —
+        # a fact about the detector, not about properties, which are public API like any other member.
+        # They are matched by attribute ACCESS instead; see test_accessed_names.
+        ("@property\ndef total(self):\n    return 1", True),
+        ("@cached_property\ndef total(self):\n    return 1", True),
         ("@total.setter\ndef total(self, v):\n    self._t = v", True),
         # A DECLARATION has no behaviour to call — see test_is_declaration.
         ("def get(self, k): ...", False),
@@ -91,6 +95,43 @@ def test_misconfigured(tmp_path, monkeypatch, layout, python_files, expected):
 )
 def test_is_public(src, public):
     assert MethodMirror.is_public(_fn(src)) is public
+
+
+@pytest.mark.parametrize(
+    ("src", "prop"),
+    [
+        ("@property\ndef total(self):\n    return 1", True),
+        ("@cached_property\ndef total(self):\n    return 1", True),
+        ("@functools.cached_property\ndef total(self):\n    return 1", True),
+        # The SETTER and DELETER are in, which is where this deliberately differs from
+        # `purity.PropertyPurity.is_property`. That one asks "is this a pure read" and excludes them on
+        # purpose; this one asks "how is it exercised", and all three answer "by attribute access".
+        ("@total.setter\ndef total(self, v):\n    self._t = v", True),
+        ("@total.deleter\ndef total(self):\n    del self._t", True),
+        ("def total(self):\n    return 1", False),
+        ("@staticmethod\ndef total():\n    return 1", False),
+    ],
+)
+def test_is_property(src, prop):
+    assert MethodMirror.is_property(_fn(src)) is prop
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        # All three attribute CONTEXTS reach the member, which is why a setter needs no separate rule.
+        ("x = obj.total", {"total"}),
+        ("obj.total = 1", {"total"}),
+        ("del obj.total", {"total"}),
+        ("assert a.b.c == 1", {"b", "c"}),
+        ("obj.method()", {"method"}),
+        ("x = 1", set()),
+    ],
+)
+def test_accessed_names(body, expected):
+    """How a property is credited. A method is CALLED and a property is READ, so the matching site looks
+    for different syntax depending on the member kind — the same concept reached two ways."""
+    assert MethodMirror.accessed_names(_fn(f"def test_a():\n    {body}\n")) == expected
 
 
 @pytest.mark.parametrize(
@@ -157,15 +198,21 @@ def test_overrides():
 
 
 def test_methods(tmp_path, monkeypatch):
-    """Which methods the rule covers — private CLASSES are skipped whole, however public their methods look."""
+    """Which members the rule covers.
+
+    A private CLASS is NOT skipped. It was, once, on the theory that the class is the API boundary — but a
+    leading underscore blocks nothing, the code inside can be wrong exactly like any other, and the
+    qualified name it produced was broken anyway (`_Private.compute` asked for `test__private_compute`).
+    Private METHODS are still out, and so are declarations.
+    """
     monkeypatch.chdir(tmp_path)
     src = (
         "class Public:\n    def a(self):\n        return 1\n    def _b(self):\n        return 2\n"
-        "class _Private:\n    def c(self):\n        return 3\n"
+        "class _Private:\n    def c(self):\n        return 3\n    def _d(self):\n        return 4\n"
     )
     engine = _mirror(tmp_path, src, "")
     found = {(cls, fn.name) for members in engine.methods().values() for cls, fn in members}
-    assert found == {("Public", "a")}, "the CLASS is the API boundary; nothing outside can reach _Private.c"
+    assert found == {("Public", "a"), ("_Private", "c")}, "a private class is still code that can be wrong"
 
 
 def test_callers(monkeypatch, tmp_path):
@@ -213,7 +260,16 @@ def test_name_of(expr, expected):
 
 @pytest.mark.parametrize(
     ("cls", "expected"),
-    [("CallEdge", "call_edge"), ("Cli", "cli"), ("AstGrep", "ast_grep"), ("A", "a")],
+    [
+        ("CallEdge", "call_edge"),
+        ("Cli", "cli"),
+        ("AstGrep", "ast_grep"),
+        ("A", "a"),
+        # Leading underscores are stripped: a private class is still a class, but `test__mirror_mirror_of`
+        # is not a name anyone would choose to write.
+        ("_Mirror", "mirror"),
+        ("__Dunderish", "dunderish"),
+    ],
 )
 def test_snake(cls, expected):
     assert MethodMirror.snake(cls) == expected
@@ -286,6 +342,21 @@ def test_violations(tmp_path, monkeypatch):
     # A delegated assertion counts, or the gate punishes the extraction PLR0915 encourages.
     delegated = "def test_covered():\n    A().covered()\n    _check()\ndef _check():\n    assert 1\n"
     assert not [f for f in _mirror(tmp_path, src, delegated).violations() if "covered" in f]
+
+    # A PROPERTY is credited by attribute ACCESS, not by a call — reading it IS exercising it. A setter is
+    # credited by the WRITE for the same reason, which is the case the old blanket exemption made
+    # unsatisfiable: it asked for a `test_size` that called `size()`, and nothing can call a setter.
+    props = (
+        "class A:\n"
+        "    @property\n    def size(self):\n        return self._n\n"
+        "    @size.setter\n    def size(self, v):\n        self._n = v\n"
+        "    @property\n    def bare(self):\n        return 1\n"
+    )
+    read_and_written = "def test_size():\n    a = A()\n    a.size = 2\n    assert a.size == 2\n"
+    found = _mirror(tmp_path, props, read_and_written).violations()
+    assert [f for f in found if "A.size" in f] == [], "one test_size covers the getter and its setter"
+    uncovered = next(f for f in found if "A.bare" in f)
+    assert "reads it" in uncovered, "the message says READS for a property — 'calls' would be unwritable"
 
     # An ignored method is excused; a module with no mirror FILE is the file-level gate's finding, not this
     # one's — reporting every method here would bury that one line under twenty.

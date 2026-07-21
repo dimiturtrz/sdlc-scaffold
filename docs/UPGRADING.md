@@ -83,9 +83,16 @@ The third is not noise — on this repo 15 of 119 findings were methods that wer
 **Ambiguity.** Two classes in one module can share a method name. The gate then demands the qualified
 `test_<class>_<method>` and names the exact function in the message. The qualified form is always accepted.
 
-**Exempt by kind:** `main()`, `@property` (read as an attribute, so a call cannot be demanded), private
-methods, and methods of private classes. An override of a same-module base is one polymorphic contract
-covered by the base's test, not a second obligation.
+**Properties are covered too**, and are matched by attribute *access* rather than by a call — `test_total`
+must read (or write, or delete) `obj.total` and assert. A getter, its setter and its deleter are **one**
+member, so one `test_total` covers all three.
+
+**Exempt by kind:** `main()`, private *methods*, declarations (a `Protocol` member or abstract method — its
+body is `...`, so there is nothing to call and nothing to assert), and an override of a same-module base
+(one polymorphic contract, covered by the base's test).
+
+A private **class** is *not* exempt. Its methods still need tests: the underscore is a naming convention
+that blocks nothing, and the code inside can be wrong exactly like any other.
 
 ### `small.py` — a unit test touches nothing it did not create
 

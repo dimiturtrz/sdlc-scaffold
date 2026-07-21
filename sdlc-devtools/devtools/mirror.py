@@ -27,9 +27,18 @@ name is unique in the module, `test_<method>` is expected; when it is shared, th
 `test_<Class>_<method>` is demanded — and the message names the exact function to write. The qualified form
 is always accepted, so a repo that prefers it everywhere is never fought.
 
-EXEMPT: `main()` (argparse plumbing exercised by the e2e) and `@property`. A property is READ as an
-attribute, not called — a Call-node counter reports every property as untested, which produced 11 phantom
-findings in the measurement that scoped this gate.
+METHODS ARE CALLED, PROPERTIES ARE READ, and both are public API. A property was exempt at first because a
+Call-node counter reports every one of them as untested — but that was a fact about the DETECTOR, not about
+properties, and exempting the whole family to work around it also left an unreachable demand in the gate: a
+`@x.setter` is not a pure read, so it was never exempt, and the gate asked for a `test_x` that CALLS `x()`.
+Nothing can satisfy that. So the member kind picks the SYNTAX the matching site looks for — a call for a
+method, an attribute touch for a property — and the message says "calls" or "reads" to match.
+
+EXEMPT: `main()` (argparse plumbing exercised by the e2e), private methods, declarations (below), and a
+method a same-module base already declares. There is deliberately NO exemption for a private CLASS: the
+underscore is a naming convention that blocks nothing, the code inside is as able to be wrong as any other,
+and the qualified name it produced was broken anyway (`_Private.compute` asked for `test__private_compute`).
+The strategy subclasses that motivated it are covered by the override rule, which is the honest reason.
 
 TWO REMEDIES, and the message names both, because "nothing tests this" has two correct fixes:
 
@@ -51,10 +60,10 @@ THE IGNORE is per-method and RULE-NAMED, never blanket — `# devtools-ignore: t
 one of its decorators), matching what the scaffold already ships for ast-grep. THE LIST IS THE SIGNAL: short
 is fine, growing is the smell rule 3 points at.
 
-PRECISE BUT INCOMPLETE, in the direction that costs a missing finding rather than a wrong one. A call is
-credited by method NAME within the mirror file. Resolving the real call graph through test doubles is not
-possible in principle — a fake is deliberately not the class under test — so a name match inside a file
-whose declared subject IS that module is the honest reading, and a name collision there is itself a smell.
+PRECISE BUT INCOMPLETE, in the direction that costs a missing finding rather than a wrong one. A member is
+credited by NAME within the mirror file. Resolving the real call graph through test doubles is not possible
+in principle — a fake is deliberately not the class under test — so a name match inside a file whose
+declared subject IS that module is the honest reading, and a name collision there is itself a smell.
 
 Run: `python -m devtools.mirror [pkgs...]` (report) | `--assert` (gate).
 """
@@ -70,7 +79,6 @@ from pathlib import Path
 from devtools._common import ENCODING
 from devtools.cli import Cli
 from devtools.layout import TestLayout
-from devtools.purity import PropertyPurity
 from devtools.pyproject import Pyproject
 from devtools.trees import Trees
 
@@ -82,6 +90,9 @@ IGNORE = "devtools-ignore: test-mirror"
 # What counts as asserting, beyond a bare `assert`: `raise AssertionError` is the same statement with the
 # ruff S101 escape hatch on, and `pytest.raises` is the assertion when the outcome IS the exception.
 ASSERT_CALLS = ("raises", "assert")
+# The property FAMILY. All three are exercised by attribute access, so they share one rule here even though
+# `purity` deliberately splits them (there, a setter is the declared exception; here it is the same shape).
+PROPERTIES = frozenset({"property", "cached_property", "setter", "deleter"})
 
 Function = ast.FunctionDef | ast.AsyncFunctionDef
 
@@ -145,18 +156,38 @@ class MethodMirror:
         )
 
     @staticmethod
-    def is_public(fn: Function) -> bool:
-        """A method this rule applies to: not private, not `main`, not a `@property`, not a declaration.
+    def is_property(fn: Function) -> bool:
+        """Is this a member of the property FAMILY — getter, setter or deleter?
 
-        A property is read as an ATTRIBUTE. Demanding a CALL to one is demanding something the language does
-        not let a caller write, so it is exempt by kind rather than by convention.
+        Broader than `PropertyPurity.is_property`, which asks "is this a pure read" and therefore excludes
+        setters on purpose. Here the question is only "how is this member EXERCISED", and all three are
+        exercised the same way: by attribute access. So all three belong on the same side of the split.
         """
-        return (
-            not fn.name.startswith("_")
-            and fn.name not in EXEMPT
-            and not PropertyPurity.is_property(fn)
-            and not MethodMirror.is_declaration(fn)
-        )
+        names = {
+            d.attr if isinstance(d, ast.Attribute) else d.id
+            for d in fn.decorator_list
+            if isinstance(d, ast.Attribute | ast.Name)
+        }
+        return bool(names & PROPERTIES)
+
+    @staticmethod
+    def is_public(fn: Function) -> bool:
+        """A method this rule applies to: not private, not `main`, not a declaration.
+
+        PROPERTIES ARE IN. They were exempt, on the grounds that a Call-node counter reports every property
+        as untested — but that was a statement about the DETECTOR, not about properties. A property is
+        public API; it is simply exercised by attribute access rather than by a call, which is `accessed`
+        rather than `called` at the matching site. Exempting it also left an unreachable demand in the gate:
+        a `@x.setter` is not a pure read, so it was never exempt, and the gate asked for a `test_x` that
+        CALLS `x()` — which nothing can satisfy.
+
+        There is no exemption for a private CLASS. It never blocked anything (the underscore is a naming
+        convention, not enforcement), a private class's methods are still code that can be wrong, and the
+        qualified name it produced was broken anyway — `_Private.compute` asked for `test__private_compute`.
+        The strategy subclasses it was introduced for are already covered by `overrides`, which is the honest
+        reason they need no test of their own.
+        """
+        return not fn.name.startswith("_") and fn.name not in EXEMPT and not MethodMirror.is_declaration(fn)
 
     @staticmethod
     def ignored(fn: Function, lines: list[str]) -> bool:
@@ -196,8 +227,10 @@ class MethodMirror:
     def methods(self) -> dict[Path, list[tuple[str, Function]]]:
         """{module: [(class, method)]} — every public method the rule covers, by the module that owns it.
 
-        A PRIVATE class is skipped whole. `_Mirror.mirror_of` is not a public seam however public the method
-        name looks — the class is the API boundary, and nothing outside the module can reach it.
+        EVERY class counts, private or not. A leading underscore on a class is a naming convention that
+        blocks nothing, and the code inside such a class can be wrong exactly like any other. The strategy
+        subclasses that first motivated skipping them need no test for a better reason — `overrides` already
+        says so, because their methods are one polymorphic contract declared by the base.
         """
         covered = set(TestLayout.testable(self.packages))
         out: dict[Path, list[tuple[str, Function]]] = {}
@@ -205,16 +238,26 @@ class MethodMirror:
             if path not in covered:
                 continue
             classes = {c.name: c for c in ast.walk(tree) if isinstance(c, ast.ClassDef)}
-            out[path] = [
-                (cls.name, fn)
-                for cls in classes.values()
-                if not cls.name.startswith("_")
-                for fn in cls.body
-                if isinstance(fn, ast.FunctionDef | ast.AsyncFunctionDef)
-                and self.is_public(fn)
-                and fn.name not in self.overrides(cls, classes)
-            ]
+            out[path] = [m for cls in classes.values() for m in self._members(cls, classes)]
         return out
+
+    def _members(self, cls: ast.ClassDef, classes: dict[str, ast.ClassDef]) -> list[tuple[str, Function]]:
+        """The members of ONE class the rule covers — at most one entry per NAME.
+
+        A property's getter, setter and deleter are three `def`s implementing ONE member. Listed separately,
+        `A.size` looked like a name shared by two members, so the ambiguity rule demanded the qualified
+        `test_a_size` to disambiguate a collision that does not exist. Within a class a name means exactly
+        one thing, so keeping the first is not a heuristic — it is the member.
+        """
+        inherited = self.overrides(cls, classes)
+        members: dict[str, Function] = {}
+        for fn in cls.body:
+            if not isinstance(fn, ast.FunctionDef | ast.AsyncFunctionDef):
+                continue
+            if not self.is_public(fn) or fn.name in inherited or fn.name in members:
+                continue
+            members[fn.name] = fn
+        return [(cls.name, fn) for fn in members.values()]
 
     @cached_property
     def callers(self) -> dict[str, set[Path]]:
@@ -254,8 +297,14 @@ class MethodMirror:
 
     @staticmethod
     def snake(name: str) -> str:
-        """`CallEdge` -> `call_edge` — the class half of a qualified test name, in test-function casing."""
-        return "".join(f"_{c.lower()}" if c.isupper() and i else c.lower() for i, c in enumerate(name))
+        """`CallEdge` -> `call_edge` — the class half of a qualified test name, in test-function casing.
+
+        Leading underscores are stripped: `_Mirror` gives `test_mirror_of`, not `test__mirror_mirror_of`.
+        A private class is still a class, but a doubled underscore in the middle of a test name is not a
+        convention anyone would choose to write.
+        """
+        bare = name.lstrip("_")
+        return "".join(f"_{c.lower()}" if c.isupper() and i else c.lower() for i, c in enumerate(bare))
 
     @staticmethod
     def reachable(start: Function, helpers: dict[str, Function]) -> list[Function]:
@@ -303,20 +352,23 @@ class MethodMirror:
         """The message for one uncovered method — a RENAME when a test already covers it under another name,
         otherwise the missing test plus the remedy its call sites point at."""
         cls, fn = member
+        # A property is READ, a method is CALLED. Saying "calls it" about a property would describe
+        # something the language does not let anyone write, which is how a message stops being followable.
+        verb, past = ("reads", "read") if self.is_property(fn) else ("calls", "called")
         where = f"{path.as_posix()}:{fn.lineno}: `{cls}.{fn.name}`"
         if covers:
             return (
-                f"{where} — a test in {mirror.as_posix()} calls it and asserts, but is not named "
+                f"{where} — a test in {mirror.as_posix()} {verb} it and asserts, but is not named "
                 f"`{names[0]}`; rename it"
             )
         reached = self.callers[fn.name] - {path}
         remedy = (
             f"reached by {len(reached)} other module(s) — a contract with no test; write `{names[0]}`"
             if reached
-            else "called only inside its own file — public by naming accident; add the underscore, or write "
-            f"`{names[0]}`"
+            else f"{past} only inside its own file — public by naming accident; add the underscore, or "
+            f"write `{names[0]}`"
         )
-        return f"{where} — no `{names[0]}` in {mirror.as_posix()} that calls it and asserts. It is {remedy}"
+        return f"{where} — no `{names[0]}` in {mirror.as_posix()} that {verb} it and asserts. It is {remedy}"
 
     def violations(self) -> list[str]:
         """Every public method whose mirror file holds no correctly-named test that calls it and asserts."""
@@ -351,18 +403,37 @@ class MethodMirror:
             out.append(self._finding(path, (cls, fn), mirror, names, covers=elsewhere))
         return out
 
+    @staticmethod
+    def accessed_names(fn: Function) -> set[str]:
+        """Every attribute name TOUCHED in this body — `obj.total`, read, written or deleted.
+
+        How a property is exercised. `ast.Attribute` covers all three contexts (Load / Store / Del), which
+        is why a setter and a getter need no separate treatment: `s.total`, `s.total = 1` and `del s.total`
+        all reach the member, and all three are what a `test_total` would legitimately do.
+        """
+        return {node.attr for node in ast.walk(fn) if isinstance(node, ast.Attribute)}
+
     def _coverage(self, helpers: dict[str, Function]) -> tuple[dict[str, set[str]], set[str]]:
-        """({test name: names it calls transitively}, {test names that assert}) for one mirror file."""
-        calls: dict[str, set[str]] = {}
+        """({test name: names it exercises transitively}, {test names that assert}) for one mirror file.
+
+        "Exercises" is the union of CALLED and ACCESSED, because the two member kinds are reached by
+        different syntax and the caller should not have to know which it is asking about. The union is safe
+        in the direction that matters: a method the test merely names without calling would be credited, but
+        the test must ALSO be named `test_<method>` and assert, and a test named after a method it only
+        mentions is not a shape anyone writes by accident.
+        """
+        exercised: dict[str, set[str]] = {}
         asserting: set[str] = set()
         for name, fn in helpers.items():
             if not name.startswith("test"):
                 continue
             bodies = self.reachable(fn, helpers)
-            calls[name] = {called for body in bodies for called in self.called_names(body)}
+            exercised[name] = {
+                touched for body in bodies for touched in self.called_names(body) | self.accessed_names(body)
+            }
             if self.asserts(bodies):
                 asserting.add(name)
-        return calls, asserting
+        return exercised, asserting
 
     def report(self) -> str:
         """The findings as one text block — the explorer view, paired with run_assert's gate view."""

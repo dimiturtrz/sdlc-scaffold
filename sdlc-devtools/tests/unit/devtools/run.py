@@ -110,6 +110,23 @@ def test_names(value, expected):
     assert Batch.names(value) == expected
 
 
+def test_resolver(batch):
+    """The shared parse: built LAZILY, then reused — the two halves the ~6s saving is actually made of.
+
+    `cached_property` rather than a hand-rolled `if self._resolver is None` memo, so "not built yet" IS the
+    absence of the instance-dict entry. That is why the laziness half has to be read off `__dict__`: asking
+    for `batch.resolver` to check would build the very thing being asserted absent.
+
+    Identity, not equality — two equal-looking Resolvers would mean the tree was parsed twice, which is the
+    cost this runner exists to remove, and `==` on a fresh parse could not tell the two apart.
+    """
+    assert "resolver" not in batch.__dict__, "nothing has asked for it, so nothing has parsed the tree"
+    first = batch.resolver
+    assert "resolver" in batch.__dict__, "the first read caches it on the instance"
+    assert batch.resolver is first, "built once and reused — the descriptor does the caching"
+    assert first.packages == ["pkg"], "and it resolves over the batch's own packages, not a fresh list"
+
+
 def test_build(batch):
     """Construction routed by SIGNATURE — the mechanism the whole ~6s saving rests on.
 

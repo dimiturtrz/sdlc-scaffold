@@ -13,10 +13,11 @@ own subject. Their conventions are unfiled work, not an oversight.
 
 ## 1. The convention
 
-1. **Mirror on the method.** A module has one mirror test file; each public method `A.a` has a `test_a` in
+1. **Mirror on the member.** A module has one mirror test file; each public member `A.a` has a `test_a` in
    it. Where the file lives is `[tool.structure] test_layout`.
-2. **A test calls and asserts.** `test_a` must call `A.a` and then assert — on the returned value or on the
-   resulting state.
+2. **A test exercises and asserts.** `test_a` must reach `A.a` and then assert — on the returned value or on
+   the resulting state. A method is *called*; a property is *read* (or written, or deleted), because that is
+   how the language lets you reach it. A getter, its setter and its deleter are one member and take one test.
 3. **A method needing no assertion after the call is suspect.** If there is nothing to check, ask what the
    method is for. That question is the point of the rule; the answer is sometimes "nothing", and then the
    method should go.

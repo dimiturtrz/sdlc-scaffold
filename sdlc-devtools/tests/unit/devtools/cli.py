@@ -142,16 +142,28 @@ def test_run(caplog):
     assert "top=2" in caplog.text, "and a passed flag wins"
 
 
-def test_prog_names_the_documented_invocation():
-    """`prog` and `tool` are PROPERTIES — read as attributes, so the method-mirror gate exempts them by
-    kind. They are covered here anyway because the value is load-bearing.
+def test_tool():
+    """The short name every log line is emitted under, resolved from the engine's FILE.
 
-    Resolved from the engine's FILE: under `python -m devtools.x` the module is re-loaded as `__main__`, so
-    deriving this from `__module__` would advertise an invocation that does not exist and label every log
-    line `__main__`. The expected value is `devtools.cli` because `Fake` is defined in THIS file, and under
-    the bare mirror layout (bd 1a8) this file is `cli.py`. It used to read `devtools.test_cli` — a module
-    that has never existed, asserted as correct only because the prefix made the mirror's name differ from
-    its subject's.
+    `tool` and `prog` are PROPERTIES, read as attributes rather than called. They were once covered by a
+    single `test_prog_names_the_documented_invocation`, on the grounds that the method-mirror gate exempted
+    properties by kind; it no longer does — a property is public API, matched by attribute ACCESS — so the
+    pair is split into one test per member.
+
+    The expected value is `cli` because `Fake` is defined in THIS file, and under the bare mirror layout
+    (bd 1a8) this file is `cli.py`.
     """
     assert Cli(Fake, "d").tool == "cli"
+    assert Cli(Explorer, "d").tool == "cli", "the tool is the engine's file, not the engine's name"
+
+
+def test_prog():
+    """The invocation the `--help` header advertises, resolved from the engine's FILE and not `__module__`.
+
+    Under `python -m devtools.x` the module is re-loaded as `__main__`, so deriving this from `__module__`
+    would advertise an invocation that does not exist and label every log line `__main__`. It used to read
+    `devtools.test_cli` — a module that has never existed, asserted as correct only because the prefix made
+    the mirror's name differ from its subject's.
+    """
     assert Cli(Fake, "d").prog == "python -m devtools.cli"
+    assert Cli(Fake, "d").prog.endswith(Cli(Fake, "d").tool), "prog is the tool, spelled as a runnable command"

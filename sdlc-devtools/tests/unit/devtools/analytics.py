@@ -5,10 +5,11 @@ dense container of parameter combinations rather than one case per behaviour.
 """
 
 import logging
+from pathlib import Path
 
 import pytest
 
-from devtools.analytics import Analytics
+from devtools.analytics import Analytics, AreaStat, FileStat
 
 # One area's worth of source, sized so every derived number below is checkable by hand: 2 defs, 4 branch
 # nodes (If, comprehension, BoolOp, For), 7 code lines out of 10 physical.
@@ -41,6 +42,63 @@ def repo(tmp_path):
     (tmp_path / "tests").mkdir()
     (tmp_path / "tests" / "t.py").write_text("def test_x():\n    assert 1\n", encoding="utf-8")
     return tmp_path
+
+
+def _area(*counts: tuple[int, int, int]) -> AreaStat:
+    """An area over hand-written per-file (code_lines, defs, branches) — the INPUT only.
+
+    Built from real `FileStat`s rather than from `analyze_file`, because the three rollups below are pure
+    arithmetic over that list: routing them through the AST counters would make a wrong sum and a wrong
+    count look identical, and it is `test_analyze_file` that owns the counting.
+    """
+    return AreaStat("area", [FileStat(Path(f"f{i}.py"), *counts_i) for i, counts_i in enumerate(counts)])
+
+
+@pytest.mark.parametrize(
+    ("counts", "expected"),
+    [
+        ([(7, 2, 4), (1, 0, 0)], 8),
+        ([(3, 1, 2), (5, 2, 0), (1, 0, 1)], 9),
+        # An area with no files sums to 0 rather than raising: `analyze` builds a stat per existing
+        # directory, and a directory holding no .py files is a real, reportable zero row.
+        ([], 0),
+        ([(0, 0, 0), (0, 0, 0)], 0),
+    ],
+)
+def test_code_lines(counts, expected):
+    """The area's size, summed over its files — the row the report prints and the denominator of the
+    src-vs-test ratio, so a rollup that dropped a file would quietly flatter every ratio in the report."""
+    assert _area(*counts).code_lines == expected
+
+
+@pytest.mark.parametrize(
+    ("counts", "expected"),
+    [
+        ([(7, 2, 4), (1, 0, 0)], 2),
+        ([(3, 1, 2), (5, 2, 0), (1, 0, 1)], 3),
+        ([], 0),
+        # A file with no defs still counts as a file — module-level script code must not vanish from the
+        # rollup, or complexity-per-def would divide by a def count that excluded it.
+        ([(4, 0, 0)], 0),
+    ],
+)
+def test_defs(counts, expected):
+    assert _area(*counts).defs == expected
+
+
+@pytest.mark.parametrize(
+    ("counts", "expected"),
+    [
+        ([(7, 2, 4), (1, 0, 0)], 4),
+        ([(3, 1, 2), (5, 2, 0), (1, 0, 1)], 3),
+        ([], 0),
+        # Branch-free files sum to 0 branches, not to their def count — the two are independent axes, and
+        # complexity-per-def is the number this engine exists to watch.
+        ([(4, 3, 0)], 0),
+    ],
+)
+def test_branches(counts, expected):
+    assert _area(*counts).branches == expected
 
 
 def test_analyze_file(tmp_path):

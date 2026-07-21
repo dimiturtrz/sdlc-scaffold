@@ -11,7 +11,7 @@ import ast
 
 import pytest
 
-from devtools.calls import CALLS, CONSTRUCT, CallArrows, CallSite
+from devtools.calls import CALLS, CONSTRUCT, CallArrows, CallEdge, CallSite
 from devtools.resolve import FileScope
 
 _DEP = "class Dep:\n    def run(self) -> None: ...\n\n\n"
@@ -35,6 +35,43 @@ def _triples(edges) -> set[tuple[str, str, str]]:
     and a subset check cannot see a spurious one. The arrows a snippet does NOT produce are half the design.
     """
     return {(e.source_id, e.target_id, e.kind) for e in edges}
+
+
+@pytest.mark.parametrize(
+    ("source", "source_method", "expected"),
+    [
+        ("mod.A", "go", "mod.A.go"),
+        # A construction edge leaves a method just like a call does — only the TARGET end differs between
+        # the two kinds, which is what lets both cuts be drawn on one graph.
+        ("pkg.deep.mod.A", "__init__", "pkg.deep.mod.A.__init__"),
+        ("mod.A", "_helper", "mod.A._helper"),
+    ],
+)
+def test_call_edge_source_id(source, source_method, expected):
+    """The node an arrow LEAVES — always a method, since only a method body can make a call.
+
+    Qualified name because `CallSite` declares `source_id` too, and one `test_source_id` cannot mean both.
+    The two are deliberately the same string for the same site: the edge is built FROM the site, so a
+    divergence here would split one node into two on the method-tier graph.
+    """
+    for kind, target_method in ((CALLS, "run"), (CONSTRUCT, "")):
+        edge = CallEdge(source, "mod.Dep", kind, source_method, target_method)
+        assert edge.source_id == expected, f"{kind}: the source end does not depend on the kind"
+
+
+@pytest.mark.parametrize(
+    ("target", "target_method", "expected"),
+    [
+        # A call lands INSIDE the box, on the method it invokes.
+        ("mod.Dep", "run", "mod.Dep.run"),
+        ("pkg.deep.mod.Dep", "save", "pkg.deep.mod.Dep.save"),
+        # A construction lands ON the box. `target_method` is empty exactly for CONSTRUCT — constructing is
+        # `__init__`, i.e. the class as a whole — so a bare class name here is the partition, not a gap.
+        ("mod.Dep", "", "mod.Dep"),
+    ],
+)
+def test_target_id(target, target_method, expected):
+    assert CallEdge("mod.A", target, CALLS, "go", target_method).target_id == expected
 
 
 @pytest.mark.parametrize(
@@ -286,11 +323,35 @@ def test_receiver_type_names(receiver, expected):
     shapes it distinguishes are otherwise only reachable in combination; a wrong answer for a subscript
     would show up at the top level as one missing arrow among many, with nothing pointing here.
     """
-    site = CallSite(
-        cls="mod.A",
-        method="go",
+    site = _site()
+    assert site.receiver_type_names(_expr(receiver)) == expected
+
+
+def _site(cls: str = "mod.A", method: str = "go") -> CallSite:
+    return CallSite(
+        cls=cls,
+        method=method,
         scope=FileScope(module="mod", local=frozenset({"Dep", "Other", "A"})),
         fields={"_d": {"Dep"}},
         declared={"d": {"Other"}},
     )
-    assert site.receiver_type_names(_expr(receiver)) == expected
+
+
+@pytest.mark.parametrize(
+    ("cls", "method", "expected"),
+    [
+        ("mod.A", "go", "mod.A.go"),
+        ("pkg.deep.mod.A", "save", "pkg.deep.mod.A.save"),
+        # A private helper is a real node at the method tier — it is the whole reason the intra-class arrow
+        # exists — so the site names it unchanged rather than folding it into its class.
+        ("mod.A", "_helper", "mod.A._helper"),
+    ],
+)
+def test_call_site_source_id(cls, method, expected):
+    """The method node any arrow from this site leaves — the same string `CallEdge.source_id` rebuilds.
+
+    Qualified because `CallEdge` declares `source_id` too. Asserted here against the SITE's own two fields:
+    the site is what the walker carries, so if these two ever disagreed the edge would leave a node the
+    method-tier graph does not contain.
+    """
+    assert _site(cls, method).source_id == expected
