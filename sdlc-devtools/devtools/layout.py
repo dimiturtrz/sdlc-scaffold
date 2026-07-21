@@ -8,8 +8,8 @@ disagree, which reads as a clean tree from one and a broken one from the other.
 
 THE CONVENTION IS CONFIG, not imposed architecture. `[tool.structure] test_layout`:
 
-    mirror  tests/unit/<pkg>/<path>/test_<name>.py   strict path mirror, one home per module
-    bare    tests/unit/<pkg>/<path>/<name>.py        the same mirror, without the prefix
+    bare    tests/unit/<pkg>/<path>/<name>.py        strict path mirror, one home per module — the DEFAULT
+    mirror  tests/unit/<pkg>/<path>/test_<name>.py   the same mirror, prefixed
     flat    a test_<name>.py ANYWHERE under tests/   lenient; a flat repo passes without restructuring
     off     nothing is demanded
 
@@ -27,9 +27,13 @@ covered by `tests/unit/<pkg>/store.py` under `bare` — the same name, so the mi
 rather than reconstructed by the reader. The prefix is a discovery mechanism wearing a convention's
 clothes.
 
-DEFAULT STAYS `mirror`. `bare` is a migration with a cost the scaffold does not get to spend for anyone:
-an existing consumer that regenerates would fail the file-level gate on every module at once. So the
-scaffold ships the capability, uses it on itself, and leaves the choice downstream.
+`bare` IS THE DEFAULT, and the reasoning that first held it back was incoherent. The argument was that
+switching costs an existing consumer a red gate on every module at once — true, but the METHOD-level mirror
+already goes red on all three consumers the moment they update, because they have untested public methods.
+Holding the prefix back spared them the rename script inside a change that hands them the conversion. The
+prefix is a trivial part of adopting the convention, so the only real question is which spelling a consumer
+converts TO — and converting to the one the scaffold itself rejected would leave the two permanently
+different. One conversion, one convention.
 """
 
 from __future__ import annotations

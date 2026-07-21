@@ -99,22 +99,40 @@ The usual fixes: `tmp_path` instead of a data root, a fake at the I/O boundary i
 removing the race instead of sleeping through it, and `random.seed(0)` / `np.random.default_rng(0)` once per
 file (the seed rule is per-file, so a seed in a fixture covers the module).
 
-### `test_layout = "bare"` — optional, and not the default
+### `test_layout = "bare"` — the new default
 
-A fourth layout: `tests/unit/<pkg>/store.py` mirrors `<pkg>/store.py` — the same name, so the mirror is
-visible in the path rather than reconstructed by the reader. `test_` is a pytest discovery mechanism, not a
-convention.
+`tests/unit/<pkg>/store.py` mirrors `<pkg>/store.py` — the same name, so the mirror is visible in the path
+rather than reconstructed by the reader. `test_` is a pytest discovery mechanism, not a convention.
 
-**The default stays `"mirror"`.** Switching costs a red file-level gate on every module at once, and that is
-not a cost the scaffold gets to spend for you. If you want it:
+**This is a change of default, so `copier update` will move you.** The rename is the small half of adopting
+the convention above, and doing both in one pass is the point: the alternative is converting your suite to a
+spelling the scaffold itself rejected, leaving the two permanently different.
 
-1. `test_layout = "bare"` in `[tool.structure]`
-2. `python_files = ["*.py"]` under `[tool.pytest.ini_options]` — **required**. Without it pytest collects
-   nothing and the suite reports green while running zero tests. `mirror.py` fails on this config rather
-   than passing, because an uncollected suite must not be able to look clean.
-3. Consider `python_classes = []` if you have no test classes — otherwise pytest tries to collect any
-   imported `Test*` production class.
-4. Drop the prefix from every mirror file.
+The template ships all three settings together, because `bare` without the pytest ones is a trap — pytest
+would collect nothing and the suite would report green while running zero tests:
 
-`sdlc-devtools` itself made this move; the conversion immediately caught a test asserting
-`python -m devtools.test_cli`, a module that has never existed.
+```toml
+[tool.structure]
+test_layout = "bare"
+
+[tool.pytest.ini_options]
+python_files = ["*.py"]     # REQUIRED — without it nothing is collected
+python_classes = []         # the convention is test_<method> functions; no test classes
+```
+
+`mirror.py --assert` fails on that config rather than passing, so the failure mode cannot hide.
+
+Then drop the prefix from every mirror file — one `git mv` per file, and the mirror gate tells you
+immediately if you miss one:
+
+```bash
+cd tests/unit/<pkg> && for f in test_*.py; do git mv "$f" "${f#test_}"; done
+```
+
+**If you need time**, `test_layout = "mirror"` is still a supported value and keeps your existing filenames.
+It is a real option, not a deprecation — but note it does not spare you the method-mirror gate above, which
+is the actual work.
+
+`sdlc-devtools` made this move first; the conversion immediately caught a test asserting
+`python -m devtools.test_cli`, a module that has never existed and read as correct only because the prefix
+made the mirror's name differ from its subject's.

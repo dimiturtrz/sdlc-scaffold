@@ -63,10 +63,12 @@ def test_no_leftover_jinja(project):
 def test_expected_layout(project):
     name, path = project
     pkg = example_pkg(name)
-    # every seeded module ships, each at its STRICT mirror path (tests/unit/<pkg>/test_<name>.py)
+    # every seeded module ships, each at its STRICT mirror path. Under the shipped `bare` layout that path
+    # carries the SAME name as the module — the mirror is visible rather than reconstructed by the reader.
     for module in ("math_ops", "pipeline", "types", "errors", "memory_store", "repository", "service"):
         assert (path / pkg / f"{module}.py").exists(), f"seed module {module} missing"
-        assert (path / "tests" / "unit" / pkg / f"test_{module}.py").exists(), f"mirror for {module} missing"
+        assert (path / "tests" / "unit" / pkg / f"{module}.py").exists(), f"mirror for {module} missing"
+        assert not (path / "tests" / "unit" / pkg / f"test_{module}.py").exists(), "the prefix is gone"
     # the analyzers are an INSTALLED package now (sdlc-devtools, pinned by tag) — not vendored source,
     # and neither is the ast-grep/jscpd config (located from the install via `python -m devtools.config`).
     pyproject_dep = (path / "pyproject.toml").read_text()
@@ -199,11 +201,15 @@ def test_select_and_ci_wiring(project):
     # x3b: instability / main-sequence coupling gate threshold ships in [tool.structure] (advisory, OFF at 0)
     assert "main_sequence_max" in pyproject_text, "the instability/main-sequence gate threshold ships (x3b)"
     # mjo: BOTH mirror gates read one [tool.structure] test_layout, so they cannot disagree about coverage.
-    # The shipped default stays "mirror" — "bare" is a migration whose cost (a red gate on every module at
-    # once) is the consumer's to spend, not the scaffold's.
-    assert 'test_layout = "mirror"' in pyproject_text, "the shipped default layout stays prefixed (mjo)"
-    for layout in ("bare", "flat", "off"):
+    # The shipped default is "bare" — the mirror is a PATH mirror, and `test_` breaks it for a pytest
+    # discovery reason rather than a convention one.
+    assert 'test_layout = "bare"' in pyproject_text, "the shipped default layout is the bare mirror (mjo)"
+    for layout in ("mirror", "flat", "off"):
         assert f'"{layout}"' in pyproject_text, f"the {layout} layout is documented where it is configured"
+    # `bare` without these two is the worst failure available: pytest collects nothing and the suite reports
+    # green while running zero tests. They ship TOGETHER or the default is a trap.
+    assert 'python_files = ["*.py"]' in pyproject_text, "bare layout requires python_files, or nothing collects"
+    assert "python_classes = []" in pyproject_text, "the convention is test_<method> functions, not classes"
     # 0sx: magic_literals + complexity ship NO config — they are advisory explorers, not ratcheted gates.
     # No legislated knob is added until a repo needs one (the ratchet was removed as the wrong mechanism).
     assert "[tool.magic_literals]" not in pyproject_text, "magic-literals is advisory — no config knob (0sx)"
@@ -945,7 +951,7 @@ def test_graph_assert_catches_two_primary_classes(full_project):
 
 
 def test_graph_assert_catches_unmirrored(full_project):
-    # a new LOGIC module with no tests/unit/full_pkg/test_<name>.py mirror must block
+    # a new LOGIC module with no tests/unit/full_pkg/<name>.py mirror must block
     def mutate(p):
         orphan = p / "full_pkg" / "orphan.py"
         orphan.write_text("class Orphan:\n    @staticmethod\n    def go():\n        return 1\n")
@@ -988,7 +994,7 @@ def test_mirror_names_the_rename_remedy_separately(full_project):
             p / "full_pkg" / "repository.py", "\n\nclass Renamed:\n    def compute(self) -> int:\n        return 1\n"
         )
         restore_test = _append(
-            p / "tests" / "unit" / "full_pkg" / "test_repository.py",
+            p / "tests" / "unit" / "full_pkg" / "repository.py",
             "\n\ndef test_some_other_name():\n    from full_pkg.repository import Renamed\n\n"
             "    assert Renamed().compute() == 1\n",
         )
@@ -1007,7 +1013,7 @@ def test_small_catches_a_unit_test_that_leaves_the_process(full_project):
         full_project,
         SMALL_ASSERT,
         lambda p: _append(
-            p / "tests" / "unit" / "full_pkg" / "test_repository.py",
+            p / "tests" / "unit" / "full_pkg" / "repository.py",
             "\n\ndef test_reaches_out():\n    import time\n\n    time.sleep(0)\n    assert 1\n",
         ),
     )

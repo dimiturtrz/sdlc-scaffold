@@ -12,7 +12,8 @@ metric arch axis import-linter's categorical layer contracts can't express):
 
 `report` is the one-shot EXPLORER (ranked tables). `--assert` is the GATE: it fails when a module is a
 god-module (fan-in AND fan-out BOTH over a degree), a new import cycle appears, a file blows the line
-ceiling, or a logic module has no strict path-mirror test (`tests/unit/<pkg>/<path>/test_foo.py`) — plus
+ceiling, or a logic module has no strict path-mirror test (`tests/unit/<pkg>/<path>/foo.py` under the
+default `bare` layout; `devtools/layout.py` owns the convention) — plus
 an advisory chokepoint warning that never blocks. Thresholds live in `pyproject
 [tool.structure]`, defaulted when absent. IMPORT-level only. Packages to graph are the positional argv
 (default `src`). Run: `python -m devtools.graph [pkgs...]` | `python -m devtools.graph --assert [pkgs...]`.

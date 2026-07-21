@@ -75,7 +75,11 @@ _PKG_TOKEN = "__PKG__"  # a token, not str.format: the fixture is real code, ful
 
 
 def seed_example(path, pkg):
-    """Drop the demo package + its strict-mirror tests into a generated (code-less) project."""
+    """Drop the demo package + its strict-mirror tests into a generated (code-less) project.
+
+    The mapping is by FILENAME, so it needs no knowledge of the prefix: under the shipped `bare` layout a
+    seed test is named after the module it mirrors, and it lands at the mirror path by construction.
+    """
     for src in sorted(_SEED_ROOT.rglob("*.py.tmpl")):
         name = src.name.removesuffix(".tmpl")
         target = (path / pkg / name) if src.parent.name == "pkg" else (path / "tests" / "unit" / pkg / name)

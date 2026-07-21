@@ -44,8 +44,8 @@ python_classes = []
 [tool.structure]
 # BARE mirror (bd 1a8): `devtools/purity.py` is covered by `tests/unit/devtools/purity.py`. Same name, so
 # the mirror is VISIBLE in the path instead of reconstructed by the reader; `test_` was a pytest discovery
-# mechanism wearing a convention's clothes. The shipped DEFAULT stays "mirror" — this migration costs a
-# consumer a red gate on every module at once, and that is not a cost the scaffold gets to spend for anyone.
+# mechanism wearing a convention's clothes. This is also the TEMPLATE default, so the package and the repos
+# it scaffolds spell the convention one way.
 test_layout = "bare"
 
 # Dependency hygiene (bd 85l.2): deptry flags imported-but-undeclared (DEP001), declared-but-unused
