@@ -66,7 +66,7 @@ jobs:
         with:
           node-version: "20"
       - name: Duplication — enforced (jscpd, DRY axis; blocks over threshold)
-        run: npx --yes jscpd {{ jscpd_paths }} --config "$(uv run -q --extra devtools python -m devtools.config jscpd)"
+        run: npx --yes jscpd {{ jscpd_paths }} --config "$(uv run -q --extra devtools python -m devtools.tools.config jscpd)"
       # >>> LOCAL-SLOT: ci-lint-steps — repo-specific lint/shape steps that ride ON TOP of the base gates
       # (a viewer-tree extra lint, an un-silenced advisory family, a repo-only static gate). The base gates
       # above are template-owned + regenerated; steps added in this region survive copier update. Empty by
@@ -104,7 +104,7 @@ jobs:
       # import cycle / god-file) as a GATE on the grimp+networkx import graph, the axis import-linter's
       # categorical contracts can't express. Thresholds in [tool.structure]. Runs here for the synced env.
       - name: Architecture fitness — enforced (devtools/graph.py --assert)
-        run: uv run --extra devtools python -m devtools.graph --assert {{ pkgs }}
+        run: uv run --extra devtools python -m devtools.graph.fitness --assert {{ pkgs }}
       # Dependency hygiene — deptry: imported-but-undeclared (DEP001) + declared-but-unused (DEP002) +
       # transitive (DEP003). Runs in the synced env (`--with` adds deptry) so it reads installed dist
       # metadata. Config (excludes + per-rule ignores) in [tool.deptry]. Blocks the merge.
@@ -117,30 +117,30 @@ jobs:
       # Object graph — ENFORCED: a `holds` cycle (A owns a B that owns an A) means neither can be built or
       # tested alone. Catches the intra-file case the import-cycle check structurally cannot represent.
       - name: Composition cycles — enforced (devtools/composition.py --assert)
-        run: uv run --extra devtools python -m devtools.composition {{ pkgs }} --assert
+        run: uv run --extra devtools python -m devtools.coupling.composition {{ pkgs }} --assert
       # Feature envy — ENFORCED: a METHOD more interested in one other class than its own object, i.e. it
       # probably belongs on that class. Judged against a SINGLE foreign class (spreading calls across
       # collaborators is orchestration, not envy) and never against a value object. Floor is
       # [tool.structure] feature_envy_min.
       - name: Feature envy — enforced (devtools/envy.py --assert)
-        run: uv run --extra devtools python -m devtools.envy {{ pkgs }} --assert
+        run: uv run --extra devtools python -m devtools.coupling.envy {{ pkgs }} --assert
       # Forbidden-USE contracts — ENFORCED: directional rules over the DECOMPOSED arrows, so a contract can
       # forbid CONSTRUCTING a concrete while still permitting use — precision imports cannot express.
       # Contracts live in [[tool.arch.forbidden]]; empty by default, so a fresh gen is green.
       - name: Forbidden-use contracts — enforced (devtools/contracts.py --assert)
-        run: uv run --extra devtools python -m devtools.contracts {{ pkgs }} --assert
+        run: uv run --extra devtools python -m devtools.coupling.contracts {{ pkgs }} --assert
       # Law of Demeter — ENFORCED: CALLING a method through a field into a stranger
       # (`self.store.config.reload()`) couples this class to a type it never declared. Ceiling is
       # [tool.structure] demeter_max_depth (2 = reach your own field, then talk to it). Only chains ending
       # in a CALL count — reading `cfg.a.b.c` is data navigation. A fresh gen has no code so it starts
       # clean and ratchets; raise the ceiling for data-navigation-heavy trees.
       - name: Law of Demeter — enforced (devtools/demeter.py --assert)
-        run: uv run --extra devtools python -m devtools.demeter {{ pkgs }} --assert
+        run: uv run --extra devtools python -m devtools.coupling.demeter {{ pkgs }} --assert
       # Property purity — ENFORCED: a `@property` that assigns to `self` makes every reader a writer
       # without saying so. The setter is the declared exception. This is also the premise the Demeter gate
       # rests on: skipping attribute chains is only honest while a property is a pure read.
       - name: Property purity — enforced (devtools/purity.py --assert)
-        run: uv run --extra devtools python -m devtools.purity {{ pkgs }} --assert
+        run: uv run --extra devtools python -m devtools.coupling.purity {{ pkgs }} --assert
       # Method-level test mirror — ENFORCED (bd mjo). graph's file-level mirror asks only whether a module
       # HAS a test file, which one smoke test satisfies for a module of twenty methods. This asks for a
       # `test_<method>` that CALLS each public method and ASSERTS. A fresh gen has no methods and passes, so
@@ -148,13 +148,13 @@ jobs:
       # both mirrors); per-method escape is `# devtools-ignore: test-mirror`. See docs/UNIT_TESTS.md, which
       # also states the case AGAINST the convention.
       - name: Test mirror — enforced (devtools/mirror.py --assert)
-        run: uv run --extra devtools python -m devtools.mirror {{ pkgs }} --assert
+        run: uv run --extra devtools python -m devtools.hygiene.mirror {{ pkgs }} --assert
       # Unit test size — ENFORCED (bd ar6/1j3): a unit test touches nothing it did not create — no external
       # data root, no network, no sleep, no unseeded RNG. Each of those lets a test fail for a reason that
       # has nothing to do with the code, and a suite that fails for unrelated reasons stops being read.
       # UNIT ONLY: an integration test SHOULD read a real fixture and an e2e SHOULD shell out.
       - name: Unit test size — enforced (devtools/small.py --assert)
-        run: uv run --extra devtools python -m devtools.small {{ pkgs }} --assert
+        run: uv run --extra devtools python -m devtools.hygiene.small {{ pkgs }} --assert
       - name: Types — enforced (pyrefly strict)
         run: uv run --with pyrefly=={{ pyrefly_version }} pyrefly check {{ lint_paths }}
 {% if enable_ml %}      # Shape contracts — ENFORCED (GRADUATED advisory->blocking, bd vip.4): every public array/tensor
@@ -169,19 +169,19 @@ jobs:
       - name: Class-shape + literal + complexity smells — advisory
         continue-on-error: true
         run: |
-          uv run --extra devtools python -m devtools.state_candidates {{ pkgs }}
-          uv run --extra devtools python -m devtools.lcom {{ pkgs }}
-          uv run --extra devtools python -m devtools.data_clumps {{ pkgs }}
-          uv run --extra devtools python -m devtools.magic_literals {{ pkgs }}
-          uv run --extra devtools python -m devtools.complexity {{ pkgs }}
-          uv run --extra devtools python -m devtools.primitives.arrows {{ pkgs }}
-          uv run --extra devtools python -m devtools.primitives.calls {{ pkgs }}
+          uv run --extra devtools python -m devtools.cohesion.state_candidates {{ pkgs }}
+          uv run --extra devtools python -m devtools.cohesion.lcom {{ pkgs }}
+          uv run --extra devtools python -m devtools.cohesion.data_clumps {{ pkgs }}
+          uv run --extra devtools python -m devtools.hygiene.magic_literals {{ pkgs }}
+          uv run --extra devtools python -m devtools.cohesion.complexity {{ pkgs }}
+          uv run --extra devtools python -m devtools.graph.arrows {{ pkgs }}
+          uv run --extra devtools python -m devtools.graph.calls {{ pkgs }}
       # ADVISORY (never blocks): flag a stale docs/architecture/graph.json — the committed graph drifted from
       # the real import graph. Regenerate locally with `nox -s archmap` and commit. Doc-gen, not enforcement
       # (import-linter is the directional gate); graduates to a gate per the creep-to-gate program.
       - name: Architecture graph — advisory (archmap --check, stale graph.json)
         continue-on-error: true
-        run: uv run --extra devtools python -m devtools.archmap {{ pkgs }} --check || echo "::warning::docs/architecture/graph.json is stale — run 'nox -s archmap' and commit"
+        run: uv run --extra devtools python -m devtools.graph.archmap {{ pkgs }} --check || echo "::warning::docs/architecture/graph.json is stale — run 'nox -s archmap' and commit"
       # Architecture CHANGELOG — ADVISORY (never blocks): how this PR moved the architecture, in REAL
       # dependency terms — which arrow KIND appeared or vanished, not just that a JSON file changed. Posted
       # to the job summary so it is read in review. The gates say what is FORBIDDEN; this says what MOVED,
@@ -193,7 +193,7 @@ jobs:
         run: |
           git fetch -q --depth=1 origin {% raw %}"${{ github.base_ref }}"{% endraw %}
           git show FETCH_HEAD:docs/architecture/graph.json > /tmp/arch-base.json 2>/dev/null || echo '{}' > /tmp/arch-base.json
-          uv run --extra devtools python -m devtools.archmap {{ pkgs }} --diff /tmp/arch-base.json | tee /tmp/arch-diff.txt
+          uv run --extra devtools python -m devtools.graph.archmap {{ pkgs }} --diff /tmp/arch-base.json | tee /tmp/arch-diff.txt
           { echo '### Architecture changes'; echo '```'; cat /tmp/arch-diff.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       # >>> LOCAL-SLOT: ci-test-steps — repo-specific test/coverage/gate steps on top of the base (e.g. a
       # separate viewer-coverage floor calibrated to library logic, or a repo-only enforced check). Survives

@@ -54,7 +54,7 @@ Publishing to GitHub Pages — one repo = one Pages site, so pick ONE of:
   - name: Architecture view (/architecture/)
     run: |
       uv run --no-project --with "sdlc-devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@{{ devtools_ref }}#subdirectory=sdlc-devtools" \
-        python -c "from devtools.archmap import Archmap; Archmap([{% for p in packages.split(",") %}'{{ p | trim }}'{% if not loop.last %}, {% endif %}{% endfor %}]).write_viewer(project='{{ project_name }}')"
+        python -c "from devtools.graph.archmap import Archmap; Archmap([{% for p in packages.split(",") %}'{{ p | trim }}'{% if not loop.last %}, {% endif %}{% endfor %}]).write_viewer(project='{{ project_name }}')"
       mkdir -p _site/architecture
       cp docs/architecture/graph.json docs/architecture/index.html _site/architecture/
   ```

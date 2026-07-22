@@ -71,13 +71,15 @@ def lint(session: nox.Session) -> None:
     session.run(
         "uv", "run", "--group", "dev", "python", "-m", "devtools.run", LAYER,
         # god-module / import-cycle / god-file / test-mirror, then the arrow-level gates
-        "--gate", "graph,demeter,purity,composition,contracts,envy,astgrep,mirror,small",
+        "--gate",
+        "graph.fitness,coupling.demeter,coupling.purity,coupling.composition,coupling.contracts,"
+        "coupling.envy,astgrep,hygiene.mirror,hygiene.small",
         # ADVISORY explorers — ranked reports that never fail. `classes` is here rather than under --gate
         # for the reason it is advisory everywhere: its survivors are genuine multi-abstraction files, i.e.
         # refactoring work rather than a classifier bug. It graduates when a real tree reaches zero.
         "--report",
-        "magic_literals,complexity,lcom,data_clumps,state_candidates,"
-        "primitives.arrows,primitives.calls,primitives.classes",
+        "hygiene.magic_literals,cohesion.complexity,cohesion.lcom,cohesion.data_clumps,"
+        "cohesion.state_candidates,graph.arrows,graph.calls,graph.classes",
         external=True,
     )
     # (class-shape — every helper a method on its engine class, only main() top-level — rides the batch run
@@ -93,7 +95,7 @@ def lint(session: nox.Session) -> None:
     # three consumer repos even after the az9 fix, and those survivors are genuine multi-abstraction files,
     # i.e. real refactoring work rather than a classifier bug. It graduates when a real tree is clean.)
     # Self-scaffolding (advisory): the scaffold maps its OWN guardrail engines — archmap --check flags a
-    # stale committed docs/architecture/graph.json. Regenerate with `python -m devtools.archmap devtools`.
+    # stale committed docs/architecture/graph.json. Regenerate with `python -m devtools.graph.archmap devtools`.
     # success_codes swallows the exit-1-on-drift so it reports without blocking (doc-gen, not a gate).
     session.run(
         "uv",
@@ -102,7 +104,7 @@ def lint(session: nox.Session) -> None:
         "dev",
         "python",
         "-m",
-        "devtools.archmap",
+        "devtools.graph.archmap",
         LAYER,
         "--check",
         external=True,

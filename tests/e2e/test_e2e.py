@@ -70,7 +70,7 @@ def test_expected_layout(project):
         assert (path / "tests" / "unit" / pkg / f"{module}.py").exists(), f"mirror for {module} missing"
         assert not (path / "tests" / "unit" / pkg / f"test_{module}.py").exists(), "the prefix is gone"
     # the analyzers are an INSTALLED package now (sdlc-devtools, pinned by tag) — not vendored source,
-    # and neither is the ast-grep/jscpd config (located from the install via `python -m devtools.config`).
+    # and neither is the ast-grep/jscpd config (located from the install via `python -m devtools.tools.config`).
     pyproject_dep = (path / "pyproject.toml").read_text()
     assert not (path / "devtools" / "graph.py").exists(), "engines ship as a package, not vendored .py"
     assert not (path / "devtools" / "sgconfig.yml").exists(), "ast-grep config ships inside the package"
@@ -164,10 +164,10 @@ def _assert_precommit_wiring(precommit_text: str) -> None:
     assert "id: archmap" in precommit_text, "the archmap regen hook ships in pre-commit (2vt.4)"
     # c80: archmap regen moved to the PRE-PUSH stage (fast commits; refresh once before the deploying push)
     # and blocks the push if graph.json drifted, so the committed diff-truth stays current with no manual regen.
-    assert "python -m devtools.archmap" in precommit_text, "archmap regen present (c80)"
+    assert "python -m devtools.graph.archmap" in precommit_text, "archmap regen present (c80)"
     assert "--regen" in precommit_text, "archmap regenerates AND blocks on drift in one engine call (c80)"
     # NO HOOK SHELLS OUT. Two hooks used `bash -c` — archmap to sequence a regen with a staleness check, and
-    # ast-grep for a `$(devtools.config sgconfig)` substitution. Both are dead: the sequencing moved into
+    # ast-grep for a `$(devtools.tools.config sgconfig)` substitution. Both are dead: the sequencing moved into
     # `archmap --regen` and the lookup into `devtools.astgrep`. This is a real gate, not tidiness — the bash
     # pre-commit picks on Windows cannot find `uv`, so every shelling hook was silently broken there, and the
     # archmap one reported Passed while doing nothing because it joined its two commands with `;`.
@@ -221,10 +221,10 @@ def test_select_and_ci_wiring(project):
     # 9mu: ruff enforced + jscpd default to the arch set but are hygiene-widenable (lint_paths/jscpd_paths)
     ci_text = (path / ".github" / "workflows" / "ci.yml").read_text()
     assert "deptry ." in ci_text, "the deptry gate is wired into CI (85l.2)"
-    assert "devtools.complexity" in ci_text, "complexity runs in CI (advisory block; 0sx)"
+    assert "devtools.cohesion.complexity" in ci_text, "complexity runs in CI (advisory block; 0sx)"
     # 2vt.4: archmap (architecture autoviz) wired into all three runners — CI advisory --check, a pre-commit
     # regen hook, and a manual nox regen session. Doc-gen/advisory; import-linter stays the directional gate.
-    assert "devtools.archmap" in ci_text and "--check" in ci_text, "archmap --check runs in CI (advisory; 2vt.4)"
+    assert "devtools.graph.archmap" in ci_text and "--check" in ci_text, "archmap --check runs in CI (advisory; 2vt.4)"
     precommit_text = (path / ".pre-commit-config.yaml").read_text()
     _assert_precommit_wiring(precommit_text)
     nox_text = (path / "noxfile.py").read_text()
@@ -389,7 +389,7 @@ def test_coverage_floor(project):
 
 def test_graph_assert_all_layers(project):
     name, path = project
-    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph", "--assert", *layers(name)], path)
+    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph.fitness", "--assert", *layers(name)], path)
 
 
 def test_astgrep(project):
@@ -428,7 +428,7 @@ def test_a_use_contract_can_forbid_construction_alone(full_project):
         '\n[[tool.arch.forbidden]]\nname = "only wiring may construct a concrete store"\n'
         'source = "full_pkg.service"\nforbidden = ["full_pkg.memory_store"]\nkinds = ["construct"]\n'
     )
-    cmd = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.contracts", "full_pkg", "--assert"]
+    cmd = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.coupling.contracts", "full_pkg", "--assert"]
     result = assert_bites(full_project, cmd, lambda p: _append(p / "pyproject.toml", contract))
     text = result.stdout + result.stderr
     assert "--construct-->" in text, "the finding names the arrow KIND, not just a dependency"
@@ -439,7 +439,8 @@ def test_demeter_enforced_runs_clean(project):
     """A5 (bd 4bl.5). The seed reaches its own fields and stops (`self._store.get(key)` = 2 hops), so the
     gate is green from day one and ratchets — a fresh gen has no code at all."""
     name, path = project
-    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.demeter", *layers(name), "--assert"], path)
+    cmd = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.coupling.demeter", *layers(name), "--assert"]
+    run(cmd, path)
 
 
 def test_arrows_advisory_decomposes_the_seed(project):
@@ -447,7 +448,7 @@ def test_arrows_advisory_decomposes_the_seed(project):
     to carry each kind, so assert the REAL arrows appear — not merely that the explorer exits 0."""
     name, path = project
     pkg = example_pkg(name)
-    cmd = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.primitives.arrows", *layers(name)]
+    cmd = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph.arrows", *layers(name)]
     result = run(cmd, path)
     text = result.stdout + result.stderr
     assert f"{pkg}.errors.KeyMissingError -> {pkg}.errors.StoreError" in text, "intra-file inherits"
@@ -479,7 +480,7 @@ def test_calls_advisory_splits_contract_from_concrete(project):
     """
     name, path = project
     pkg = example_pkg(name)
-    result = run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.primitives.calls", *layers(name)], path)
+    result = run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph.calls", *layers(name)], path)
     text = result.stdout + result.stderr
     contract, concrete = text.split("construct -> the concrete")
     # the repository calls the Store CONTRACT — never the MemoryStore that actually runs
@@ -503,7 +504,7 @@ def test_calls_advisory_splits_contract_from_concrete(project):
 def test_magic_literals_advisory_runs_clean(project):
     name, path = project
     # ADVISORY explorer (0sx) — ranked report, always exit 0, no config, no gate.
-    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.magic_literals", *layers(name)], path)
+    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.hygiene.magic_literals", *layers(name)], path)
 
 
 def test_audit_workflow_rendered(project):
@@ -525,12 +526,12 @@ def test_pip_audit_runs_clean(project):
 def test_complexity_advisory_runs_clean(project):
     name, path = project
     # ADVISORY explorer (0sx) — radon CC ranked report, always exit 0. ruff C901 is the FIXED complexity gate.
-    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.complexity", *layers(name)], path)
+    run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.cohesion.complexity", *layers(name)], path)
 
 
 def test_archmap_generates_site_and_check_bites(project):
     name, path = project
-    archmap = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.archmap", *layers(name)]
+    archmap = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph.archmap", *layers(name)]
     # doc-gen (m5c): archmap emits graph.json (diff-truth) + a self-contained interactive viewer; --check
     # must be GREEN on the fresh output.
     run(archmap, path)
@@ -559,7 +560,7 @@ def test_archmap_diff_reports_what_moved(project):
     dependency terms — a reviewer sees which arrow KIND appeared, not that a JSON file changed."""
     name, path = project
     pkg = example_pkg(name)
-    archmap = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.archmap", *layers(name)]
+    archmap = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph.archmap", *layers(name)]
     run(archmap, path)
     baseline = path / "base.json"
     graph = json.loads((path / "docs" / "architecture" / "graph.json").read_text())
@@ -581,14 +582,14 @@ def test_archviz_pages_workflow_gated(scaffold, tmp_path_factory):
     pages = on / "p" / ".github" / "workflows" / "pages.yml"
     assert pages.exists(), "archviz_pages=true ships pages.yml"
     txt = pages.read_text(encoding="utf-8")
-    assert "deploy-pages" in txt and "devtools.archmap" in txt, "the Pages workflow regenerates + deploys"
+    assert "deploy-pages" in txt and "devtools.graph.archmap" in txt, "the Pages workflow regenerates + deploys"
     # clf.3: it ships the STAGED pattern — main at /architecture/, dev at /architecture/preview/ (guarded so a
     # repo with no dev branch skips cleanly), and a root redirect. Packages ({{ pkgs }}) render into the build.
     assert "_site/architecture" in txt, "main view -> /architecture/"
     assert "_site/architecture/preview" in txt, "dev view -> /architecture/preview/"
     assert "git archive origin/dev" in txt and "rev-parse --verify" in txt, "dev preview built from origin/dev, guarded"
     assert "url=./architecture/" in txt, "root redirects to the stable view"
-    assert "devtools.archmap pg" in txt, "the packages answer renders into the archmap invocation"
+    assert "devtools.graph.archmap pg" in txt, "the packages answer renders into the archmap invocation"
 
     off = tmp_path_factory.mktemp("pages_off")
     generate(scaffold, off / "p", {"project_name": "pg", "packages": "pg", "domain": "none"})  # pages default off
@@ -744,7 +745,7 @@ def test_prepush_archmap_regenerates_and_blocks_on_drift(full_project):
 
 # ---- the optional gates actually BITE --------------------------------------------------------------
 
-GRAPH_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph", "--assert", "full_pkg"]
+GRAPH_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.graph.fitness", "--assert", "full_pkg"]
 
 
 @pytest.fixture(scope="module")
@@ -888,7 +889,9 @@ def test_graph_assert_catches_cycle(full_project):
     assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
-DEMETER_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.demeter", "full_pkg", "--assert"]
+DEMETER_ASSERT = [
+    "uv", "run", "--extra", "devtools", "python", "-m", "devtools.coupling.demeter", "full_pkg", "--assert",
+]
 
 
 def test_demeter_catches_a_reach_through(full_project):
@@ -919,7 +922,7 @@ def test_demeter_does_not_fire_on_a_deep_read(full_project):
         restore()
 
 
-PURITY_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.purity", "full_pkg", "--assert"]
+PURITY_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.coupling.purity", "full_pkg", "--assert"]
 
 
 def test_purity_catches_a_mutating_property(full_project):
@@ -964,8 +967,8 @@ def test_graph_assert_catches_unmirrored(full_project):
     assert run(GRAPH_ASSERT, full_project).returncode == 0, "passes again once reverted"
 
 
-MIRROR_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.mirror", "full_pkg", "--assert"]
-SMALL_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.small", "full_pkg", "--assert"]
+MIRROR_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.hygiene.mirror", "full_pkg", "--assert"]
+SMALL_ASSERT = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.hygiene.small", "full_pkg", "--assert"]
 
 
 def test_mirror_catches_a_public_method_with_no_named_test(full_project):

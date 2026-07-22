@@ -92,7 +92,7 @@ def test_the_bespoke_set_is_exactly_the_known_three():
     so this pins the only three modules allowed to be contract-exempt. A fourth is a loud failure here, not a
     silent skip: the literal survives as this guard, which is the whole value the hand-list used to carry."""
     bespoke = sorted(name for name, _ in _main_modules() if _bespoke(name))
-    assert bespoke == ["archmap", "config", "run"], (
+    assert bespoke == ["graph.archmap", "run", "tools.config"], (
         f"the contract-exempt set changed to {bespoke}; a new module answering no report() is either a real "
         f"bespoke tool (add it here) or an engine that lost its contract (a bug this test exists to catch)"
     )

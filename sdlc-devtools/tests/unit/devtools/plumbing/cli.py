@@ -10,8 +10,8 @@ import logging
 
 import pytest
 
+from devtools.graph.arrows import ClassArrows  # a REAL in-package engine, for the subpackage-path proof
 from devtools.plumbing.cli import Cli, Flag, Switch
-from devtools.primitives.arrows import ClassArrows  # a REAL in-package engine, for the subpackage-path proof
 
 
 class Fake:
@@ -172,6 +172,6 @@ def test_prog():
     # A REAL in-package engine exercises the path resolution: an engine in a SUBPACKAGE keeps its segment,
     # so the header advertises the invocation that actually runs (bd yfv.2) rather than dropping to the bare
     # module name — which would print `python -m devtools.arrows` for a tool that now answers only at
-    # `devtools.primitives.arrows`.
-    assert Cli(ClassArrows, "d").tool == "primitives.arrows"
-    assert Cli(ClassArrows, "d").prog == "python -m devtools.primitives.arrows"
+    # `devtools.graph.arrows`.
+    assert Cli(ClassArrows, "d").tool == "graph.arrows"
+    assert Cli(ClassArrows, "d").prog == "python -m devtools.graph.arrows"
