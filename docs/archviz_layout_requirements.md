@@ -59,7 +59,7 @@ browser look; the owner confirms the final visual.
 
 ## Candidate approaches (decided per-stage in the epic, not up front)
 
-- **A — deterministic compaction on fcose.** Extend the existing parking pass to recapture *any* geometric
+- **A — deterministic compaction on fcose.** *(SHIPPED — see Stage A result above.)* Extend the existing parking pass to recapture *any* geometric
   outlier (not just edgeless) into the tidy block. Lowest risk, no new dependency, keeps the working viewer,
   guarantees compression (#1) and determinism (#3), threshold derived from sibling spread (#5). Does NOT
   deliver planarity (#4) or up-down (#6).
@@ -93,6 +93,32 @@ byte-deterministic with `randomize:false` (the harness confirms Δ=0). The *view
 load only because it reseeds (`randomize:true`) on depth changes — a viewer choice Stage A drops, not an
 engine limitation. The 509 crossings on a 37-node import graph, and 25 of 51 compounds under a tidy-pack
 half-density, are the concrete evidence force layout ignores both planarity and compression.
+
+## Stage A result (fcose defaults + deterministic compaction, bd 42b.2)
+
+The force pass and the compaction now live in one shared module (`devtools/archviz/layout.js`), imported by
+both the viewer and the harness. The two interim magic knobs are gone (fcose keeps its own defaults);
+`compact` shrink-wraps every compound structurally instead. Measured against the floor above:
+
+| view | under-filled | median fill | crossings | canvas | determinism |
+|------|--------------|-------------|-----------|--------|-------------|
+| module / imports  | 3 → **0** | 0.16 → **0.35** | 509 → 601 | 1171×1008 → 1219×963 | yes |
+| class / structure | 0 → 0 | 0.29 → 0.28 | 10 → 14 | 1756×1733 → **1274×1329** | yes |
+| all / all         | **25 → 0** | 0.15 → **0.37** | 3183 → 5562 | 7649×9670 → **4803×4902** | yes |
+
+**What Stage A delivered:** compression (#1) — zero pathological boxes in every view, median fill up 2.5× at
+all/all, canvas roughly halved in each axis; determinism (#3) — every view byte-identical across runs, the
+viewer's reseed dropped; no magic constants (#5) — the two interim knobs retired, guarded against return.
+Compaction preserves well-filled clusters (structure #2) and only tidies boxes the harness flags under-filled,
+so module/class views are near-untouched.
+
+**The cost, and what it hands the decision gate (42b.3):** crossings rose, sharply at all/all (3183 → 5562).
+That is the compression↔planarity tension made concrete — packing boxes tight forces edges to cross more, and
+fcose's larger, airier baseline had room to avoid them. Compaction does NOT deliver planarity (#4) or up-down
+(#6); it grids under-filled boxes in reading order, which reads as adjacency, not flow. So the gate's question
+is sharp: is 5562 crossings (with guaranteed compression + determinism, zero new deps, a working viewer) good
+enough — or does the crossing count + the want for #4/#6 justify ELK's 1.6 MB and a full engine swap? The
+fixture `archviz_baseline.json` holds the fcose floor; `node measure.cjs` reports the Stage A numbers above.
 
 ## The measurement harness (why this can be verified without a browser)
 

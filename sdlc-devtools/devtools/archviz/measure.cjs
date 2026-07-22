@@ -7,12 +7,9 @@
  * canvas size. Every layout change is scored HERE first; the browser look is the final confirmation, not the
  * debugging loop.
  *
- * It runs the SAME fcose constants and the SAME parking pass the viewer ships (LAYOUT, below, and park()),
- * so the numbers describe what the user actually sees. Those two blocks are duplicated from viewer.js on
- * purpose for now: viewer.js is a browser IIFE with no exports, and Stage A (bd 42b.2) rewrites the parking
- * pass anyway — unifying the source of truth is part of that rework, not this precondition. Until then, a
- * guard test (tests/unit/test_archviz_layout_baseline.py) holds these copies to viewer.js so they cannot
- * drift silently.
+ * It runs the SAME layout the viewer ships — the force pass AND the compaction — because both import it from
+ * the one shared module, layout.js (bd 42b.2). So the numbers describe what the user actually sees, with no
+ * copy to drift: retune the layout and both the page and this harness move together.
  *
  * NODE SIZES are DERIVED, not rendered: headless cytoscape has no text metrics, so a node's width is modelled
  * from its label length (CHAR_W below). Fill is a RATIO (child area / box area) so the size model cancels;
@@ -39,19 +36,9 @@ Module._resolveFilename = function (request, ...rest) {
 const cytoscape = require(path.join(HERE, 'cytoscape.min.js'));
 cytoscape.use(require(path.join(HERE, 'cytoscape-fcose.js')));
 
-// ---- shipped layout (MIRROR of viewer.js FCOSE — held by test_archviz_layout_baseline.py) ----------------
-const LAYOUT = {
-  name: 'fcose', quality: 'proof', animate: false,
-  nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.8, gravity: 0.25, numIter: 2500,
-  edgeElasticity: (e) => (e.data('crossModule') ? 0.05 : 0.45),
-  gravityCompound: 8, gravityRangeCompound: 5,
-  nodeDimensionsIncludeLabels: true,
-  // fcose's spectral init is deterministic, so randomize:false gives byte-identical runs (the harness's own
-  // determinism check confirms Δ=0). The VIEWER reseeds (randomize:true) on every depth change — that, and
-  // only that, is why the shipped viewer is non-deterministic on load; the ENGINE is not the obstacle to
-  // req #3. Measuring with the deterministic setting is the fair floor for the other three metrics.
-  randomize: false,
-};
+// The shipped layout, from its one home — the force pass and the deterministic compaction the viewer also
+// uses (bd 42b.2). LAYOUT sets randomize:false, which fcose's spectral init makes byte-deterministic.
+const { LAYOUT, compact } = require(path.join(HERE, 'layout.js'));
 
 // ---- node size model (DERIVED — see header) --------------------------------------------------------------
 const CHAR_W = 7;   // ~advance of an 11px sans glyph
@@ -70,19 +57,6 @@ const KIND_BANDS = {
 };
 const isPrivate = (label) => label.startsWith('_');
 
-function moduleOfMap(nodes) {
-  // outermost ancestor (the top module) for every id — the viewer's moduleOf, from the parent chain.
-  const parent = {};
-  for (const n of nodes) parent[n.id] = n.parent || null;
-  const top = {};
-  for (const n of nodes) {
-    let at = n.id;
-    while (parent[at]) at = parent[at];
-    top[n.id] = at;
-  }
-  return top;
-}
-
 function buildView(graph, depth, kinds) {
   const d = DEPTHS.indexOf(depth);
   const wantClass = d >= 1, wantMethod = d >= 2, wantPrivate = d >= 3;
@@ -94,7 +68,6 @@ function buildView(graph, depth, kinds) {
     return wantClass && wantMethod && (wantPrivate || !isPrivate(n.label));
   });
   const present = new Set(nodes.map((n) => n.id));
-  const top = moduleOfMap(graph.nodes);
 
   // climb an endpoint to the nearest present ancestor (a filtered-out method rolls up to its class/module)
   const climb = (id) => {
@@ -118,40 +91,14 @@ function buildView(graph, depth, kinds) {
   });
   const cyEdges = [...agg.keys()].map((key, i) => {
     const [s, t] = key.split('|');
-    return { data: { id: 'e' + i, source: s, target: t, crossModule: top[s] !== top[t] } };
+    return { data: { id: 'e' + i, source: s, target: t } };
   });
   return { nodes: cyNodes, edges: cyEdges };
 }
 
-// ---- parking pass (MIRROR of viewer.js parkEdgeless — held by the baseline guard test) --------------------
-const PARK_GAP = 24;
-function park(cy) {
-  const groups = new Map();
-  cy.nodes().forEach((n) => {
-    if (n.isParent() || n.degree(false) > 0) return;
-    const key = n.parent().empty() ? '' : n.parent().id();
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(n);
-  });
-  for (const [key, loose] of groups) {
-    const siblings = key ? cy.getElementById(key).children() : cy.nodes().filter((n) => n.parent().empty());
-    const looseIds = new Set(loose.map((n) => n.id()));
-    const anchored = siblings.filter((n) => !looseIds.has(n.id()));
-    const under = anchored.nonempty();
-    const box = under ? anchored.boundingBox() : cy.collection(loose).boundingBox();
-    const cellW = Math.max(...loose.map((n) => n.outerWidth())) + PARK_GAP;
-    const cellH = Math.max(...loose.map((n) => n.outerHeight())) + PARK_GAP;
-    const cols = Math.max(1, Math.min(loose.length, Math.round(box.w / cellW) || 1));
-    const top = under ? box.y2 + PARK_GAP : box.y1;
-    loose.forEach((n, i) => n.position({
-      x: box.x1 + (i % cols) * cellW + cellW / 2,
-      y: top + Math.floor(i / cols) * cellH + cellH / 2,
-    }));
-  }
-}
-
 // ---- metrics ---------------------------------------------------------------------------------------------
 const area = (bb) => Math.max(0, bb.w) * Math.max(0, bb.h);
+const GRID_GAP = 24;   // the gutter the ideal-pack reference assumes — matches layout.js's compaction GAP
 
 // Ideal-pack fill: grid-pack k boxes (their own w/h) into ~square, report Σarea / gridArea. This is the
 // DERIVED reference a real box is compared against — a box below half of its own ideal is "under-filled",
@@ -161,8 +108,8 @@ function idealFill(children) {
   if (n === 0) return 1;
   const cols = Math.max(1, Math.round(Math.sqrt(n)));
   const rows = Math.ceil(n / cols);
-  const cw = Math.max(...children.map((c) => c.w)) + PARK_GAP;
-  const ch = Math.max(...children.map((c) => c.h)) + PARK_GAP;
+  const cw = Math.max(...children.map((c) => c.w)) + GRID_GAP;
+  const ch = Math.max(...children.map((c) => c.h)) + GRID_GAP;
   const gridArea = cols * cw * rows * ch;
   const occupied = children.reduce((s, c) => s + c.w * c.h, 0);
   return occupied / gridArea;
@@ -219,10 +166,10 @@ function intersect(a, b, c, d) {
 }
 
 // ---- run a view ------------------------------------------------------------------------------------------
-function layoutOnce(elements) {
+function layoutOnce(elements, layout = LAYOUT) {
   const cy = cytoscape({ headless: true, styleEnabled: true, elements,
     style: [{ selector: 'node', style: { width: 'data(w)', height: 'data(h)' } }] });
-  cy.layout(LAYOUT).run();   // fcose animate:false runs synchronously
+  cy.layout(layout).run();   // fcose animate:false runs synchronously
   return cy;
 }
 
@@ -247,35 +194,44 @@ const VIEWS = [
   { name: 'all/all', depth: 'all', kinds: [...KIND_BANDS.imports, ...KIND_BANDS.structure, ...KIND_BANDS.behaviour] },
 ];
 
+// Score one graph across all views. `layout`/`settle` are injectable so an experiment can A/B a candidate
+// engine or compaction pass without forking the harness (Stage A, bd 42b.2); the defaults ARE the shipped
+// pipeline, which is what the committed baseline records.
+function scoreGraph(graph, { layout = LAYOUT, settle = compact } = {}) {
+  const report = { views: {} };
+  for (const view of VIEWS) {
+    const elements = buildView(graph, view.depth, view.kinds);
+    const cy1 = layoutOnce(elements, layout);
+    const cy2 = layoutOnce(elements, layout);   // determinism: two independent layouts of identical input
+    const delta = maxDelta(positionsOf(cy1), positionsOf(cy2));
+    settle(cy1);
+    report.views[view.name] = { nodes: elements.nodes.length, edges: elements.edges.length,
+      deterministic: delta === 0, maxPositionDelta: delta, ...measure(cy1) };
+    cy1.destroy(); cy2.destroy();
+  }
+  return report;
+}
+
+function summarise(report) {
+  return Object.entries(report.views).map(([name, v]) =>
+    `${name.padEnd(16)} n=${String(v.nodes).padStart(3)} e=${String(v.edges).padStart(3)}  ` +
+    `compounds=${v.compounds} under-filled=${v.underfilled}  medFill=${v.medianFill == null ? '—' : v.medianFill.toFixed(2)}  ` +
+    `crossings=${v.crossings}  canvas=${v.canvas.w}x${v.canvas.h}  ${v.deterministic ? 'deterministic' : 'NON-DET Δ=' + v.maxPositionDelta}`
+  ).join('\n');
+}
+
 function main() {
   const arg = process.argv[2];
   const fixture = path.join(HERE, '..', '..', 'tests', 'fixtures', 'archviz_graph.json');
   const graphPath = arg ? path.resolve(arg) : fixture;
   const graph = JSON.parse(fs.readFileSync(graphPath, 'utf8'));
-  const report = { source: path.relative(process.cwd(), graphPath), views: {} };
-
-  for (const view of VIEWS) {
-    const elements = buildView(graph, view.depth, view.kinds);
-    // determinism: two independent layouts of identical input
-    const cy1 = layoutOnce(elements);
-    const cy2 = layoutOnce(elements);
-    const delta = maxDelta(positionsOf(cy1), positionsOf(cy2));
-    park(cy1);
-    const m = measure(cy1);
-    report.views[view.name] = { nodes: elements.nodes.length, edges: elements.edges.length,
-      deterministic: delta === 0, maxPositionDelta: delta, ...m };
-    cy1.destroy(); cy2.destroy();
-  }
-
-  process.stdout.write(JSON.stringify(report, null, 2) + '\n');
-  // human summary to stderr so `... > baseline.json` stays clean
-  for (const [name, v] of Object.entries(report.views)) {
-    process.stderr.write(
-      `${name.padEnd(16)} n=${String(v.nodes).padStart(3)} e=${String(v.edges).padStart(3)}  ` +
-      `compounds=${v.compounds} under-filled=${v.underfilled}  medFill=${v.medianFill == null ? '—' : v.medianFill.toFixed(2)}  ` +
-      `crossings=${v.crossings}  canvas=${v.canvas.w}x${v.canvas.h}  ${v.deterministic ? 'deterministic' : 'NON-DET Δ=' + v.maxPositionDelta}\n`);
-  }
-  process.exit(0);
+  const report = { source: path.relative(process.cwd(), graphPath), ...scoreGraph(graph) };
+  process.stderr.write(summarise(report) + '\n');   // summary to stderr so `... > baseline.json` stays clean
+  // Headless cytoscape leaves a handle open, so the process will not exit on its own; but exiting before a
+  // piped stdout flushes truncates the JSON. Write with a completion callback, then exit.
+  process.stdout.write(JSON.stringify(report, null, 2) + '\n', () => process.exit(0));
 }
 
-main();
+module.exports = { buildView, layoutOnce, compact, measure, scoreGraph, summarise, LAYOUT, KIND_BANDS, VIEWS };
+
+if (require.main === module) main();

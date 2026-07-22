@@ -8,7 +8,6 @@ carries the one real-grimp end-to-end proof; the viewer assembly needs no grimp 
 """
 
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -233,47 +232,39 @@ def test_main_requires_packages(monkeypatch):
         main()
 
 
-# The measurement harness (measure.cjs, bd 42b.1) scores what the VIEWER ships, so it carries a COPY of the
-# fcose constants and the parking gap out of viewer.js — necessary because viewer.js is a browser IIFE with
-# no exports and the harness runs under Node. A copy nothing checks drifts the moment either file is tuned,
-# and then the "baseline" the layout rework is measured against stops describing the real page. This holds the
-# two in lockstep until Stage A (bd 42b.2) rewrites parking and can unify the source outright.
-_LAYOUT_NUMBERS = [
-    "nodeSeparation",
-    "idealEdgeLength",
-    "nestingFactor",
-    "gravity",
-    "numIter",
-    "gravityCompound",
-    "gravityRangeCompound",
-]
+# The layout (the fcose force pass AND the deterministic compaction) has ONE home, layout.js, consumed by BOTH
+# the interactive viewer and the headless measurement harness (bd 42b.2). That is what lets the harness score
+# the layout the page actually renders. This test locks the single source in: it fails if either consumer
+# re-inlines its own copy of the constants, or if the interim force-tuning the compaction retired (a per-edge
+# `edgeElasticity` split, a `gravityCompound` override) creeps back into any archviz file.
+_RETIRED_KNOBS = ("gravityCompound", "gravityRangeCompound", "edgeElasticity")
 
 
-def _layout_constants(text: str) -> dict[str, str]:
-    """The layout knobs a viewer/harness declares, as name->literal — the shared subset both files must agree
-    on. Values are compared as source text (`0.8`, not 0.8) so a reformat that changes precision is caught."""
-    found = {}
-    for key in _LAYOUT_NUMBERS:
-        m = re.search(rf"\b{key}\s*:\s*([\d.]+)", text)
-        assert m, f"{key} not found — the layout block moved or was renamed"
-        found[key] = m.group(1)
-    # the cross-module edge-spring split: `crossModule ? 0.05 : 0.45`
-    m = re.search(r"crossModule.*?\?\s*([\d.]+)\s*:\s*([\d.]+)", text)
-    assert m, "edgeElasticity cross-module split not found"
-    found["edgeElasticity.cross"], found["edgeElasticity.intra"] = m.group(1), m.group(2)
-    # the parking grid gap
-    m = re.search(r"PARK_GAP\s*=\s*(\d+)", text)
-    assert m, "PARK_GAP not found"
-    found["PARK_GAP"] = m.group(1)
-    return found
+def test_layout_is_single_sourced():
+    """viewer.js and measure.cjs both take LAYOUT + compact from layout.js — neither declares its own. A copy
+    nothing checks drifts, and then the harness stops describing the real page."""
+    layout = (_ARCHVIZ / "layout.js").read_text(encoding="utf-8")
+    assert "archvizLayout" in layout and "function compact" in layout, "layout.js must export LAYOUT + compact"
+
+    viewer = (_ARCHVIZ / "viewer.js").read_text(encoding="utf-8")
+    assert "window.archvizLayout" in viewer, "viewer.js must consume the shared layout, not inline its own"
+    assert "quality: 'proof'" not in viewer, "viewer.js re-inlined an fcose config — it must use layout.js"
+
+    harness = (_ARCHVIZ / "measure.cjs").read_text(encoding="utf-8")
+    assert "require(path.join(HERE, 'layout.js'))" in harness, "measure.cjs must import the shared layout.js"
 
 
-def test_measure_harness_mirrors_viewer_layout():
-    """measure.cjs must carry the SAME fcose constants + parking gap as viewer.js, so its baseline numbers
-    describe the layout the page actually renders. Retune one file and this fails until the other matches."""
-    viewer = _layout_constants((_ARCHVIZ / "viewer.js").read_text(encoding="utf-8"))
-    harness = _layout_constants((_ARCHVIZ / "measure.cjs").read_text(encoding="utf-8"))
-    assert viewer == harness, (
-        f"the harness's shipped-layout copy drifted from viewer.js — reconcile them:\n"
-        f"  viewer:  {viewer}\n  harness: {harness}"
-    )
+def test_the_retired_force_tuning_stays_retired():
+    """Stage A replaced whack-a-mole force constants with deterministic compaction. If a `gravityCompound` or
+    per-edge `edgeElasticity` reappears as a layout OPTION in any archviz source, someone is tuning forces
+    again instead of fixing the compaction — the exact regression the rework exists to prevent. Matched as an
+    object key (`knob:`), so layout.js's prose recounting what it removed does not count as reintroducing it."""
+    offenders = {}
+    for f in _ARCHVIZ.glob("*.js"):
+        if f.name not in {"viewer.js", "layout.js"}:
+            continue
+        source = f.read_text(encoding="utf-8").replace(" ", "")
+        back = [k for k in _RETIRED_KNOBS if f"{k}:" in source]
+        if back:
+            offenders[f.name] = back
+    assert not offenders, f"retired force-tuning knobs are back — fix compaction, do not re-tune forces: {offenders}"
