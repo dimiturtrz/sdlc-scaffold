@@ -32,11 +32,6 @@
   // boxes — so they simply sat on top of each other, worse the deeper the tier. Scaling with depth is the
   // right shape (the deeper stops need more room); the coefficient was just far too small.
   const FCOSE = { name: 'fcose', quality: 'proof', animate: false,
-    // nodeRepulsion below the stock 4500: repulsion is what shoves two edgeless siblings apart into the empty
-    // space, and compound gravity has to overcome it to pack them — easing it lets a modest gravity win, so
-    // boxes shrink-wrap their content instead of standing off. nodeSeparation still guarantees a min gap, so
-    // this trades "flung apart" for "close but not touching", never overlap.
-    nodeRepulsion: 3000,
     nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.8, gravity: 0.25, numIter: 2500,
     // A cross-module edge is a WEAK spring; an intra-module one keeps full strength. A compound box is sized
     // to bound ALL its children, so a single method calling into another module used to drag that one child
@@ -55,7 +50,7 @@
     // reaches: at the stock 1.5 a child already flung out sits OUTSIDE it and feels no pull home at all, so
     // it never comes back — widening the range is what recaptures the outliers, not just the ones near
     // centre. Compound gravity is per-box, so this tightens each module without pulling the modules together.
-    gravityCompound: 15, gravityRangeCompound: 10,
+    gravityCompound: 8, gravityRangeCompound: 5,
     // Our nodes are sized to their text (`width: 'label'`) and a compound draws its own label above its
     // children. fcose measures raw boxes unless told otherwise, so without this it packs siblings into
     // each other's labels — which is most of the overlap between module boxes.
