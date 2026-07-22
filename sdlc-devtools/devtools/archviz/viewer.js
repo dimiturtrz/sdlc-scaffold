@@ -42,6 +42,15 @@
     // real internal shape stays taut. `crossModule` is stamped on each edge at build time (it needs the
     // containment tree, which this constant does not have in scope) and merely read here.
     edgeElasticity: (e) => (e.data('crossModule') ? 0.05 : 0.45),
+    // Hold a compound's children TOGETHER. The complaint was children flying far apart into empty space:
+    // sibling methods with no edge between them feel only mutual repulsion (nodeRepulsion 4500) and, pulling
+    // back, only compound gravity — which at the stock 1.0 loses, so they drift until the box stretches to
+    // bound them. Raising `gravityCompound` moves the repulsion/gravity balance point inward, packing
+    // siblings tight (nodeSeparation still stops overlap). `gravityRangeCompound` is the RADIUS that gravity
+    // reaches: at the stock 1.5 a child already flung out sits OUTSIDE it and feels no pull home at all, so
+    // it never comes back — widening the range is what recaptures the outliers, not just the ones near
+    // centre. Compound gravity is per-box, so this tightens each module without pulling the modules together.
+    gravityCompound: 8, gravityRangeCompound: 5,
     // Our nodes are sized to their text (`width: 'label'`) and a compound draws its own label above its
     // children. fcose measures raw boxes unless told otherwise, so without this it packs siblings into
     // each other's labels — which is most of the overlap between module boxes.
