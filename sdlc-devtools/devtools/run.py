@@ -19,7 +19,6 @@ EVERY ENGINE RUNS, even after one fails. Twelve chained `session.run` calls stop
 commit that breaks three gates is discovered three times; here the exit code is the OR of all of them and
 the report is complete.
 
-    python -m devtools.run pkg --gate graph.fitness,coupling.demeter --report graph.arrows,graph.calls
 
 `python -m devtools.<tool> [--assert]` is unchanged and remains the documented contract — this is an
 ADDITION for runners to call, not a replacement (it is pinned in consumers and wired into every template).

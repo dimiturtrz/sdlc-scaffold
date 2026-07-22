@@ -18,8 +18,6 @@ TUNING: `[tool.structure] feature_envy_min` (default 4) is the floor of foreign 
 judged at all. Below it the ratio is noise — two accesses versus one is not evidence of anything. Legitimate
 delegators (mappers, serializers, visitors, facades) read another class heavily BY DESIGN, so the floor is
 raisable per repo rather than the rule being weakened.
-
-Run: `python -m devtools.coupling.envy [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

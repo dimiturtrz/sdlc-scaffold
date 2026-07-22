@@ -13,9 +13,6 @@ grimp builds the honest combined import graph (folder≡package≡module, so nod
 
 DOC-GEN / ADVISORY. This visualizes structure; it does not enforce it — directional enforcement stays with
 import-linter (the layer gate). `--check` fails only if the committed graph.json is stale.
-
-    python -m devtools.graph.archmap core cardioseg          # (re)write docs/architecture/{graph.json,index.html}
-    python -m devtools.graph.archmap core cardioseg --check  # fail if the committed graph.json is out of date
 """
 
 from __future__ import annotations

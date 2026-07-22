@@ -19,8 +19,6 @@ Constant so they're never counted). Because a legitimate non-enum-able floor is 
 universal ceiling — 0 is too strict and any N is arbitrary — so this is an ADVISORY explorer: it prints the
 ranked StrEnum/dataclass candidates and always exits 0. The reviewer decides. A repo that wants to enforce
 a literal budget adds a legislated `[tool.magic_literals]` config knob at that point, not speculatively.
-
-    python -m devtools.hygiene.magic_literals mypackage    # advisory report, always exit 0
 """
 
 from __future__ import annotations

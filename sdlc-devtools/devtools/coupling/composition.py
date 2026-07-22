@@ -8,8 +8,6 @@ about without the other.
 
 Uses the `holds` subgraph only. That subset is SOUND — a field's declared type is stated in the source, not
 inferred — so this blocks rather than advises.
-
-Run: `python -m devtools.coupling.composition [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

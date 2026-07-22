@@ -14,8 +14,6 @@ WHY THIS IS AN ENGINE and not a two-line script: it answers `report()` / `run_as
 gate, so a runner drives it without knowing that this one happens to shell out to a vendored binary while
 the others walk an AST. The subprocess is an implementation detail of THIS engine, not a second category
 of gate the callers have to special-case.
-
-Run: `python -m devtools.astgrep [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

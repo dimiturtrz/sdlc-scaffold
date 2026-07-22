@@ -27,8 +27,6 @@ NOT counted, because they are not object reach-through:
 
 The ceiling is `[tool.structure] demeter_max_depth` (default 2), legislated like `file_max`: 2 is "use your
 own field", 3 is already reaching past it.
-
-Run: `python -m devtools.coupling.demeter [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

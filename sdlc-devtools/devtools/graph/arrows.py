@@ -14,8 +14,6 @@ exactly what makes `self.repo.save()` resolvable to `UserRepo.save`. Both engine
 ROLL-UP: project any arrow's endpoints to their files and you land on the import edge — `import` is just
 the coarsest fold. Cross-file arrows therefore ride an import (grimp agrees); INTRA-file arrows roll up to
 a file self-loop, which the import graph legitimately drops and cannot represent at all.
-
-Run: `python -m devtools.arrows [pkgs...]` (report).
 """
 
 from __future__ import annotations

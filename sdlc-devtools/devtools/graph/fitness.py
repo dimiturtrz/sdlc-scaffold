@@ -16,7 +16,7 @@ ceiling, or a logic module has no strict path-mirror test (`tests/unit/<pkg>/<pa
 default `bare` layout; `devtools/layout.py` owns the convention) — plus
 an advisory chokepoint warning that never blocks. Thresholds live in `pyproject
 [tool.structure]`, defaulted when absent. IMPORT-level only. Packages to graph are the positional argv
-(default `src`). Run: `python -m devtools.graph.fitness [pkgs...]` (report) | `--assert` (gate).
+(default `src`).
 """
 
 from __future__ import annotations

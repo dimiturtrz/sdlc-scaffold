@@ -8,8 +8,6 @@ Signal: a clump = a param SET (>= `min_clump` params) that is carried WHOLE by >
 functions (support = # signatures whose params are a superset). Only MAXIMAL sets are reported (a set is
 dropped if a larger set with >= its support exists), so the recurring tuple surfaces, not its subsets.
 Frequent-subset counting (not connected components) — the latter over-merges via hub params like `size`.
-
-    python -m devtools.cohesion.data_clumps src mypackage
 """
 
 from __future__ import annotations

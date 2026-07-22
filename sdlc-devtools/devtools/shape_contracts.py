@@ -16,9 +16,6 @@ public/private is not a shape axis. Only array/tensor slots are ever flagged, so
 `add_args`/`run` dispatcher handlers (framework signatures — `args` is a Namespace). Ships ADVISORY
 (report-only, exit 0). A repo opts into the blocking ratchet with `--assert` once its tree is clean — a
 new bare-array boundary then fails the merge.
-
-    python -m devtools.shape_contracts <packages>            # advisory report
-    python -m devtools.shape_contracts <packages> --assert   # blocking (exit 1 on any bare boundary)
 """
 
 from __future__ import annotations
