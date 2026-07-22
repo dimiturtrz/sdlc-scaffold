@@ -95,9 +95,9 @@
     arr.forEach((n, i) => n.position({ x: x0 + (i % cols) * cellW, y: y0 + Math.floor(i / cols) * cellH }));
   }
 
-  // fill a compound reaches vs the fill a tidy square grid-pack of the SAME children would — the ratio the
-  // harness calls "under-filled" below 0.5. Both numerator and denominator use the children's own sizes, so
-  // the trigger is derived from the graph, not a pixel constant.
+  // fill a compound reaches vs the fill a tidy square grid-pack of the SAME children would. Both numerator and
+  // denominator use the children's OWN sizes, so what the trigger compares against is derived from the graph,
+  // not a pixel constant — only the tolerance it is compared to (SPREAD_TOLERANCE) is a policy.
   function fillRatio(kids) {
     const arr = kids.toArray();
     const box = kids.boundingBox();
@@ -111,7 +111,13 @@
     return ideal ? fill / ideal : 0;
   }
 
-  const UNDERFILLED = 0.5;   // < half a tidy pack's density (the harness's definition, applied as the trigger)
+  // Tidy a box unless it is ALREADY within 80% of a tidy pack's density. This is the compaction's tolerance
+  // for fcose spread, and it is deliberately tight: the deep tiers (public/all) read as "drawn out" at the
+  // looser 0.5, because a box packed at 0.5–0.8 of ideal still carries visible empty gaps. The ceiling is 0.8
+  // rather than 1.0 because re-gridding a box that is ALREADY near-tidy only churns its arrangement without
+  // saving space (measured: a 1.0 trigger came out slightly larger). This is a spread POLICY, distinct from
+  // the harness metric's 0.5 "pathologically empty" floor — the metric reports, this acts.
+  const SPREAD_TOLERANCE = 0.8;
 
   // The deterministic compression pass. Run AFTER fcose settles (positions are what it reads); pure geometry,
   // no viewport side effects (the viewer fits the camera itself).
@@ -126,12 +132,12 @@
     });
     for (const [key, loose] of groups) gridUnder(cy, key, loose);
 
-    // 2. tidy any compound still under-filled — deepest first, so a parent repacks after its children have
-    // their final sizes.
+    // 2. tidy every compound looser than the tolerance — deepest first, so a parent repacks after its children
+    // have their final sizes.
     const parents = cy.nodes(':parent').toArray().sort((a, b) => b.id().length - a.id().length);
     for (const p of parents) {
       const kids = p.children();
-      if (kids.length >= 2 && fillRatio(kids) < UNDERFILLED) gridInReadingOrder(kids);
+      if (kids.length >= 2 && fillRatio(kids) < SPREAD_TOLERANCE) gridInReadingOrder(kids);
     }
   }
 
