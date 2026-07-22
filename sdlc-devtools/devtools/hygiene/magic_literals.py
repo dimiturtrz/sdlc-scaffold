@@ -20,7 +20,7 @@ universal ceiling — 0 is too strict and any N is arbitrary — so this is an A
 ranked StrEnum/dataclass candidates and always exits 0. The reviewer decides. A repo that wants to enforce
 a literal budget adds a legislated `[tool.magic_literals]` config knob at that point, not speculatively.
 
-    python -m devtools.magic_literals mypackage    # advisory report, always exit 0
+    python -m devtools.hygiene.magic_literals mypackage    # advisory report, always exit 0
 """
 
 from __future__ import annotations

@@ -16,7 +16,7 @@ proxy. Hydra/OmegaConf/pydantic settings trees are legitimately deep and are no 
 DEPTH = attribute hops in the called chain. `self.store.get(k)` is 2 (own field, then talk to it) — fine.
 `self.store.config.reload()` is 3 — that third hop is the reach-through, and it is what this gate names.
 
-THIS RESTS ON `devtools.purity`. In Python a `@property` is a method call spelled as attribute access, so
+THIS RESTS ON `devtools.coupling.purity`. In Python a `@property` is a method call spelled as attribute access, so
 "an attribute chain is only data" holds exactly as far as properties are pure reads. That is enforced, not
 assumed — the purity gate ships alongside this one and blocks a `@property` that assigns to `self`.
 
@@ -28,7 +28,7 @@ NOT counted, because they are not object reach-through:
 The ceiling is `[tool.structure] demeter_max_depth` (default 2), legislated like `file_max`: 2 is "use your
 own field", 3 is already reaching past it.
 
-Run: `python -m devtools.demeter [pkgs...]` (report) | `--assert` (gate).
+Run: `python -m devtools.coupling.demeter [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

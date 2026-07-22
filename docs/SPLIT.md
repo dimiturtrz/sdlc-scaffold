@@ -59,8 +59,8 @@ package imports zero scaffold code (the F duplication is the price of standalone
 
 ## What does NOT change on split
 
-- The consumer contract: still `python -m devtools.graph <pkg>`, config still via `python -m
-  devtools.config` — the import name (`devtools`) and CLI are unchanged.
+- The consumer contract: still `python -m devtools.graph.fitness <pkg>`, config still via `python -m
+  devtools.tools.config` — the import name (`devtools`) and CLI are unchanged.
 - The scaffold IS the policy (thresholds, ruff select, LOCAL-SLOT taxonomy, gate wiring). That stays in the
   scaffold repo; only the generic analyzers leave. See [`SPEC.md`](SPEC.md).
 - The 5 novel checks and the policy — the moat — are unaffected by where the code lives.

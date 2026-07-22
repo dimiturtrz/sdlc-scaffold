@@ -98,13 +98,13 @@ class Cli:
     def tool(self) -> str:
         """The engine's dotted module path UNDER `devtools`, resolved from its FILE rather than `__module__`.
 
-        Running `python -m devtools.demeter` loads that module a SECOND time under the name `__main__`, so
+        Running `python -m devtools.coupling.demeter` loads that module a SECOND time under the name `__main__`, so
         `__module__` reads `__main__` there — which would advertise an invocation that does not exist in
         `--help` and label every log line `__main__` instead of the tool that emitted it. The FILE is stable
         across that reload.
 
-        Taken RELATIVE to the package root so a subpackage is not dropped: `primitives/arrows.py` resolves to
-        `primitives.arrows`, which is what makes `python -m devtools.primitives.arrows` the invocation the
+        Taken RELATIVE to the package root so a subpackage is not dropped: `graph/arrows.py` resolves to
+        `graph.arrows`, which is what makes `python -m devtools.graph.arrows` the invocation the
         help header prints and the logger name it stamps (bd yfv.2). An engine defined OUTSIDE the package —
         only a test fake — has no such path and falls back to the bare file stem.
         """

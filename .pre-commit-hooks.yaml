@@ -17,7 +17,7 @@
 - id: arch-fitness
   name: architecture fitness (graph.py --assert)
   # --extra devtools: graph.py needs grimp+networkx (optional extra), same as the generated hook + nox.
-  entry: uv run --extra devtools python -m devtools.graph --assert
+  entry: uv run --extra devtools python -m devtools.graph.fitness --assert
   language: system
   pass_filenames: false
   always_run: true

@@ -8,7 +8,7 @@ name; a param carried by >=half the methods (and >=2) is latent state. Score = s
 counts, so a class where many methods thread many common params ranks highest. Dispatcher command classes
 (`add_args`+`run`) and already-stateful classes (have `__init__`) are skipped.
 
-    python -m devtools.state_candidates src mypackage
+    python -m devtools.cohesion.state_candidates src mypackage
 """
 
 from __future__ import annotations

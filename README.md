@@ -227,8 +227,8 @@ v1.12 `SLF001` op-namespace fix), so you fix the code the intended way instead o
 - `pyproject.toml` — the portable ruff/vulture/coverage blocks + marked LOCAL-SLOT regions, and the
   `devtools` optional-dependency: the analyzers as a **pinned package** (`sdlc-devtools @ git+…@<tag>`), not
   vendored source. An engine improvement is a one-line pin bump (`devtools_ref`) on `copier update` — no
-  analyzer source diff in your PRs. They still import as `devtools` (`python -m devtools.graph …`); the
-  ast-grep/jscpd config ships inside the package and is located via `python -m devtools.config`.
+  analyzer source diff in your PRs. They still import as `devtools` (`python -m devtools.graph.fitness …`); the
+  ast-grep/jscpd config ships inside the package and is located via `python -m devtools.tools.config`.
 - `noxfile.py` · `.pre-commit-config.yaml` · `.github/workflows/ci.yml` — the same gates bound to the local
   runner, the commit event, and the merge. Plus `.github/workflows/audit.yml` — a nightly pip-audit CVE scan
   (`nox -s audit` locally), the one gate on a schedule rather than per-PR (advisories change under you).

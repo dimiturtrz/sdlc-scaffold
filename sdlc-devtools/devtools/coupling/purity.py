@@ -18,7 +18,7 @@ PRECISE BUT INCOMPLETE, as everywhere else here. This sees assignment to `self` 
 A property that calls a method which mutates elsewhere is not caught, and proving purity in general is not
 attempted — the common, checkable case is the one worth a gate.
 
-Run: `python -m devtools.purity [pkgs...]` (report) | `--assert` (gate).
+Run: `python -m devtools.coupling.purity [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

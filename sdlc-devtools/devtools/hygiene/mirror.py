@@ -63,7 +63,7 @@ credited by NAME within the mirror file. Resolving the real call graph through t
 in principle — a fake is deliberately not the class under test — so a name match inside a file whose
 declared subject IS that module is the honest reading, and a name collision there is itself a smell.
 
-Run: `python -m devtools.mirror [pkgs...]` (report) | `--assert` (gate).
+Run: `python -m devtools.hygiene.mirror [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

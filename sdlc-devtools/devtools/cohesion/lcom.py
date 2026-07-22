@@ -16,7 +16,7 @@ real fusion); (b) ABSTRACT/STUB — every method is a trivial body (`...`/pass/`
 NotImplementedError`/docstring). What survives is a CONCRETE, STATEFUL class whose behaviour genuinely
 splits into disjoint-state groups.
 
-    python -m devtools.lcom src mypackage
+    python -m devtools.cohesion.lcom src mypackage
 """
 
 from __future__ import annotations

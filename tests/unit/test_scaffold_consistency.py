@@ -292,10 +292,11 @@ def test_the_scaffolds_own_workflows_invoke_only_real_devtools_modules():
     file in the sibling package, so the next module move cannot break a workflow silently again.
     """
     pkg = REPO / "sdlc-devtools" / "devtools"
+    own = [*(REPO / ".github" / "workflows").glob("*.yml"), REPO / ".pre-commit-hooks.yaml"]
     invoked = {
-        (wf.name, module)
-        for wf in sorted((REPO / ".github" / "workflows").glob("*.yml"))
-        for module in re.findall(r"python -m (devtools\.[\w.]+)", wf.read_text(encoding="utf-8"))
+        (f.name, module)
+        for f in own
+        for module in re.findall(r"python -m (devtools\.[\w.]+)", f.read_text(encoding="utf-8"))
     }
     missing = sorted(
         f"{wf}: {mod}" for wf, mod in invoked if not (pkg / Path(*mod.split(".")[1:])).with_suffix(".py").exists()

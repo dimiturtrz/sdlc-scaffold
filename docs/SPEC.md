@@ -100,7 +100,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | 5 | arch fitness | OURS `graph.py --assert` | (mechanism; `--no-test-mirror` skips the mirror check for a test-less tree) | `[tool.structure]` thresholds (slot) |
 | 5b | test-mirror (part of #5) | OURS `graph.py` `unmirrored()` + `omit.py` | `__init__`/`__main__` exempt | `[tool.coverage] omit` shells exempt |
 | 5c | class roles / one-subject-per-file (part of #5, ENFORCED) | OURS `classes.py` `ClassIndex` | role rules (no config) | Blocks when a file defines >1 **PRIMARY** class — two subjects sharing a module. A class is a **SATELLITE** (never counted) when it is an ERROR (own name or a base ends in `Error`/`Exception` — reliable because the shipped select carries pep8-naming `N818`, so one gate makes the other's heuristic sound), a DATACLASS or ENUM (value/config object, `@dataclass` and `@dataclass(...)` both), or a SUBCLASS OF A SAME-FILE class (a local specialisation). Zero primaries is fine (a pure error/config module). The containment tier the typed class graph is built on (bd 4bl.1) |
-| 6 | ast-grep module-shape | vendored ast-grep + our `sg-rules`, driven by OURS `astgrep.py` `AstGrep` | rule yml | scan paths = `packages`. Invoked as an ENGINE (`python -m devtools.astgrep <pkgs> --assert`) rather than by each runner re-spelling the CLI call. It shells out to the vendored binary, but answers the same `report()`/`run_assert()` verbs as the AST engines, so it rides the batch runner and the runners stay uniform. That is also the portability fix: locating the packaged config used to be a `$(python -m devtools.config sgconfig)` substitution, which forced `bash -c` — and the bash pre-commit selects on Windows cannot find `uv`, so this gate did not run at all on the scaffold's own primary dev platform. The lookup is `Config.path` in Python now, and an e2e asserts NO hook entry contains `bash -c` |
+| 6 | ast-grep module-shape | vendored ast-grep + our `sg-rules`, driven by OURS `astgrep.py` `AstGrep` | rule yml | scan paths = `packages`. Invoked as an ENGINE (`python -m devtools.astgrep <pkgs> --assert`) rather than by each runner re-spelling the CLI call. It shells out to the vendored binary, but answers the same `report()`/`run_assert()` verbs as the AST engines, so it rides the batch runner and the runners stay uniform. That is also the portability fix: locating the packaged config used to be a `$(python -m devtools.tools.config sgconfig)` substitution, which forced `bash -c` — and the bash pre-commit selects on Windows cannot find `uv`, so this gate did not run at all on the scaffold's own primary dev platform. The lookup is `Config.path` in Python now, and an e2e asserts NO hook entry contains `bash -c` |
 | 7 | jscpd DRY | vendored jscpd | `jscpd.json` threshold | scope=`jscpd_paths` (R1 hygiene, default `packages`, widenable to a web-TS dir — 9mu) |
 | 8 | class-shape explorers | OURS lcom/data_clumps/state_candidates | (advisory, always exit 0) | scan paths = `packages` |
 | 9 | import-linter (self-gates on >1 pkg) | vendored import-linter | (mechanism) | `[tool.importlinter]` contracts (LOCAL-SLOT) |
@@ -155,7 +155,7 @@ scaffold tag in the generated `pyproject.toml`'s `devtools` extra
 one-line `devtools_ref` bump on `copier update` — no analyzer source diff in the consumer's PRs (the churn
 this fixed). The package is extraction-ready — [`SPLIT.md`](SPLIT.md) enumerates every scaffold↔package
 seam and the checklist to lift it into its own repo. The ast-grep rules + the ast-grep/jscpd config ship INSIDE the package and are located from
-the install via `python -m devtools.config sgconfig|jscpd` (external CLIs need a filesystem path). All
+the install via `python -m devtools.tools.config sgconfig|jscpd` (external CLIs need a filesystem path). All
 `python -m devtools.*` gate invocations run with `--extra devtools`. A generated project keeps only a
 `devtools/README.md` usage doc (no `__init__.py`, so it's a namespace portion that never shadows the
 installed package).
@@ -274,7 +274,7 @@ identically (every scope = `packages`). No new questions, no new slots.
 ## Pinned tool versions (single-sourced in copier.yml, `when: false`)
 - ruff `0.15.13` · vulture `2.16` · nox `2026.7.11` · deptry `0.25.1` · pip-audit `2.10.1` · pre-commit `4.6.0` · pyrefly `1.1.1`
 - ast-grep via `uvx --from ast-grep-cli ast-grep` · jscpd via `npx --yes jscpd` (config located via
-  `python -m devtools.config`)
+  `python -m devtools.tools.config`)
 - the analyzers themselves: `sdlc-devtools` package pinned by `devtools_ref` (the `devtools` extra pulls it
   + its transitive `grimp`/`networkx`)
 

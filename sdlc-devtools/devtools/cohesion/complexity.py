@@ -5,7 +5,7 @@ reviewer signal. ADVISORY only — the FIXED complexity gate is ruff `C901`/`PLR
 legislated house number. This surfaces the ranking so a reviewer sees drift below that floor; it never
 blocks. A repo that wants a tighter legislated ceiling adds a config knob at that point, not speculatively.
 
-    python -m devtools.complexity mypackage    # advisory ranked report, always exit 0
+    python -m devtools.cohesion.complexity mypackage    # advisory ranked report, always exit 0
 """
 
 from __future__ import annotations

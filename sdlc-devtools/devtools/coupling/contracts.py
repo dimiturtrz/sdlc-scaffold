@@ -23,7 +23,7 @@ per-repo fact):
 
 No contracts configured = nothing to check, so a fresh project starts green and ratchets.
 
-Run: `python -m devtools.contracts [pkgs...]` (report) | `--assert` (gate).
+Run: `python -m devtools.coupling.contracts [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

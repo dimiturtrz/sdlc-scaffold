@@ -19,7 +19,7 @@ judged at all. Below it the ratio is noise — two accesses versus one is not ev
 delegators (mappers, serializers, visitors, facades) read another class heavily BY DESIGN, so the floor is
 raisable per repo rather than the rule being weakened.
 
-Run: `python -m devtools.envy [pkgs...]` (report) | `--assert` (gate).
+Run: `python -m devtools.coupling.envy [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations
