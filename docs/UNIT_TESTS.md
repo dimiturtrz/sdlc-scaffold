@@ -69,7 +69,7 @@ and had simply never been asked.
 
 | rule | gate | notes |
 |---|---|---|
-| 1, 2, 4 | `devtools/mirror.py` | per-method mirror; resolves the layout through `devtools/layout.py` |
+| 1, 2, 4 | `devtools/mirror.py` | per-method mirror; resolves the layout through `devtools/plumbing/layout.py` |
 | 9 | `devtools/small.py` | external data / network / sleep / unseeded RNG |
 | module has a test at all | `devtools/graph.py` | the file-level mirror this refines |
 | 5 | ruff `PLR0915` | not a constraint on density — a dense parametrized table costs ~1 statement, so the ceiling is only reachable by writing the same test longhand |
