@@ -47,7 +47,8 @@
     nodeDimensionsIncludeLabels: true,
   };
 
-  const GAP = 24;   // the gutter between gridded boxes — one gap, used by both passes
+  const GAP = 10;   // the visual gutter between packed boxes — a minimal breathing margin, not a tuning knob
+  const VIEWPORT_ASPECT = 1.6;   // target width:height for a shelf pack — a plain landscape default (16:10)
 
   const parentId = (n) => (n.parent().empty() ? '' : n.parent().id());
 
@@ -69,8 +70,8 @@
     const anchored = siblings.filter((n) => !looseIds.has(n.id()));
     const under = anchored.nonempty();
     const box = under ? anchored.boundingBox() : cy.collection(loose).boundingBox();
-    const cellW = Math.max(...loose.map((n) => n.outerWidth())) + GAP;
-    const cellH = Math.max(...loose.map((n) => n.outerHeight())) + GAP;
+    const cellW = Math.max(...loose.map((n) => n.boundingBox().w)) + GAP;
+    const cellH = Math.max(...loose.map((n) => n.boundingBox().h)) + GAP;
     const cols = Math.max(1, Math.min(loose.length, Math.round(box.w / cellW) || 1));
     const top = under ? box.y2 + GAP : box.y1;
     loose.forEach((n, i) => n.position({
@@ -79,8 +80,13 @@
     }));
   }
 
-  // pack a compound's children into a near-square grid, ordered by their solved position (grouped into rows
-  // by y, then left-to-right) so the force pass's spatial adjacency is kept while the gaps are squeezed out.
+  // pack a compound's children in reading order (their solved position, grouped into rows by y then left to
+  // right) so the force pass's spatial adjacency is kept while the gaps are squeezed out. A SHELF pack, not a
+  // uniform grid: each box takes its OWN width and a row wraps at a width budget, so a narrow method next to a
+  // wide one does not inherit the wide one's column. The uniform grid was the real "drawn out" — cells sized
+  // to the widest child left every narrow child ringed with empty space (a 13-method class came out ~26%
+  // full). The budget is sqrt(total footprint), which lands roughly square; rows are as tall as their tallest
+  // box, so variable sizes nest instead of quantising to a cell.
   //
   // A child may itself be a COMPOUND (a class box inside a module, a subpackage inside a package). A compound's
   // geometry is DERIVED from its children, so its `position()` is unreliable to read or write — moving one
@@ -101,18 +107,26 @@
       d.position({ x: p.x + dx, y: p.y + dy });
     });
   }
-  function gridInReadingOrder(kids) {
+  function packInReadingOrder(kids) {
     const arr = kids.toArray().slice().sort((a, b) => {
       const pa = centre(a), pb = centre(b);
       const sameRow = Math.abs(pa.y - pb.y) <= (a.boundingBox().h + b.boundingBox().h) / 2;
       return sameRow ? pa.x - pb.x : pa.y - pb.y;
     });
-    const cellW = Math.max(...arr.map((n) => n.boundingBox().w)) + GAP;
-    const cellH = Math.max(...arr.map((n) => n.boundingBox().h)) + GAP;
-    const cols = Math.max(1, Math.round(Math.sqrt(arr.length)));
+    const cell = (n) => ({ w: n.boundingBox().w + GAP, h: n.boundingBox().h + GAP });
+    // Row width budget = sqrt(total footprint) targets a square block; scaling the footprint by the viewport's
+    // aspect before the sqrt makes the block land at THAT aspect instead — so a shelf pack fills a landscape
+    // screen rather than stacking into a portrait column. VIEWPORT_ASPECT is a plain landscape default (16:10).
+    const budget = Math.sqrt(arr.reduce((s, n) => { const c = cell(n); return s + c.w * c.h; }, 0) * VIEWPORT_ASPECT);
     const bb = kids.boundingBox();
-    const x0 = bb.x1 + cellW / 2, y0 = bb.y1 + cellH / 2;
-    arr.forEach((n, i) => place(n, x0 + (i % cols) * cellW, y0 + Math.floor(i / cols) * cellH));
+    let x = bb.x1, y = bb.y1, rowH = 0;
+    for (const n of arr) {
+      const c = cell(n);
+      if (x - bb.x1 + c.w > budget && x > bb.x1) { x = bb.x1; y += rowH; rowH = 0; }  // wrap the shelf
+      place(n, x + c.w / 2, y + c.h / 2);
+      x += c.w;
+      rowH = Math.max(rowH, c.h);
+    }
   }
 
   // fill a compound reaches vs the fill a tidy square grid-pack of the SAME children would. Both numerator and
@@ -157,7 +171,7 @@
     const parents = cy.nodes(':parent').toArray().sort((a, b) => b.id().length - a.id().length);
     for (const p of parents) {
       const kids = p.children();
-      if (kids.length >= 2 && fillRatio(kids) < SPREAD_TOLERANCE) gridInReadingOrder(kids);
+      if (kids.length >= 2 && fillRatio(kids) < SPREAD_TOLERANCE) packInReadingOrder(kids);
     }
   }
 
