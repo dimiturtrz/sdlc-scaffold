@@ -8,12 +8,16 @@ carries the one real-grimp end-to-end proof; the viewer assembly needs no grimp 
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
 import pytest
 
+import devtools
 from devtools.graph.archmap import Archmap, main
+
+_ARCHVIZ = Path(devtools.__file__).resolve().parent / "archviz"
 
 
 class _FakeGraph:
@@ -227,3 +231,49 @@ def test_main_requires_packages(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["devtools.archmap"])
     with pytest.raises(SystemExit):
         main()
+
+
+# The measurement harness (measure.cjs, bd 42b.1) scores what the VIEWER ships, so it carries a COPY of the
+# fcose constants and the parking gap out of viewer.js — necessary because viewer.js is a browser IIFE with
+# no exports and the harness runs under Node. A copy nothing checks drifts the moment either file is tuned,
+# and then the "baseline" the layout rework is measured against stops describing the real page. This holds the
+# two in lockstep until Stage A (bd 42b.2) rewrites parking and can unify the source outright.
+_LAYOUT_NUMBERS = [
+    "nodeSeparation",
+    "idealEdgeLength",
+    "nestingFactor",
+    "gravity",
+    "numIter",
+    "gravityCompound",
+    "gravityRangeCompound",
+]
+
+
+def _layout_constants(text: str) -> dict[str, str]:
+    """The layout knobs a viewer/harness declares, as name->literal — the shared subset both files must agree
+    on. Values are compared as source text (`0.8`, not 0.8) so a reformat that changes precision is caught."""
+    found = {}
+    for key in _LAYOUT_NUMBERS:
+        m = re.search(rf"\b{key}\s*:\s*([\d.]+)", text)
+        assert m, f"{key} not found — the layout block moved or was renamed"
+        found[key] = m.group(1)
+    # the cross-module edge-spring split: `crossModule ? 0.05 : 0.45`
+    m = re.search(r"crossModule.*?\?\s*([\d.]+)\s*:\s*([\d.]+)", text)
+    assert m, "edgeElasticity cross-module split not found"
+    found["edgeElasticity.cross"], found["edgeElasticity.intra"] = m.group(1), m.group(2)
+    # the parking grid gap
+    m = re.search(r"PARK_GAP\s*=\s*(\d+)", text)
+    assert m, "PARK_GAP not found"
+    found["PARK_GAP"] = m.group(1)
+    return found
+
+
+def test_measure_harness_mirrors_viewer_layout():
+    """measure.cjs must carry the SAME fcose constants + parking gap as viewer.js, so its baseline numbers
+    describe the layout the page actually renders. Retune one file and this fails until the other matches."""
+    viewer = _layout_constants((_ARCHVIZ / "viewer.js").read_text(encoding="utf-8"))
+    harness = _layout_constants((_ARCHVIZ / "measure.cjs").read_text(encoding="utf-8"))
+    assert viewer == harness, (
+        f"the harness's shipped-layout copy drifted from viewer.js — reconcile them:\n"
+        f"  viewer:  {viewer}\n  harness: {harness}"
+    )

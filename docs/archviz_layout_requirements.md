@@ -73,6 +73,27 @@ Prototype data lives in the epic. The decision between A and B is a stage gate, 
 A is the proportionate fix for the actual complaint (compression); B is only worth its cost if planarity /
 up-down prove to matter after A lands.
 
+## Measured baseline (fcose as shipped, `randomize:false`)
+
+Run: `node sdlc-devtools/devtools/archviz/measure.cjs` (defaults to the pinned fixture
+`sdlc-devtools/tests/fixtures/archviz_graph.json`; the full JSON is recorded at
+`sdlc-devtools/tests/fixtures/archviz_baseline.json`). Three fully-expanded views, the maximal picture the
+complaints were about:
+
+| view | nodes/edges | compounds | under-filled | median fill | crossings | canvas | deterministic |
+|------|-------------|-----------|--------------|-------------|-----------|--------|---------------|
+| module / imports  |  37 / 79 |  7 | **3** | 0.16 |  509 | 1171×1008  | yes |
+| class / structure |  84 / 29 | 17 |  0    | 0.29 |   10 | 1756×1733  | yes |
+| all / all         | 370 / 459 | 51 | **25** | 0.15 | 3183 | 7649×9670 | yes |
+
+This is the floor. The numbers Stage A must move: **under-filled 25→0** and **median fill 0.15→materially
+higher** at all/all (the empty-box complaint, quantified — the worst boxes fill under 2%), and **crossings
+down** at every view. Determinism is a solved problem, not a Stage-A goal: fcose's spectral init is
+byte-deterministic with `randomize:false` (the harness confirms Δ=0). The *viewer* is non-deterministic on
+load only because it reseeds (`randomize:true`) on depth changes — a viewer choice Stage A drops, not an
+engine limitation. The 509 crossings on a 37-node import graph, and 25 of 51 compounds under a tidy-pack
+half-density, are the concrete evidence force layout ignores both planarity and compression.
+
 ## The measurement harness (why this can be verified without a browser)
 
 Both fcose (via a headless cytoscape run or the emitted positions) and ELK run in Node. A small harness
