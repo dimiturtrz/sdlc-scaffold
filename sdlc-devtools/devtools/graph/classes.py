@@ -16,8 +16,6 @@ A class is a SATELLITE when it is:
   - a SUBCLASS OF A SAME-FILE CLASS — a local specialisation, not an independent peer.
 Everything else is a PRIMARY. Two primaries in one file = two subjects = the split gate fires; zero is
 fine (a pure error/config module has no subject of its own).
-
-Run: `python -m devtools.classes [pkgs...]` (report) | `--assert` (gate on multi-primary files).
 """
 
 from __future__ import annotations

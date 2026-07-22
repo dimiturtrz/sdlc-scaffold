@@ -1,4 +1,4 @@
-"""Code-size / complexity analytics — a one-shot EXPLORER (like `devtools.graph`'s report mode), not a
+"""Code-size / complexity analytics — a one-shot EXPLORER (like `devtools.graph.fitness`'s report mode), not a
 gate. Tracks that methods stay thin and complexity stays in the engine as the codebase grows, rather than
 scattering into fat leaf functions.
 
@@ -6,9 +6,6 @@ Per-file and per-area: code lines (non-blank, non-comment), def count, and a bra
 `if/for/while/try/except/with/and/or/ternary/comprehension`, the McCabe-style decision points, summed via
 `ast` (no radon dependency). Plus the src-vs-test line ratio and the top-N largest files. Complexity-per-def
 is the number to watch — a rising max means logic is leaking into leaves that should delegate.
-
-    python -m devtools.analytics --areas core neuroscan devtools     # scan your packages
-    python -m devtools.analytics --areas core --flag-over 250        # list files over a code-line budget
 """
 
 from __future__ import annotations

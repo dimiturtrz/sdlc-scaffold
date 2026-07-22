@@ -4,8 +4,6 @@ radon does the measurement (the mature, correct CC engine); this ranks it and pr
 reviewer signal. ADVISORY only — the FIXED complexity gate is ruff `C901`/`PLR09xx` (CC>10 blocks), a
 legislated house number. This surfaces the ranking so a reviewer sees drift below that floor; it never
 blocks. A repo that wants a tighter legislated ceiling adds a config knob at that point, not speculatively.
-
-    python -m devtools.complexity mypackage    # advisory ranked report, always exit 0
 """
 
 from __future__ import annotations

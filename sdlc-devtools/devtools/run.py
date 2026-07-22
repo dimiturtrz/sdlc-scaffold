@@ -19,7 +19,6 @@ EVERY ENGINE RUNS, even after one fails. Twelve chained `session.run` calls stop
 commit that breaks three gates is discovered three times; here the exit code is the OR of all of them and
 the report is complete.
 
-    python -m devtools.run pkg --gate graph,demeter --report arrows,calls
 
 `python -m devtools.<tool> [--assert]` is unchanged and remains the documented contract — this is an
 ADDITION for runners to call, not a replacement (it is pinned in consumers and wired into every template).
@@ -103,7 +102,7 @@ class Batch:
         to parse the tree for name resolution it will not use.
 
         `cached_property` rather than a hand-rolled `if self._resolver is None` memo: the lazy read was
-        the first thing `devtools.purity` flagged when it was written, and it was right. The descriptor
+        the first thing `devtools.coupling.purity` flagged when it was written, and it was right. The descriptor
         does the caching, so the property itself stays a pure read.
         """
         return Resolver(self.packages)

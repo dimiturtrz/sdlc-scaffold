@@ -13,9 +13,6 @@ grimp builds the honest combined import graph (folder≡package≡module, so nod
 
 DOC-GEN / ADVISORY. This visualizes structure; it does not enforce it — directional enforcement stays with
 import-linter (the layer gate). `--check` fails only if the committed graph.json is stale.
-
-    python -m devtools.archmap core cardioseg          # (re)write docs/architecture/{graph.json,index.html}
-    python -m devtools.archmap core cardioseg --check  # fail if the committed graph.json is out of date
 """
 
 from __future__ import annotations
@@ -291,7 +288,7 @@ class Archmap:
 
 def main():
     ap = argparse.ArgumentParser(
-        prog="python -m devtools.archmap",
+        prog="python -m devtools.graph.archmap",
         description="architecture autoviz: graph.json + a self-contained cytoscape viewer (doc-gen)",
     )
     ap.add_argument("packages", nargs="+", help="package dirs to map (>=1 required)")
@@ -322,7 +319,7 @@ def main():
         drift = engine.check()
         if drift:
             log.error(
-                "archmap: graph.json is stale (run `python -m devtools.archmap %s`):\n%s",
+                "archmap: graph.json is stale (run `python -m devtools.graph.archmap %s`):\n%s",
                 " ".join(args.packages),
                 "\n".join(drift),
             )

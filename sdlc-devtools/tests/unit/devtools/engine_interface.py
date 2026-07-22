@@ -14,6 +14,7 @@ the one thing every other gate exposes as a method was, there, reachable only by
 import importlib
 import inspect
 import pkgutil
+import re
 
 import pytest
 
@@ -84,6 +85,27 @@ def test_plumbing_holds_no_engines():
     for name in PLUMBING:
         module = importlib.import_module(f"devtools.plumbing.{name}")
         assert not hasattr(module, "main"), f"plumbing/{name} owns a main() — it is an engine, misfiled"
+
+
+# The invocation lives in exactly ONE place — `Cli.prog`, computed from the engine's file (bd 5hg). A bare
+# concrete self-invocation restated in a docstring is a second source of truth `--help` already owns, checked
+# by nothing, so it rots on the next module move (it did). ALLOWED: a `$(python -m devtools.tools.config …)`
+# substitution — that documents how OTHER commands consume a tool's OUTPUT, not how to run this one — and the
+# abstract `<tool>` contract. FORBIDDEN: `python -m devtools.<concrete>` not inside a `$(…)`.
+_RESTATED_INVOCATION = re.compile(r"(?<!\$\()python -m devtools\.[a-z]")
+
+
+def test_no_engine_docstring_restates_its_invocation():
+    """No engine (or bespoke tool) may hand-copy `python -m devtools.<x>` into its docstring — Cli.prog owns
+    it, and a copy nothing checks drifts silently. This is the guard that would have caught the `5hg` rename
+    leaving 24 stale run-lines behind."""
+    offenders = sorted(
+        name for name, module in _main_modules() if _RESTATED_INVOCATION.search(inspect.getdoc(module) or "")
+    )
+    assert not offenders, (
+        f"these docstrings restate `python -m devtools.<x>` — delete the run-line, `Cli.prog`/`--help` is its "
+        f"single source: {offenders}"
+    )
 
 
 def test_the_bespoke_set_is_exactly_the_known_three():

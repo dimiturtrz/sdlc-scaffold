@@ -3,7 +3,7 @@
 ast-grep is an EXTERNAL CLI and needs a filesystem path to its config, which the runners used to supply
 with shell substitution:
 
-    bash -c 'uvx --from ast-grep-cli ast-grep scan -c "$(python -m devtools.config sgconfig)" pkgs'
+    bash -c 'uvx --from ast-grep-cli ast-grep scan -c "$(python -m devtools.tools.config sgconfig)" pkgs'
 
 That `$(…)` is the only reason the hook needed `bash`, and on Windows the bash pre-commit selects cannot
 reliably find `uv`/`uvx` on its PATH — so the scaffold's own primary dev platform could not run the one
@@ -14,8 +14,6 @@ WHY THIS IS AN ENGINE and not a two-line script: it answers `report()` / `run_as
 gate, so a runner drives it without knowing that this one happens to shell out to a vendored binary while
 the others walk an AST. The subprocess is an implementation detail of THIS engine, not a second category
 of gate the callers have to special-case.
-
-Run: `python -m devtools.astgrep [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

@@ -161,8 +161,9 @@ def test_the_template_only_calls_engines_the_pinned_release_actually_has():
         match.group(1)
         for path in _RUNNERS.values()
         # anchored on `-m`, so only a real invocation counts — `"-m", "devtools.run"` and
-        # `python -m devtools.graph` both match, while prose naming a module does not
-        for match in re.finditer(r"-m[\"',\s]+devtools\.(\w+)", Path(path).read_text(encoding="utf-8"))
+        # `python -m devtools.graph.fitness` both match, while prose naming a module does not. `[\w.]+` spans
+        # the subpackage (bd 5hg): a gate lives at a DOTTED path now, so `\w+` would capture only the folder.
+        for match in re.finditer(r"-m[\"',\s]+devtools\.([\w.]+)", Path(path).read_text(encoding="utf-8"))
     }
     ref = copier_default("devtools_ref")
     probe = ["git", "rev-parse", "-q", "--verify", ref]
@@ -172,7 +173,8 @@ def test_the_template_only_calls_engines_the_pinned_release_actually_has():
         module
         for module in referenced
         if subprocess.run(  # noqa: S603 (fixed git probe)
-            ["git", "cat-file", "-e", f"{ref}:sdlc-devtools/devtools/{module}.py"],  # noqa: S607 (git on PATH)
+            # dotted module -> path: `graph.fitness` lives at `graph/fitness.py` in the pinned tree.
+            ["git", "cat-file", "-e", f"{ref}:sdlc-devtools/devtools/{module.replace('.', '/')}.py"],  # noqa: S607
             **_CAPTURE,
         ).returncode
         != 0
@@ -278,3 +280,25 @@ def test_every_enforced_gate_is_wired_into_all_three_runners():
     assert not missing, "enforced gates must run in EVERY runner; these are wired in only some:\n  " + "\n  ".join(
         f"{label}: only there -> {gates}" for label, gates in missing.items()
     )
+
+
+def test_the_scaffolds_own_workflows_invoke_only_real_devtools_modules():
+    """The scaffold's OWN CI (dogfood) invokes devtools by module path, and NOTHING checked those paths.
+
+    That gap shipped a broken `architecture/deploy` when `devtools.archmap` moved to `devtools.graph.archmap`
+    (bd 5hg): the deploy job invoked the old path, and no PR check could see it — deploy runs on push-to-main,
+    not on the PR, and the gate-wiring guard above covers the TEMPLATE runners a CONSUMER receives, not these
+    self-scaffolding workflows. A `python -m devtools.<x>` in a scaffold workflow must resolve to a real module
+    file in the sibling package, so the next module move cannot break a workflow silently again.
+    """
+    pkg = REPO / "sdlc-devtools" / "devtools"
+    own = [*(REPO / ".github" / "workflows").glob("*.yml"), REPO / ".pre-commit-hooks.yaml"]
+    invoked = {
+        (f.name, module)
+        for f in own
+        for module in re.findall(r"python -m (devtools\.[\w.]+)", f.read_text(encoding="utf-8"))
+    }
+    missing = sorted(
+        f"{wf}: {mod}" for wf, mod in invoked if not (pkg / Path(*mod.split(".")[1:])).with_suffix(".py").exists()
+    )
+    assert not missing, "scaffold workflows invoke devtools modules that do not exist:\n  " + "\n  ".join(missing)

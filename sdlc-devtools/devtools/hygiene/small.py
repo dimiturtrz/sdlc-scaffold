@@ -28,8 +28,6 @@ The common, checkable case is the one worth a gate — the same bargain every en
 THE SEED RULE IS PER-FILE, not per-call. `random.seed(0)` in a fixture covers the module's tests, so
 demanding a seed at each sampling site would fight the fixture pattern the convention encourages. A file
 that samples and never seeds anywhere is the finding.
-
-Run: `python -m devtools.small [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

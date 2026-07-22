@@ -17,8 +17,6 @@ THE SETTER IS THE EXCEPTION, and it is the whole point of one: `@x.setter` is th
 PRECISE BUT INCOMPLETE, as everywhere else here. This sees assignment to `self` inside the property body.
 A property that calls a method which mutates elsewhere is not caught, and proving purity in general is not
 attempted — the common, checkable case is the one worth a gate.
-
-Run: `python -m devtools.purity [pkgs...]` (report) | `--assert` (gate).
 """
 
 from __future__ import annotations

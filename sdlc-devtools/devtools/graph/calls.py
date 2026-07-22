@@ -26,8 +26,6 @@ a returned value, a reflective lookup — resolves to nothing and emits no edge.
 never a wrong edge, sometimes a missing one. Because our house style types every field and parameter, and
 because we attribute to the DECLARED type instead of guessing the dispatch, that incompleteness is small
 and, critically, one-directional — which is what lets a gate fire on an arrow's PRESENCE and still block.
-
-Run: `python -m devtools.calls [pkgs...]` (report).
 """
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-/* archmap interactive viewer — hydrates ./graph.json (emitted by `python -m devtools.archmap`).
+/* archmap interactive viewer — hydrates ./graph.json (emitted by `python -m devtools.graph.archmap`).
  *
  * Manual collapse/aggregate engine: WE own the visible-representative logic, so a folded package pair is
  * exactly ONE counted arrow (the summed underlying imports), not a fan. Nodes come and go (add/remove) as
