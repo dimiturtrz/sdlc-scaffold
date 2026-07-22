@@ -33,6 +33,15 @@
   // right shape (the deeper stops need more room); the coefficient was just far too small.
   const FCOSE = { name: 'fcose', quality: 'proof', animate: false,
     nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.8, gravity: 0.25, numIter: 2500,
+    // A cross-module edge is a WEAK spring; an intra-module one keeps full strength. A compound box is sized
+    // to bound ALL its children, so a single method calling into another module used to drag that one child
+    // to the box's far edge and blow the whole box open (e.g. `small`'s __init__ -> plumbing.layout left an
+    // enormous, near-empty `small`). nestingFactor pushes the BOXES apart but does nothing to stop a child
+    // being dragged; slackening the cross-module spring lets that child drift back to its own compound under
+    // gravity while the loose edge still reaches across. Intra-module edges keep the default so a class's
+    // real internal shape stays taut. `crossModule` is stamped on each edge at build time (it needs the
+    // containment tree, which this constant does not have in scope) and merely read here.
+    edgeElasticity: (e) => (e.data('crossModule') ? 0.05 : 0.45),
     // Our nodes are sized to their text (`width: 'label'`) and a compound draws its own label above its
     // children. fcose measures raw boxes unless told otherwise, so without this it packs siblings into
     // each other's labels — which is most of the overlap between module boxes.
@@ -223,6 +232,9 @@
   }
 
   function ancestors(id) { const a = []; let p = PARENT[id]; while (p) { a.push(p); p = PARENT[p]; } return a; }
+  // The outermost container is the module (containment is module -> class -> method); a node with no
+  // ancestors IS a module. Used to tell an intra-module edge from a cross-module one for the layout.
+  function moduleOf(id) { const a = ancestors(id); return a.length ? a[a.length - 1] : id; }
   function hiddenBy(id) { return ancestors(id).some((a) => collapsed.has(a)); }
   function inV(id) { return !hiddenBy(id); }
   function rep(id) { let r = id; for (const a of [id, ...ancestors(id)]) if (collapsed.has(a)) r = a; return r; }
@@ -342,7 +354,12 @@
     }
     cy.add(Object.entries(agg).map(([key, w]) => {
       const [s, t, kind] = key.split('|');
-      return { group: 'edges', data: { id: 'agg:' + key, source: s, target: t, weight: w, kind } };
+      // Stamped here, not in the layout constant, because telling a cross-module edge apart needs the
+      // containment tree. `s`/`t` are the VISIBLE representatives at this depth, so at module depth this is
+      // always false (both ends already ARE modules) and the weakening only bites at the finer tiers, which
+      // is exactly where a method's reach into another module was dragging its box open.
+      return { group: 'edges', data: { id: 'agg:' + key, source: s, target: t, weight: w, kind,
+        crossModule: moduleOf(s) !== moduleOf(t) } };
     }));
     relayout();
   }
