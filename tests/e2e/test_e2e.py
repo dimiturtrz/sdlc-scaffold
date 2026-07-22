@@ -447,7 +447,8 @@ def test_arrows_advisory_decomposes_the_seed(project):
     to carry each kind, so assert the REAL arrows appear — not merely that the explorer exits 0."""
     name, path = project
     pkg = example_pkg(name)
-    result = run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.arrows", *layers(name)], path)
+    cmd = ["uv", "run", "--extra", "devtools", "python", "-m", "devtools.primitives.arrows", *layers(name)]
+    result = run(cmd, path)
     text = result.stdout + result.stderr
     assert f"{pkg}.errors.KeyMissingError -> {pkg}.errors.StoreError" in text, "intra-file inherits"
     assert f"{pkg}.memory_store.CapacityError -> {pkg}.errors.StoreError" in text, "cross-file inherits"
@@ -478,7 +479,7 @@ def test_calls_advisory_splits_contract_from_concrete(project):
     """
     name, path = project
     pkg = example_pkg(name)
-    result = run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.calls", *layers(name)], path)
+    result = run(["uv", "run", "--extra", "devtools", "python", "-m", "devtools.primitives.calls", *layers(name)], path)
     text = result.stdout + result.stderr
     contract, concrete = text.split("construct -> the concrete")
     # the repository calls the Store CONTRACT — never the MemoryStore that actually runs
