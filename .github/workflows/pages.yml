@@ -41,7 +41,7 @@ jobs:
       - name: Build main architecture
         run: |
           cd sdlc-devtools
-          uv run --group dev python -m devtools.archmap devtools
+          uv run --group dev python -m devtools.graph.archmap devtools
           mkdir -p "$GITHUB_WORKSPACE/_site/architecture"
           cp docs/architecture/graph.json docs/architecture/index.html "$GITHUB_WORKSPACE/_site/architecture/"
       # /architecture/preview/ = dev (extract dev's sdlc-devtools + build it, so the preview tracks dev)
@@ -50,7 +50,7 @@ jobs:
           rm -rf /tmp/devbuild && mkdir -p /tmp/devbuild
           git archive origin/dev sdlc-devtools | tar -x -C /tmp/devbuild
           cd /tmp/devbuild/sdlc-devtools
-          uv run --group dev python -m devtools.archmap devtools
+          uv run --group dev python -m devtools.graph.archmap devtools
           mkdir -p "$GITHUB_WORKSPACE/_site/architecture/preview"
           cp docs/architecture/graph.json docs/architecture/index.html "$GITHUB_WORKSPACE/_site/architecture/preview/"
       # root redirect so the Pages site URL itself resolves to the stable view
