@@ -282,7 +282,7 @@ def test_multi_package_renders_into_gates(scaffold, tmp_path_factory):
     # run in ONE process, so `--extra devtools` has to reach THAT call or graph cannot import grimp at all.
     batch = noxfile[noxfile.index('"devtools.run"') - 400 : noxfile.index('"devtools.run"') + 400]
     assert '"--extra",' in batch and '"devtools",' in batch, f"the batch run must pull the devtools extra:\n{batch}"
-    assert "graph," in batch, "graph must be among the batched gates"
+    assert "graph.fitness," in batch, "graph.fitness must be among the batched gates"
     ci = (out / ".github" / "workflows" / "ci.yml").read_text()
     assert "check pkg_a pkg_b --select" in ci
     assert "--assert pkg_a pkg_b" in ci
@@ -408,7 +408,7 @@ def test_jscpd(project):
 def test_class_shape_smells(project):
     name, path = project
     # advisory explorers — must run clean (exit 0); findings are fine, they never block
-    for tool in ("state_candidates", "lcom", "data_clumps"):
+    for tool in ("cohesion.state_candidates", "cohesion.lcom", "cohesion.data_clumps"):
         run(["uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{tool}", *layers(name)], path)
 
 
@@ -416,7 +416,7 @@ def test_composition_and_contracts_enforced_run_clean(project):
     """A4 (bd 4bl.4). The seed's object graph is acyclic, and a fresh gen configures no contracts — both
     gates start green and ratchet."""
     name, path = project
-    for engine in ("composition", "contracts"):
+    for engine in ("coupling.composition", "coupling.contracts"):
         run(["uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{engine}", *layers(name), "--assert"], path)
 
 
