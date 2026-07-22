@@ -51,15 +51,6 @@ log = logging.getLogger("devtools.run")
 # this (one home) rather than keeping a copy.
 PLUMBING = frozenset(info.name for info in pkgutil.iter_modules(plumbing.__path__))
 
-# What this RUNNER cannot drive, which is deliberately NOT the same question the interface test asks. That
-# test excludes what is exempt from the `report()/run_assert()` CONTRACT; this excludes what cannot be
-# constructed as `Engine(packages)`. `analytics` is the case that separates them: it honours the contract
-# perfectly and the test rightly holds it to that, but its `__init__(repo, areas)` takes something else
-# entirely, so a batch run cannot build it. Collapsing the two lists into one silently dropped analytics
-# from the contract test — a duplication worth keeping, because the facts are only coincidentally similar.
-UNDRIVEABLE = frozenset({"config", "archmap", "analytics", "run"})
-NOT_ENGINES = PLUMBING | UNDRIVEABLE
-
 
 @dataclass(frozen=True)
 class Result:
