@@ -78,6 +78,7 @@ _ASSETS = {
     "__LAYOUT_BASE__": "layout-base.js",
     "__COSE_BASE__": "cose-base.js",
     "__FCOSE__": "cytoscape-fcose.js",
+    "__LAYOUT__": "layout.js",
     "__VIEWER__": "viewer.js",
 }
 

@@ -8,6 +8,15 @@ one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved
 inherited call points at the base where the code actually lives. [Open the live viewer
 →](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
 
+**v1.26** — the architecture viewer's **layout is now deterministic and self-compacting**. The interactive
+map (the marked package tree → nested boxes + typed arrows) was force-directed, so a single stranded child
+ballooned its box into an empty strip and every fix was another magic force-constant. Now the force pass and
+a new compaction share one module: fcose gives the global arrangement, then a deterministic pass parks the
+outward-only children and shelf-packs every still-loose compound in reading order — guaranteeing tight boxes,
+byte-identical runs, and no tuning knobs (the two interim force constants are gone). A headless Node harness
+scores fill / crossings / determinism against the real graph, so "is it better?" is a measured number, not a
+screenshot: median box fill rose from 0.15 to ~0.6 and the full-depth canvas roughly halved.
+
 **v1.25** — the analyzer package's **structure now comes from its folders, not hand-kept lists**. Thirty-one
 flat modules became a layered tree: `plumbing/` (the machinery every engine runs on), `graph/` (the code-graph
 subsystem — the class/call/dependency read-models, the arch-fitness gate, the viewer), and the gates grouped

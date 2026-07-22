@@ -1,0 +1,5750 @@
+{
+  "edges": [
+    {
+      "kind": "import",
+      "source": "devtools.astgrep",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.astgrep",
+      "target": "devtools.tools.config",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.complexity",
+      "target": "devtools.plumbing._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.complexity",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.complexity",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.data_clumps",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.data_clumps",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.lcom",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.lcom",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.state_candidates",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.state_candidates",
+      "target": "devtools.plumbing.omit",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.cohesion.state_candidates",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.composition",
+      "target": "devtools.graph.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.composition",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.contracts",
+      "target": "devtools.graph.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.contracts",
+      "target": "devtools.graph.calls",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.contracts",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.contracts",
+      "target": "devtools.plumbing.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.contracts",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.demeter",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.demeter",
+      "target": "devtools.plumbing.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.demeter",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.demeter",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.envy",
+      "target": "devtools.graph.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.envy",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.envy",
+      "target": "devtools.plumbing.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.envy",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.envy",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.purity",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.purity",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.coupling.purity",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.archmap",
+      "target": "devtools",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.archmap",
+      "target": "devtools.graph.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.archmap",
+      "target": "devtools.graph.calls",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.archmap",
+      "target": "devtools.graph.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.archmap",
+      "target": "devtools.plumbing._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.archmap",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.arrows",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.arrows",
+      "target": "devtools.plumbing.names",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.arrows",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.calls",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.calls",
+      "target": "devtools.plumbing.names",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.calls",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.classes",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.classes",
+      "target": "devtools.plumbing.names",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.classes",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.graph.arrows",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.graph.calls",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.graph.classes",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.plumbing._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.plumbing.layout",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.plumbing.names",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.plumbing.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.graph.fitness",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.magic_literals",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.magic_literals",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.mirror",
+      "target": "devtools.plumbing._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.mirror",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.mirror",
+      "target": "devtools.plumbing.layout",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.mirror",
+      "target": "devtools.plumbing.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.mirror",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.small",
+      "target": "devtools.plumbing._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.small",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.small",
+      "target": "devtools.plumbing.layout",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.hygiene.small",
+      "target": "devtools.plumbing.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.plumbing.cli",
+      "target": "devtools",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.plumbing.layout",
+      "target": "devtools.plumbing.omit",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.plumbing.omit",
+      "target": "devtools.plumbing.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.plumbing.pyproject",
+      "target": "devtools.plumbing._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.plumbing.resolve",
+      "target": "devtools.plumbing.names",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.plumbing.resolve",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.plumbing.trees",
+      "target": "devtools.plumbing._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.run",
+      "target": "devtools",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.run",
+      "target": "devtools.plumbing",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.run",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.run",
+      "target": "devtools.plumbing.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.shape_contracts",
+      "target": "devtools.plumbing.cli",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.shape_contracts",
+      "target": "devtools.plumbing.pyproject",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.shape_contracts",
+      "target": "devtools.plumbing.trees",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.tools.analytics",
+      "target": "devtools.plumbing._common",
+      "weight": 1
+    },
+    {
+      "kind": "import",
+      "source": "devtools.tools.config",
+      "target": "devtools",
+      "weight": 1
+    },
+    {
+      "kind": "inherits",
+      "source": "devtools.Gate",
+      "target": "devtools.Engine",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.astgrep.AstGrep.report",
+      "target": "devtools.astgrep.AstGrep.findings",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.astgrep.AstGrep.report",
+      "target": "devtools.astgrep.AstGrep.scan",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.astgrep.AstGrep.run_assert",
+      "target": "devtools.astgrep.AstGrep.findings",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.astgrep.AstGrep.run_assert",
+      "target": "devtools.astgrep.AstGrep.scan",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.astgrep.AstGrep.scan",
+      "target": "devtools.tools.config.Config.path",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.complexity.Complexity.report",
+      "target": "devtools.cohesion.complexity.Complexity._render",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.complexity.Complexity.report",
+      "target": "devtools.cohesion.complexity.Complexity.scan",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.complexity.Complexity.scan",
+      "target": "devtools.cohesion.complexity.Complexity._functions",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.cohesion.complexity.Complexity.scan",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.complexity.Complexity.scan",
+      "target": "devtools.plumbing.trees.Trees.files",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.data_clumps.DataClumps._functions",
+      "target": "devtools.cohesion.data_clumps.DataClumps._params",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.cohesion.data_clumps.DataClumps._functions",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.data_clumps.DataClumps._functions",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.data_clumps.DataClumps.clumps",
+      "target": "devtools.cohesion.data_clumps.DataClumps._candidates",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.data_clumps.DataClumps.clumps",
+      "target": "devtools.cohesion.data_clumps.DataClumps._functions",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.data_clumps.DataClumps.clumps",
+      "target": "devtools.cohesion.data_clumps.DataClumps._support",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.data_clumps.DataClumps.report",
+      "target": "devtools.cohesion.data_clumps.DataClumps._render",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.data_clumps.DataClumps.report",
+      "target": "devtools.cohesion.data_clumps.DataClumps.clumps",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._instance_methods",
+      "target": "devtools.cohesion.lcom.Lcom._is_static",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_abstract",
+      "target": "devtools.cohesion.lcom.Lcom._base_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_impl",
+      "target": "devtools.cohesion.lcom.Lcom._base_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_split_candidate",
+      "target": "devtools.cohesion.lcom.Lcom._instance_methods",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_split_candidate",
+      "target": "devtools.cohesion.lcom.Lcom._is_abstract",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_split_candidate",
+      "target": "devtools.cohesion.lcom.Lcom._is_impl",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_split_candidate",
+      "target": "devtools.cohesion.lcom.Lcom._is_sklearn_contract",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_split_candidate",
+      "target": "devtools.cohesion.lcom.Lcom._is_trivial",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_split_candidate",
+      "target": "devtools.cohesion.lcom.Lcom.lcom4",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom._is_trivial",
+      "target": "devtools.cohesion.lcom.Lcom._raises_notimplemented",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom.lcom4",
+      "target": "devtools.cohesion.lcom.Lcom._instance_methods",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom.lcom4",
+      "target": "devtools.cohesion.lcom.Lcom._linked",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom.lcom4",
+      "target": "devtools.cohesion.lcom.Lcom._self_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom.report",
+      "target": "devtools.cohesion.lcom.Lcom._render",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom.report",
+      "target": "devtools.cohesion.lcom.Lcom.scan",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom.scan",
+      "target": "devtools.cohesion.lcom.Lcom._is_split_candidate",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.cohesion.lcom.Lcom.scan",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.Lcom.scan",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates._analyze",
+      "target": "devtools.cohesion.state_candidates.StateCandidates._staticmethods",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates._analyze",
+      "target": "devtools.cohesion.state_candidates.StateCandidates.shared_state",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.report",
+      "target": "devtools.cohesion.state_candidates.StateCandidates._render",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.report",
+      "target": "devtools.cohesion.state_candidates.StateCandidates.scan",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.scan",
+      "target": "devtools.cohesion.state_candidates.StateCandidates._analyze",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.scan",
+      "target": "devtools.plumbing.omit.Omit.coverage_omit",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.scan",
+      "target": "devtools.plumbing.omit.Omit.matches_omit",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.scan",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.scan",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.shared_state",
+      "target": "devtools.cohesion.state_candidates.StateCandidates._is_autograd_function",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.shared_state",
+      "target": "devtools.cohesion.state_candidates.StateCandidates._is_command",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.shared_state",
+      "target": "devtools.cohesion.state_candidates.StateCandidates._is_pydantic_config",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.shared_state",
+      "target": "devtools.cohesion.state_candidates.StateCandidates._params",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.StateCandidates.shared_state",
+      "target": "devtools.cohesion.state_candidates.StateCandidates._staticmethods",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.composition.CompositionCycles.cycles",
+      "target": "devtools.coupling.composition.CompositionCycles._names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.composition.CompositionCycles.cycles",
+      "target": "devtools.coupling.composition.CompositionCycles.graph",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.composition.CompositionCycles.graph",
+      "target": "devtools.graph.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.composition.CompositionCycles.graph",
+      "target": "devtools.graph.arrows.ClassArrows.edges",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.composition.CompositionCycles.report",
+      "target": "devtools.coupling.composition.CompositionCycles.cycles",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.composition.CompositionCycles.run_assert",
+      "target": "devtools.coupling.composition.CompositionCycles.cycles",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.__init__",
+      "target": "devtools.coupling.contracts.UseContracts.load_contracts",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.contracts.UseContracts.edges",
+      "target": "devtools.graph.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.edges",
+      "target": "devtools.graph.arrows.ClassArrows.edges",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.contracts.UseContracts.edges",
+      "target": "devtools.graph.calls.CallArrows",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.edges",
+      "target": "devtools.graph.calls.CallArrows.class_edges",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.contracts.UseContracts.edges",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.load_contracts",
+      "target": "devtools.plumbing.pyproject.Pyproject.rows",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.load_contracts",
+      "target": "devtools.plumbing.pyproject.Pyproject.tool_section",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.malformed",
+      "target": "devtools.plumbing.pyproject.Pyproject.str_list",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.report",
+      "target": "devtools.coupling.contracts.UseContracts.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.run_assert",
+      "target": "devtools.coupling.contracts.UseContracts.malformed",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.run_assert",
+      "target": "devtools.coupling.contracts.UseContracts.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.violations",
+      "target": "devtools.coupling.contracts.UseContracts._under",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.violations",
+      "target": "devtools.coupling.contracts.UseContracts.edges",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.violations",
+      "target": "devtools.plumbing.pyproject.Pyproject.str_list",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.UseContracts.violations",
+      "target": "devtools.plumbing.pyproject.Pyproject.str_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter.__init__",
+      "target": "devtools.coupling.demeter.Demeter.load_max_depth",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter._friend",
+      "target": "devtools.plumbing.resolve.Resolver.is_self_attr",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter._violations_in",
+      "target": "devtools.coupling.demeter.Demeter._chain",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter._violations_in",
+      "target": "devtools.coupling.demeter.Demeter._friend",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter._violations_in",
+      "target": "devtools.coupling.demeter.Demeter._module_roots",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter._violations_in",
+      "target": "devtools.coupling.demeter.Demeter._root_name",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter.load_max_depth",
+      "target": "devtools.plumbing.pyproject.Pyproject.structure_cfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter.report",
+      "target": "devtools.coupling.demeter.Demeter.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter.run_assert",
+      "target": "devtools.coupling.demeter.Demeter.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter.violations",
+      "target": "devtools.coupling.demeter.Demeter._violations_in",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.demeter.Demeter.violations",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.Demeter.violations",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.coupling.envy.FeatureEnvy",
+      "target": "devtools.coupling.envy.MethodSite",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.coupling.envy.FeatureEnvy",
+      "target": "devtools.plumbing.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.coupling.envy.FeatureEnvy",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.__init__",
+      "target": "devtools.coupling.envy.FeatureEnvy._satellites",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.__init__",
+      "target": "devtools.coupling.envy.FeatureEnvy.load_minimum",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.envy.FeatureEnvy.__init__",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.envy.FeatureEnvy._satellites",
+      "target": "devtools.graph.classes.ClassIndex",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy._satellites",
+      "target": "devtools.graph.classes.ClassIndex.by_file",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy._satellites",
+      "target": "devtools.plumbing.resolve.Resolver.module_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy._tally",
+      "target": "devtools.coupling.envy.FeatureEnvy._outermost",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy._tally",
+      "target": "devtools.plumbing.resolve.Resolver.is_self_attr",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy._verdict",
+      "target": "devtools.coupling.envy.FeatureEnvy._is_satellite",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy._verdict",
+      "target": "devtools.coupling.envy.MethodSite.describe",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy._verdict",
+      "target": "devtools.plumbing.resolve.Resolver.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.load_minimum",
+      "target": "devtools.plumbing.pyproject.Pyproject.structure_cfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.report",
+      "target": "devtools.coupling.envy.FeatureEnvy.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.run_assert",
+      "target": "devtools.coupling.envy.FeatureEnvy.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.coupling.envy.FeatureEnvy._tally",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.coupling.envy.FeatureEnvy._verdict",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.coupling.envy.MethodSite",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.plumbing.resolve.Resolver.annotation_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.plumbing.resolve.Resolver.field_types",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.plumbing.resolve.Resolver.scope_of",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.FeatureEnvy.violations",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.purity.PropertyPurity.__init__",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.purity.PropertyPurity.__init__",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.purity.PropertyPurity._violations_in",
+      "target": "devtools.coupling.purity.PropertyPurity.assigned_selves",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.purity.PropertyPurity._violations_in",
+      "target": "devtools.coupling.purity.PropertyPurity.is_property",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.purity.PropertyPurity.assigned_selves",
+      "target": "devtools.plumbing.resolve.Resolver.is_self_attr",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.purity.PropertyPurity.report",
+      "target": "devtools.coupling.purity.PropertyPurity.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.purity.PropertyPurity.run_assert",
+      "target": "devtools.coupling.purity.PropertyPurity.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.purity.PropertyPurity.violations",
+      "target": "devtools.coupling.purity.PropertyPurity._violations_in",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.archmap.Archmap",
+      "target": "devtools.graph.archmap.EdgeRow",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.archmap.Archmap",
+      "target": "devtools.graph.archmap.GraphData",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.archmap.Archmap",
+      "target": "devtools.graph.archmap.NodeRow",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.graph.archmap.Archmap",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.archmap.Archmap.__init__",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.archmap.Archmap._class_nodes",
+      "target": "devtools.graph.classes.ClassIndex",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._class_nodes",
+      "target": "devtools.graph.classes.ClassIndex.by_file",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._class_nodes",
+      "target": "devtools.plumbing.resolve.Resolver.module_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._json_text",
+      "target": "devtools.graph.archmap.Archmap.graph_data",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._method_nodes",
+      "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._method_nodes",
+      "target": "devtools.plumbing.resolve.Resolver.module_of",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.archmap.Archmap._typed_edges",
+      "target": "devtools.graph.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._typed_edges",
+      "target": "devtools.graph.arrows.ClassArrows.edges",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.archmap.Archmap._typed_edges",
+      "target": "devtools.graph.calls.CallArrows",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._typed_edges",
+      "target": "devtools.graph.calls.CallArrows.edges",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.check",
+      "target": "devtools.graph.archmap.Archmap._json_text",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.diff",
+      "target": "devtools.graph.archmap.Archmap._signature",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.diff",
+      "target": "devtools.graph.archmap.Archmap.graph_data",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.graph_data",
+      "target": "devtools.graph.archmap.Archmap._class_nodes",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.graph_data",
+      "target": "devtools.graph.archmap.Archmap._method_nodes",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.graph_data",
+      "target": "devtools.graph.archmap.Archmap._parent",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.graph_data",
+      "target": "devtools.graph.archmap.Archmap._typed_edges",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.graph_data",
+      "target": "devtools.graph.archmap.Archmap.graph",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.regen",
+      "target": "devtools.graph.archmap.Archmap.check",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.regen",
+      "target": "devtools.graph.archmap.Archmap.write_json",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.regen",
+      "target": "devtools.graph.archmap.Archmap.write_viewer",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap.write_json",
+      "target": "devtools.graph.archmap.Archmap._json_text",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.graph.archmap.GraphData",
+      "target": "devtools.graph.archmap.EdgeRow",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.graph.archmap.GraphData",
+      "target": "devtools.graph.archmap.NodeRow",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.arrows.ClassArrows",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.arrows.ClassArrows.__init__",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.ClassArrows.edges",
+      "target": "devtools.graph.arrows.ClassArrows.field_types",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.ClassArrows.edges",
+      "target": "devtools.graph.arrows.ClassArrows.signature_types",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.ClassArrows.edges",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.ClassArrows.edges",
+      "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.ClassArrows.edges",
+      "target": "devtools.plumbing.resolve.Resolver.scope_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.ClassArrows.field_types",
+      "target": "devtools.plumbing.resolve.Resolver.field_types",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.ClassArrows.report",
+      "target": "devtools.graph.arrows.ClassArrows.edges",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.ClassArrows.signature_types",
+      "target": "devtools.plumbing.resolve.Resolver.annotation_names",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.calls.CallArrows",
+      "target": "devtools.graph.calls.CallEdge",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.calls.CallArrows",
+      "target": "devtools.graph.calls.CallSite",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.calls.CallArrows",
+      "target": "devtools.plumbing.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.calls.CallArrows",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.calls.CallArrows.__init__",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edge_for_call",
+      "target": "devtools.graph.calls.CallArrows._miss",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edge_for_call",
+      "target": "devtools.graph.calls.CallArrows._receiver_classes",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.calls.CallArrows._edge_for_call",
+      "target": "devtools.graph.calls.CallEdge",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edge_for_call",
+      "target": "devtools.plumbing.resolve.Resolver.is_self_attr",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "target": "devtools.graph.calls.CallArrows._edge_for_call",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "target": "devtools.graph.calls.CallArrows._local_types",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "target": "devtools.graph.calls.CallArrows._methods",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "target": "devtools.graph.calls.CallArrows._param_types",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "target": "devtools.graph.calls.CallSite",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "target": "devtools.plumbing.resolve.Resolver.field_types",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._local_types",
+      "target": "devtools.plumbing.names.Names.trailing",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._param_types",
+      "target": "devtools.plumbing.resolve.Resolver.annotation_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._receiver_classes",
+      "target": "devtools.graph.calls.CallSite.receiver_type_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.class_edges",
+      "target": "devtools.graph.calls.CallArrows.edges",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.edges",
+      "target": "devtools.graph.calls.CallArrows._edges_for_class",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.edges",
+      "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.edges",
+      "target": "devtools.plumbing.resolve.Resolver.scope_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.report",
+      "target": "devtools.graph.calls.CallArrows.edges",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.graph.calls.CallSite",
+      "target": "devtools.plumbing.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallSite.receiver_type_names",
+      "target": "devtools.plumbing.names.Names.trailing",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallSite.receiver_type_names",
+      "target": "devtools.plumbing.resolve.Resolver.is_self_attr",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.classes.ClassIndex.__init__",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.__init__",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex._contracts",
+      "target": "devtools.graph.classes.ClassIndex._method_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex._contracts",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex._implements",
+      "target": "devtools.graph.classes.ClassIndex._method_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex._implements",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex._is_data_container",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex._is_data_container",
+      "target": "devtools.plumbing.names.Names.decorator",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex._is_enum",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex._is_error",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.by_file",
+      "target": "devtools.graph.classes.ClassIndex.classify",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.classify",
+      "target": "devtools.graph.classes.ClassIndex._contracts",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.classify",
+      "target": "devtools.graph.classes.ClassIndex.role",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.multi_primary",
+      "target": "devtools.graph.classes.ClassIndex.by_file",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.report",
+      "target": "devtools.graph.classes.ClassIndex.by_file",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.role",
+      "target": "devtools.graph.classes.ClassIndex._implements",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.role",
+      "target": "devtools.graph.classes.ClassIndex._is_data_container",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.role",
+      "target": "devtools.graph.classes.ClassIndex._is_enum",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.role",
+      "target": "devtools.graph.classes.ClassIndex._is_error",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.role",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.ClassIndex.run_assert",
+      "target": "devtools.graph.classes.ClassIndex.multi_primary",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.graph.fitness.ImportGraph",
+      "target": "devtools.graph.fitness.StructureCfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph._is_abstract",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph._is_abstract",
+      "target": "devtools.plumbing.names.Names.trailing",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph._off_main_sequence",
+      "target": "devtools.graph.fitness.ImportGraph.main_sequence_distance",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph._render",
+      "target": "devtools.graph.fitness.ImportGraph._top",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph._render",
+      "target": "devtools.graph.fitness.ImportGraph.instability",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph._render",
+      "target": "devtools.graph.fitness.ImportGraph.main_sequence_distance",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.abstractness",
+      "target": "devtools.graph.fitness.ImportGraph._is_abstract",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.abstractness",
+      "target": "devtools.graph.fitness.ImportGraph._module_file",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.assert_fitness",
+      "target": "devtools.graph.fitness.ImportGraph._chokepoints",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.assert_fitness",
+      "target": "devtools.graph.fitness.ImportGraph._cycles",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.assert_fitness",
+      "target": "devtools.graph.fitness.ImportGraph._god_modules",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.assert_fitness",
+      "target": "devtools.graph.fitness.ImportGraph._off_main_sequence",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.assert_fitness",
+      "target": "devtools.graph.fitness.ImportGraph._oversized",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.assert_fitness",
+      "target": "devtools.graph.fitness.ImportGraph._undersized",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.ImportGraph.file_lines",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.file_lines",
+      "target": "devtools.plumbing.trees.Trees.files",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.ImportGraph.load_structure_cfg",
+      "target": "devtools.graph.fitness.StructureCfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.load_structure_cfg",
+      "target": "devtools.plumbing.pyproject.Pyproject.structure_cfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.main_sequence_distance",
+      "target": "devtools.graph.fitness.ImportGraph.abstractness",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.main_sequence_distance",
+      "target": "devtools.graph.fitness.ImportGraph.instability",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.report",
+      "target": "devtools.graph.fitness.ImportGraph._render",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.report",
+      "target": "devtools.graph.fitness.ImportGraph.build_graph",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.report",
+      "target": "devtools.graph.fitness.ImportGraph.typed_graph",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.ImportGraph.run_assert",
+      "target": "devtools.graph.classes.ClassIndex",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.run_assert",
+      "target": "devtools.graph.classes.ClassIndex.multi_primary",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.run_assert",
+      "target": "devtools.graph.fitness.ImportGraph.assert_fitness",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.run_assert",
+      "target": "devtools.graph.fitness.ImportGraph.build_graph",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.run_assert",
+      "target": "devtools.graph.fitness.ImportGraph.file_lines",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.run_assert",
+      "target": "devtools.graph.fitness.ImportGraph.load_structure_cfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.run_assert",
+      "target": "devtools.graph.fitness.ImportGraph.unmirrored",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.ImportGraph.typed_graph",
+      "target": "devtools.graph.arrows.ClassArrows",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.typed_graph",
+      "target": "devtools.graph.arrows.ClassArrows.edges",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.ImportGraph.typed_graph",
+      "target": "devtools.graph.calls.CallArrows",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.typed_graph",
+      "target": "devtools.graph.calls.CallArrows.class_edges",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.ImportGraph.typed_graph",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.ImportGraph.unmirrored",
+      "target": "devtools.plumbing.layout.TestLayout.of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals._string_literals",
+      "target": "devtools.hygiene.magic_literals.MagicLiterals._excluded_value_ids",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals._string_literals",
+      "target": "devtools.hygiene.magic_literals.MagicLiterals._is_token",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.report",
+      "target": "devtools.hygiene.magic_literals.MagicLiterals._render",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.report",
+      "target": "devtools.hygiene.magic_literals.MagicLiterals.scan_key_sets",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.report",
+      "target": "devtools.hygiene.magic_literals.MagicLiterals.scan_strings",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.scan_key_sets",
+      "target": "devtools.hygiene.magic_literals.MagicLiterals._key_sets",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.scan_key_sets",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.scan_key_sets",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.scan_strings",
+      "target": "devtools.hygiene.magic_literals.MagicLiterals._string_literals",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.scan_strings",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.MagicLiterals.scan_strings",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.hygiene.mirror.MethodMirror",
+      "target": "devtools.hygiene.mirror.Coverage",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.hygiene.mirror.MethodMirror",
+      "target": "devtools.plumbing.layout.TestLayout",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.hygiene.mirror.MethodMirror.__init__",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.__init__",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.hygiene.mirror.MethodMirror._coverage",
+      "target": "devtools.hygiene.mirror.Coverage",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._coverage",
+      "target": "devtools.hygiene.mirror.MethodMirror.accessed_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._coverage",
+      "target": "devtools.hygiene.mirror.MethodMirror.asserts",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._coverage",
+      "target": "devtools.hygiene.mirror.MethodMirror.called_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._coverage",
+      "target": "devtools.hygiene.mirror.MethodMirror.reachable",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._finding",
+      "target": "devtools.hygiene.mirror.MethodMirror.is_property",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._members",
+      "target": "devtools.hygiene.mirror.MethodMirror.is_public",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._members",
+      "target": "devtools.hygiene.mirror.MethodMirror.overrides",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._violations_in",
+      "target": "devtools.hygiene.mirror.MethodMirror._coverage",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._violations_in",
+      "target": "devtools.hygiene.mirror.MethodMirror._finding",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._violations_in",
+      "target": "devtools.hygiene.mirror.MethodMirror.expected",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._violations_in",
+      "target": "devtools.hygiene.mirror.MethodMirror.functions",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._violations_in",
+      "target": "devtools.hygiene.mirror.MethodMirror.ignored",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror._violations_in",
+      "target": "devtools.hygiene.mirror.MethodMirror.is_property",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.asserts",
+      "target": "devtools.hygiene.mirror.MethodMirror.name_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.called_names",
+      "target": "devtools.hygiene.mirror.MethodMirror.name_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.expected",
+      "target": "devtools.hygiene.mirror.MethodMirror.snake",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.is_public",
+      "target": "devtools.hygiene.mirror.MethodMirror.is_declaration",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.layout",
+      "target": "devtools.plumbing.layout.TestLayout.of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.layout",
+      "target": "devtools.plumbing.pyproject.Pyproject.structure_cfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.methods",
+      "target": "devtools.hygiene.mirror.MethodMirror._members",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.methods",
+      "target": "devtools.plumbing.layout.TestLayout.testable",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.misconfigured",
+      "target": "devtools.plumbing.pyproject.Pyproject.str_list",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.misconfigured",
+      "target": "devtools.plumbing.pyproject.Pyproject.structure_cfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.misconfigured",
+      "target": "devtools.plumbing.pyproject.Pyproject.table",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.misconfigured",
+      "target": "devtools.plumbing.pyproject.Pyproject.tool_section",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.reachable",
+      "target": "devtools.hygiene.mirror.MethodMirror.called_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.report",
+      "target": "devtools.hygiene.mirror.MethodMirror.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.run_assert",
+      "target": "devtools.hygiene.mirror.MethodMirror.misconfigured",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.run_assert",
+      "target": "devtools.hygiene.mirror.MethodMirror.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.violations",
+      "target": "devtools.hygiene.mirror.MethodMirror._violations_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.violations",
+      "target": "devtools.hygiene.mirror.MethodMirror.layout",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.MethodMirror.violations",
+      "target": "devtools.hygiene.mirror.MethodMirror.methods",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.__init__",
+      "target": "devtools.hygiene.small.SmallTests._layout",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.__init__",
+      "target": "devtools.plumbing.layout.TestLayout.of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests._findings_in",
+      "target": "devtools.hygiene.small.SmallTests._why",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests._findings_in",
+      "target": "devtools.hygiene.small.SmallTests.absolute_paths",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests._findings_in",
+      "target": "devtools.hygiene.small.SmallTests.calls",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests._layout",
+      "target": "devtools.plumbing.pyproject.Pyproject.structure_cfg",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.absolute_paths",
+      "target": "devtools.hygiene.small.SmallTests.is_absolute",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.calls",
+      "target": "devtools.hygiene.small.SmallTests.chain",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.calls",
+      "target": "devtools.hygiene.small.SmallTests.trailing",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.report",
+      "target": "devtools.hygiene.small.SmallTests.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.run_assert",
+      "target": "devtools.hygiene.small.SmallTests.violations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.violations",
+      "target": "devtools.hygiene.small.SmallTests._findings_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.SmallTests.violations",
+      "target": "devtools.hygiene.small.SmallTests.files",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.plumbing.cli.Cli",
+      "target": "devtools.plumbing.cli.Flag",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.plumbing.cli.Cli",
+      "target": "devtools.plumbing.cli.Switch",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.cli.Cli.run",
+      "target": "devtools.plumbing.cli.Cli.accepted",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.cli.Cli.run",
+      "target": "devtools.plumbing.cli.Cli.parser",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.plumbing.layout.TestLayout",
+      "target": "devtools.plumbing.layout.TestLayout",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.layout.TestLayout.of",
+      "target": "devtools.plumbing.layout.TestLayout.names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.layout.TestLayout.testable",
+      "target": "devtools.plumbing.omit.Omit.coverage_omit",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.layout.TestLayout.testable",
+      "target": "devtools.plumbing.omit.Omit.matches_omit",
+      "weight": 1
+    },
+    {
+      "kind": "inherits",
+      "source": "devtools.plumbing.layout._Mirror",
+      "target": "devtools.plumbing.layout.TestLayout",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.layout._Mirror.missing",
+      "target": "devtools.plumbing.layout._Mirror.mirror_of",
+      "weight": 1
+    },
+    {
+      "kind": "inherits",
+      "source": "devtools.plumbing.layout._Off",
+      "target": "devtools.plumbing.layout.TestLayout",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.names.Names.bases",
+      "target": "devtools.plumbing.names.Names.trailing",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.names.Names.decorator",
+      "target": "devtools.plumbing.names.Names.trailing",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.omit.Omit.coverage_omit",
+      "target": "devtools.plumbing.pyproject.Pyproject.str_list",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.omit.Omit.coverage_omit",
+      "target": "devtools.plumbing.pyproject.Pyproject.table",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.omit.Omit.coverage_omit",
+      "target": "devtools.plumbing.pyproject.Pyproject.tool_section",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.pyproject.Pyproject.structure_cfg",
+      "target": "devtools.plumbing.pyproject.Pyproject.tool_section",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.plumbing.resolve.Resolver",
+      "target": "devtools.plumbing.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.__init__",
+      "target": "devtools.plumbing.resolve.Resolver._class_homes",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.__init__",
+      "target": "devtools.plumbing.resolve.Resolver._inheritance",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.plumbing.resolve.Resolver.__init__",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.__init__",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._assigned_type",
+      "target": "devtools.plumbing.names.Names.trailing",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._assigned_type",
+      "target": "devtools.plumbing.resolve.Resolver.annotation_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._class_homes",
+      "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._class_homes",
+      "target": "devtools.plumbing.resolve.Resolver.module_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._inheritance",
+      "target": "devtools.plumbing.names.Names.bases",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._inheritance",
+      "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._inheritance",
+      "target": "devtools.plumbing.resolve.Resolver.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._inheritance",
+      "target": "devtools.plumbing.resolve.Resolver.resolve_all",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver._inheritance",
+      "target": "devtools.plumbing.resolve.Resolver.scope_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.annotation_names",
+      "target": "devtools.plumbing.names.Names.trailing",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.field_types",
+      "target": "devtools.plumbing.resolve.Resolver._assigned_type",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.field_types",
+      "target": "devtools.plumbing.resolve.Resolver.annotation_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.field_types",
+      "target": "devtools.plumbing.resolve.Resolver.init_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.field_types",
+      "target": "devtools.plumbing.resolve.Resolver.is_self_attr",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.resolve",
+      "target": "devtools.plumbing.resolve.Resolver.qualified",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.resolve_all",
+      "target": "devtools.plumbing.resolve.Resolver.resolve",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.plumbing.resolve.Resolver.scope_of",
+      "target": "devtools.plumbing.resolve.FileScope",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.scope_of",
+      "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.scope_of",
+      "target": "devtools.plumbing.resolve.Resolver.imported_names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.plumbing.resolve.Resolver.scope_of",
+      "target": "devtools.plumbing.resolve.Resolver.module_of",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.run.Batch",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.run.Batch",
+      "target": "devtools.run.Result",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.run.Batch._guarded",
+      "target": "devtools.run.Result",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.run.Batch.build",
+      "target": "devtools.run.Batch.engine_class",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.run.Batch.resolver",
+      "target": "devtools.plumbing.resolve.Resolver",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.run.Batch.run",
+      "target": "devtools.run.Batch._guarded",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.run.Batch.run_gate",
+      "target": "devtools.run.Batch.build",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.run.Batch.run_gate",
+      "target": "devtools.run.Result",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.run.Batch.run_report",
+      "target": "devtools.run.Batch.build",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.run.Batch.run_report",
+      "target": "devtools.run.Result",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts._analyze",
+      "target": "devtools.shape_contracts.ShapeContracts._bare_array_slots",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts._analyze",
+      "target": "devtools.shape_contracts.ShapeContracts._functions",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts._bare_array_slots",
+      "target": "devtools.shape_contracts.ShapeContracts._annotations",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts._bare_array_slots",
+      "target": "devtools.shape_contracts.ShapeContracts._is_array_anno",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts._bare_array_slots",
+      "target": "devtools.shape_contracts.ShapeContracts._is_jaxtyping_anno",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.array_names",
+      "target": "devtools.plumbing.pyproject.Pyproject.str_list",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.array_names",
+      "target": "devtools.plumbing.pyproject.Pyproject.tool_section",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.report",
+      "target": "devtools.shape_contracts.ShapeContracts._render",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.report",
+      "target": "devtools.shape_contracts.ShapeContracts.scan",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.run_assert",
+      "target": "devtools.shape_contracts.ShapeContracts._render",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.run_assert",
+      "target": "devtools.shape_contracts.ShapeContracts.scan",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.shape_contracts.ShapeContracts.scan",
+      "target": "devtools.plumbing.trees.Trees",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.scan",
+      "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.scan",
+      "target": "devtools.shape_contracts.ShapeContracts._analyze",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.ShapeContracts.scan",
+      "target": "devtools.shape_contracts.ShapeContracts.array_names",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.tools.analytics.Analytics",
+      "target": "devtools.tools.analytics.AreaStat",
+      "weight": 1
+    },
+    {
+      "kind": "references",
+      "source": "devtools.tools.analytics.Analytics",
+      "target": "devtools.tools.analytics.FileStat",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.analytics.Analytics._test_lines",
+      "target": "devtools.tools.analytics.Analytics._code_lines",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.analytics.Analytics.analyze",
+      "target": "devtools.tools.analytics.Analytics.analyze_file",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.tools.analytics.Analytics.analyze",
+      "target": "devtools.tools.analytics.AreaStat",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.analytics.Analytics.analyze_file",
+      "target": "devtools.tools.analytics.Analytics._code_lines",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.tools.analytics.Analytics.analyze_file",
+      "target": "devtools.tools.analytics.FileStat",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.analytics.Analytics.report",
+      "target": "devtools.tools.analytics.Analytics._test_lines",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.analytics.Analytics.report",
+      "target": "devtools.tools.analytics.Analytics.analyze",
+      "weight": 1
+    },
+    {
+      "kind": "holds",
+      "source": "devtools.tools.analytics.AreaStat",
+      "target": "devtools.tools.analytics.FileStat",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.config.Config.path",
+      "target": "devtools.tools.config.Config.names",
+      "weight": 1
+    }
+  ],
+  "nodes": [
+    {
+      "descendants": 36,
+      "id": "devtools",
+      "label": "devtools",
+      "level": "module",
+      "parent": null,
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.astgrep",
+      "label": "astgrep",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 4,
+      "id": "devtools.cohesion",
+      "label": "cohesion",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.complexity",
+      "label": "complexity",
+      "level": "module",
+      "parent": "devtools.cohesion",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps",
+      "label": "data_clumps",
+      "level": "module",
+      "parent": "devtools.cohesion",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom",
+      "label": "lcom",
+      "level": "module",
+      "parent": "devtools.cohesion",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates",
+      "label": "state_candidates",
+      "level": "module",
+      "parent": "devtools.cohesion",
+      "role": null
+    },
+    {
+      "descendants": 5,
+      "id": "devtools.coupling",
+      "label": "coupling",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition",
+      "label": "composition",
+      "level": "module",
+      "parent": "devtools.coupling",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts",
+      "label": "contracts",
+      "level": "module",
+      "parent": "devtools.coupling",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter",
+      "label": "demeter",
+      "level": "module",
+      "parent": "devtools.coupling",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy",
+      "label": "envy",
+      "level": "module",
+      "parent": "devtools.coupling",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity",
+      "label": "purity",
+      "level": "module",
+      "parent": "devtools.coupling",
+      "role": null
+    },
+    {
+      "descendants": 5,
+      "id": "devtools.graph",
+      "label": "graph",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap",
+      "label": "archmap",
+      "level": "module",
+      "parent": "devtools.graph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.arrows",
+      "label": "arrows",
+      "level": "module",
+      "parent": "devtools.graph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls",
+      "label": "calls",
+      "level": "module",
+      "parent": "devtools.graph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes",
+      "label": "classes",
+      "level": "module",
+      "parent": "devtools.graph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness",
+      "label": "fitness",
+      "level": "module",
+      "parent": "devtools.graph",
+      "role": null
+    },
+    {
+      "descendants": 3,
+      "id": "devtools.hygiene",
+      "label": "hygiene",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals",
+      "label": "magic_literals",
+      "level": "module",
+      "parent": "devtools.hygiene",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror",
+      "label": "mirror",
+      "level": "module",
+      "parent": "devtools.hygiene",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small",
+      "label": "small",
+      "level": "module",
+      "parent": "devtools.hygiene",
+      "role": null
+    },
+    {
+      "descendants": 8,
+      "id": "devtools.plumbing",
+      "label": "plumbing",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing._common",
+      "label": "_common",
+      "level": "module",
+      "parent": "devtools.plumbing",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli",
+      "label": "cli",
+      "level": "module",
+      "parent": "devtools.plumbing",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout",
+      "label": "layout",
+      "level": "module",
+      "parent": "devtools.plumbing",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.names",
+      "label": "names",
+      "level": "module",
+      "parent": "devtools.plumbing",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.omit",
+      "label": "omit",
+      "level": "module",
+      "parent": "devtools.plumbing",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.pyproject",
+      "label": "pyproject",
+      "level": "module",
+      "parent": "devtools.plumbing",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve",
+      "label": "resolve",
+      "level": "module",
+      "parent": "devtools.plumbing",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.trees",
+      "label": "trees",
+      "level": "module",
+      "parent": "devtools.plumbing",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run",
+      "label": "run",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts",
+      "label": "shape_contracts",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 2,
+      "id": "devtools.tools",
+      "label": "tools",
+      "level": "module",
+      "parent": "devtools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics",
+      "label": "analytics",
+      "level": "module",
+      "parent": "devtools.tools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.config",
+      "label": "config",
+      "level": "module",
+      "parent": "devtools.tools",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.Engine",
+      "label": "Engine",
+      "level": "class",
+      "parent": "devtools",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.Gate",
+      "label": "Gate",
+      "level": "class",
+      "parent": "devtools",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.astgrep.AstGrep",
+      "label": "AstGrep",
+      "level": "class",
+      "parent": "devtools.astgrep",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.complexity.Complexity",
+      "label": "Complexity",
+      "level": "class",
+      "parent": "devtools.cohesion.complexity",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps",
+      "label": "DataClumps",
+      "level": "class",
+      "parent": "devtools.cohesion.data_clumps",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom",
+      "label": "Lcom",
+      "level": "class",
+      "parent": "devtools.cohesion.lcom",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates",
+      "label": "StateCandidates",
+      "level": "class",
+      "parent": "devtools.cohesion.state_candidates",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition.CompositionCycles",
+      "label": "CompositionCycles",
+      "level": "class",
+      "parent": "devtools.coupling.composition",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts",
+      "label": "UseContracts",
+      "level": "class",
+      "parent": "devtools.coupling.contracts",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter",
+      "label": "Demeter",
+      "level": "class",
+      "parent": "devtools.coupling.demeter",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy",
+      "label": "FeatureEnvy",
+      "level": "class",
+      "parent": "devtools.coupling.envy",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.MethodSite",
+      "label": "MethodSite",
+      "level": "class",
+      "parent": "devtools.coupling.envy",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity.PropertyPurity",
+      "label": "PropertyPurity",
+      "level": "class",
+      "parent": "devtools.coupling.purity",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap",
+      "label": "Archmap",
+      "level": "class",
+      "parent": "devtools.graph.archmap",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.EdgeRow",
+      "label": "EdgeRow",
+      "level": "class",
+      "parent": "devtools.graph.archmap",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.GraphData",
+      "label": "GraphData",
+      "level": "class",
+      "parent": "devtools.graph.archmap",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.NodeRow",
+      "label": "NodeRow",
+      "level": "class",
+      "parent": "devtools.graph.archmap",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.arrows.ClassArrows",
+      "label": "ClassArrows",
+      "level": "class",
+      "parent": "devtools.graph.arrows",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows",
+      "label": "CallArrows",
+      "level": "class",
+      "parent": "devtools.graph.calls",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallEdge",
+      "label": "CallEdge",
+      "level": "class",
+      "parent": "devtools.graph.calls",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallSite",
+      "label": "CallSite",
+      "level": "class",
+      "parent": "devtools.graph.calls",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex",
+      "label": "ClassIndex",
+      "level": "class",
+      "parent": "devtools.graph.classes",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph",
+      "label": "ImportGraph",
+      "level": "class",
+      "parent": "devtools.graph.fitness",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.StructureCfg",
+      "label": "StructureCfg",
+      "level": "class",
+      "parent": "devtools.graph.fitness",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals",
+      "label": "MagicLiterals",
+      "level": "class",
+      "parent": "devtools.hygiene.magic_literals",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.Coverage",
+      "label": "Coverage",
+      "level": "class",
+      "parent": "devtools.hygiene.mirror",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror",
+      "label": "MethodMirror",
+      "level": "class",
+      "parent": "devtools.hygiene.mirror",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests",
+      "label": "SmallTests",
+      "level": "class",
+      "parent": "devtools.hygiene.small",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Cli",
+      "label": "Cli",
+      "level": "class",
+      "parent": "devtools.plumbing.cli",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Flag",
+      "label": "Flag",
+      "level": "class",
+      "parent": "devtools.plumbing.cli",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Switch",
+      "label": "Switch",
+      "level": "class",
+      "parent": "devtools.plumbing.cli",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout.TestLayout",
+      "label": "TestLayout",
+      "level": "class",
+      "parent": "devtools.plumbing.layout",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout._Mirror",
+      "label": "_Mirror",
+      "level": "class",
+      "parent": "devtools.plumbing.layout",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout._Off",
+      "label": "_Off",
+      "level": "class",
+      "parent": "devtools.plumbing.layout",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.names.Names",
+      "label": "Names",
+      "level": "class",
+      "parent": "devtools.plumbing.names",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.omit.Omit",
+      "label": "Omit",
+      "level": "class",
+      "parent": "devtools.plumbing.omit",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.pyproject.Pyproject",
+      "label": "Pyproject",
+      "level": "class",
+      "parent": "devtools.plumbing.pyproject",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.FileScope",
+      "label": "FileScope",
+      "level": "class",
+      "parent": "devtools.plumbing.resolve",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver",
+      "label": "Resolver",
+      "level": "class",
+      "parent": "devtools.plumbing.resolve",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.trees.Trees",
+      "label": "Trees",
+      "level": "class",
+      "parent": "devtools.plumbing.trees",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch",
+      "label": "Batch",
+      "level": "class",
+      "parent": "devtools.run",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Result",
+      "label": "Result",
+      "level": "class",
+      "parent": "devtools.run",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts",
+      "label": "ShapeContracts",
+      "level": "class",
+      "parent": "devtools.shape_contracts",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.Analytics",
+      "label": "Analytics",
+      "level": "class",
+      "parent": "devtools.tools.analytics",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.AreaStat",
+      "label": "AreaStat",
+      "level": "class",
+      "parent": "devtools.tools.analytics",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.FileStat",
+      "label": "FileStat",
+      "level": "class",
+      "parent": "devtools.tools.analytics",
+      "role": "satellite"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.config.Config",
+      "label": "Config",
+      "level": "class",
+      "parent": "devtools.tools.config",
+      "role": "primary"
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.Engine.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.Engine",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.Gate.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.Gate",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.astgrep.AstGrep.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.astgrep.AstGrep",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.astgrep.AstGrep.findings",
+      "label": "findings",
+      "level": "method",
+      "parent": "devtools.astgrep.AstGrep",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.astgrep.AstGrep.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.astgrep.AstGrep",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.astgrep.AstGrep.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.astgrep.AstGrep",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.astgrep.AstGrep.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.astgrep.AstGrep",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.complexity.Complexity.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.cohesion.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.complexity.Complexity._functions",
+      "label": "_functions",
+      "level": "method",
+      "parent": "devtools.cohesion.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.complexity.Complexity._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.cohesion.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.complexity.Complexity.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.cohesion.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.complexity.Complexity.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.cohesion.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps._candidates",
+      "label": "_candidates",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps._functions",
+      "label": "_functions",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps._params",
+      "label": "_params",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps._support",
+      "label": "_support",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps.clumps",
+      "label": "clumps",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.DataClumps.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._base_names",
+      "label": "_base_names",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._instance_methods",
+      "label": "_instance_methods",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._is_abstract",
+      "label": "_is_abstract",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._is_impl",
+      "label": "_is_impl",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._is_sklearn_contract",
+      "label": "_is_sklearn_contract",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._is_split_candidate",
+      "label": "_is_split_candidate",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._is_static",
+      "label": "_is_static",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._is_trivial",
+      "label": "_is_trivial",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._linked",
+      "label": "_linked",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._raises_notimplemented",
+      "label": "_raises_notimplemented",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom._self_names",
+      "label": "_self_names",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom.lcom4",
+      "label": "lcom4",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.lcom.Lcom.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom.Lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates._analyze",
+      "label": "_analyze",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates._is_autograd_function",
+      "label": "_is_autograd_function",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates._is_command",
+      "label": "_is_command",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates._is_pydantic_config",
+      "label": "_is_pydantic_config",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates._params",
+      "label": "_params",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates._staticmethods",
+      "label": "_staticmethods",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.StateCandidates.shared_state",
+      "label": "shared_state",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates.StateCandidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition.CompositionCycles.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.coupling.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition.CompositionCycles._names",
+      "label": "_names",
+      "level": "method",
+      "parent": "devtools.coupling.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition.CompositionCycles.cycles",
+      "label": "cycles",
+      "level": "method",
+      "parent": "devtools.coupling.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition.CompositionCycles.graph",
+      "label": "graph",
+      "level": "method",
+      "parent": "devtools.coupling.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition.CompositionCycles.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.coupling.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition.CompositionCycles.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.coupling.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts._under",
+      "label": "_under",
+      "level": "method",
+      "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts.edges",
+      "label": "edges",
+      "level": "method",
+      "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts.load_contracts",
+      "label": "load_contracts",
+      "level": "method",
+      "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts.malformed",
+      "label": "malformed",
+      "level": "method",
+      "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.UseContracts.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter._chain",
+      "label": "_chain",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter._friend",
+      "label": "_friend",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter._module_roots",
+      "label": "_module_roots",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter._root_name",
+      "label": "_root_name",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter._violations_in",
+      "label": "_violations_in",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter.load_max_depth",
+      "label": "load_max_depth",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.Demeter.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy._is_satellite",
+      "label": "_is_satellite",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy._outermost",
+      "label": "_outermost",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy._satellites",
+      "label": "_satellites",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy._tally",
+      "label": "_tally",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy._verdict",
+      "label": "_verdict",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy.load_minimum",
+      "label": "load_minimum",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.FeatureEnvy.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.coupling.envy.FeatureEnvy",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.envy.MethodSite.describe",
+      "label": "describe",
+      "level": "method",
+      "parent": "devtools.coupling.envy.MethodSite",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity.PropertyPurity.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.coupling.purity.PropertyPurity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity.PropertyPurity._violations_in",
+      "label": "_violations_in",
+      "level": "method",
+      "parent": "devtools.coupling.purity.PropertyPurity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity.PropertyPurity.assigned_selves",
+      "label": "assigned_selves",
+      "level": "method",
+      "parent": "devtools.coupling.purity.PropertyPurity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity.PropertyPurity.is_property",
+      "label": "is_property",
+      "level": "method",
+      "parent": "devtools.coupling.purity.PropertyPurity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity.PropertyPurity.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.coupling.purity.PropertyPurity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity.PropertyPurity.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.coupling.purity.PropertyPurity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.purity.PropertyPurity.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.coupling.purity.PropertyPurity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap._class_nodes",
+      "label": "_class_nodes",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap._json_text",
+      "label": "_json_text",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap._method_nodes",
+      "label": "_method_nodes",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap._parent",
+      "label": "_parent",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap._signature",
+      "label": "_signature",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap._typed_edges",
+      "label": "_typed_edges",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap.check",
+      "label": "check",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap.diff",
+      "label": "diff",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap.graph",
+      "label": "graph",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap.graph_data",
+      "label": "graph_data",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap.regen",
+      "label": "regen",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap.write_json",
+      "label": "write_json",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap.write_viewer",
+      "label": "write_viewer",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.arrows.ClassArrows.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.graph.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.arrows.ClassArrows.edges",
+      "label": "edges",
+      "level": "method",
+      "parent": "devtools.graph.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.arrows.ClassArrows.field_types",
+      "label": "field_types",
+      "level": "method",
+      "parent": "devtools.graph.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.arrows.ClassArrows.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.graph.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.arrows.ClassArrows.signature_types",
+      "label": "signature_types",
+      "level": "method",
+      "parent": "devtools.graph.arrows.ClassArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows._edge_for_call",
+      "label": "_edge_for_call",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows._edges_for_class",
+      "label": "_edges_for_class",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows._local_types",
+      "label": "_local_types",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows._methods",
+      "label": "_methods",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows._miss",
+      "label": "_miss",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows._param_types",
+      "label": "_param_types",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows._receiver_classes",
+      "label": "_receiver_classes",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows.class_edges",
+      "label": "class_edges",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows.edges",
+      "label": "edges",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallEdge.source_id",
+      "label": "source_id",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallEdge",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallEdge.target_id",
+      "label": "target_id",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallEdge",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallSite.receiver_type_names",
+      "label": "receiver_type_names",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallSite",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallSite.source_id",
+      "label": "source_id",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallSite",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex._contracts",
+      "label": "_contracts",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex._implements",
+      "label": "_implements",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex._is_data_container",
+      "label": "_is_data_container",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex._is_enum",
+      "label": "_is_enum",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex._is_error",
+      "label": "_is_error",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex._method_names",
+      "label": "_method_names",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex.by_file",
+      "label": "by_file",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex.classify",
+      "label": "classify",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex.multi_primary",
+      "label": "multi_primary",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex.role",
+      "label": "role",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.ClassIndex.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._chokepoints",
+      "label": "_chokepoints",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._cycles",
+      "label": "_cycles",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._god_modules",
+      "label": "_god_modules",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._is_abstract",
+      "label": "_is_abstract",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._module_file",
+      "label": "_module_file",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._off_main_sequence",
+      "label": "_off_main_sequence",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._oversized",
+      "label": "_oversized",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._top",
+      "label": "_top",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph._undersized",
+      "label": "_undersized",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.abstractness",
+      "label": "abstractness",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.assert_fitness",
+      "label": "assert_fitness",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.build_graph",
+      "label": "build_graph",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.file_lines",
+      "label": "file_lines",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.instability",
+      "label": "instability",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.load_structure_cfg",
+      "label": "load_structure_cfg",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.main_sequence_distance",
+      "label": "main_sequence_distance",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.typed_graph",
+      "label": "typed_graph",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.fitness.ImportGraph.unmirrored",
+      "label": "unmirrored",
+      "level": "method",
+      "parent": "devtools.graph.fitness.ImportGraph",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals._excluded_value_ids",
+      "label": "_excluded_value_ids",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals._is_token",
+      "label": "_is_token",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals._key_sets",
+      "label": "_key_sets",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals._string_literals",
+      "label": "_string_literals",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals.scan_key_sets",
+      "label": "scan_key_sets",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.MagicLiterals.scan_strings",
+      "label": "scan_strings",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror._coverage",
+      "label": "_coverage",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror._finding",
+      "label": "_finding",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror._members",
+      "label": "_members",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror._violations_in",
+      "label": "_violations_in",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.accessed_names",
+      "label": "accessed_names",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.asserts",
+      "label": "asserts",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.called_names",
+      "label": "called_names",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.callers",
+      "label": "callers",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.expected",
+      "label": "expected",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.functions",
+      "label": "functions",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.ignored",
+      "label": "ignored",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.is_declaration",
+      "label": "is_declaration",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.is_property",
+      "label": "is_property",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.is_public",
+      "label": "is_public",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.layout",
+      "label": "layout",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.methods",
+      "label": "methods",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.misconfigured",
+      "label": "misconfigured",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.name_of",
+      "label": "name_of",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.overrides",
+      "label": "overrides",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.reachable",
+      "label": "reachable",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.snake",
+      "label": "snake",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.MethodMirror.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests._findings_in",
+      "label": "_findings_in",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests._layout",
+      "label": "_layout",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests._why",
+      "label": "_why",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.absolute_paths",
+      "label": "absolute_paths",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.calls",
+      "label": "calls",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.chain",
+      "label": "chain",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.files",
+      "label": "files",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.is_absolute",
+      "label": "is_absolute",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.trailing",
+      "label": "trailing",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.SmallTests.violations",
+      "label": "violations",
+      "level": "method",
+      "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Cli.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.plumbing.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Cli.accepted",
+      "label": "accepted",
+      "level": "method",
+      "parent": "devtools.plumbing.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Cli.parser",
+      "label": "parser",
+      "level": "method",
+      "parent": "devtools.plumbing.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Cli.prog",
+      "label": "prog",
+      "level": "method",
+      "parent": "devtools.plumbing.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Cli.run",
+      "label": "run",
+      "level": "method",
+      "parent": "devtools.plumbing.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Cli.tool",
+      "label": "tool",
+      "level": "method",
+      "parent": "devtools.plumbing.cli.Cli",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Flag.add_to",
+      "label": "add_to",
+      "level": "method",
+      "parent": "devtools.plumbing.cli.Flag",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.cli.Switch.add_to",
+      "label": "add_to",
+      "level": "method",
+      "parent": "devtools.plumbing.cli.Switch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout.TestLayout.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.plumbing.layout.TestLayout",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout.TestLayout.mirror_of",
+      "label": "mirror_of",
+      "level": "method",
+      "parent": "devtools.plumbing.layout.TestLayout",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout.TestLayout.missing",
+      "label": "missing",
+      "level": "method",
+      "parent": "devtools.plumbing.layout.TestLayout",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout.TestLayout.names",
+      "label": "names",
+      "level": "method",
+      "parent": "devtools.plumbing.layout.TestLayout",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout.TestLayout.of",
+      "label": "of",
+      "level": "method",
+      "parent": "devtools.plumbing.layout.TestLayout",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout.TestLayout.testable",
+      "label": "testable",
+      "level": "method",
+      "parent": "devtools.plumbing.layout.TestLayout",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout._Mirror.mirror_of",
+      "label": "mirror_of",
+      "level": "method",
+      "parent": "devtools.plumbing.layout._Mirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout._Mirror.missing",
+      "label": "missing",
+      "level": "method",
+      "parent": "devtools.plumbing.layout._Mirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout._Off.mirror_of",
+      "label": "mirror_of",
+      "level": "method",
+      "parent": "devtools.plumbing.layout._Off",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.layout._Off.missing",
+      "label": "missing",
+      "level": "method",
+      "parent": "devtools.plumbing.layout._Off",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.names.Names.bases",
+      "label": "bases",
+      "level": "method",
+      "parent": "devtools.plumbing.names.Names",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.names.Names.decorator",
+      "label": "decorator",
+      "level": "method",
+      "parent": "devtools.plumbing.names.Names",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.names.Names.trailing",
+      "label": "trailing",
+      "level": "method",
+      "parent": "devtools.plumbing.names.Names",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.omit.Omit.coverage_omit",
+      "label": "coverage_omit",
+      "level": "method",
+      "parent": "devtools.plumbing.omit.Omit",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.omit.Omit.matches_omit",
+      "label": "matches_omit",
+      "level": "method",
+      "parent": "devtools.plumbing.omit.Omit",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.pyproject.Pyproject.rows",
+      "label": "rows",
+      "level": "method",
+      "parent": "devtools.plumbing.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.pyproject.Pyproject.str_list",
+      "label": "str_list",
+      "level": "method",
+      "parent": "devtools.plumbing.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.pyproject.Pyproject.str_of",
+      "label": "str_of",
+      "level": "method",
+      "parent": "devtools.plumbing.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.pyproject.Pyproject.structure_cfg",
+      "label": "structure_cfg",
+      "level": "method",
+      "parent": "devtools.plumbing.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.pyproject.Pyproject.table",
+      "label": "table",
+      "level": "method",
+      "parent": "devtools.plumbing.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.pyproject.Pyproject.tool_section",
+      "label": "tool_section",
+      "level": "method",
+      "parent": "devtools.plumbing.pyproject.Pyproject",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver._assigned_type",
+      "label": "_assigned_type",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver._class_homes",
+      "label": "_class_homes",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver._inheritance",
+      "label": "_inheritance",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.annotation_names",
+      "label": "annotation_names",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.classes_in",
+      "label": "classes_in",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.definer",
+      "label": "definer",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.field_types",
+      "label": "field_types",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.imported_names",
+      "label": "imported_names",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.init_of",
+      "label": "init_of",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.is_self_attr",
+      "label": "is_self_attr",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.leaves_project",
+      "label": "leaves_project",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.module_of",
+      "label": "module_of",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.qualified",
+      "label": "qualified",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.resolve",
+      "label": "resolve",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.resolve_all",
+      "label": "resolve_all",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.scope_of",
+      "label": "scope_of",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.trees.Trees.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.plumbing.trees.Trees",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.trees.Trees.files",
+      "label": "files",
+      "level": "method",
+      "parent": "devtools.plumbing.trees.Trees",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.plumbing.trees.Trees.walk",
+      "label": "walk",
+      "level": "method",
+      "parent": "devtools.plumbing.trees.Trees",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch._guarded",
+      "label": "_guarded",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch.build",
+      "label": "build",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch.engine_class",
+      "label": "engine_class",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch.names",
+      "label": "names",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch.resolver",
+      "label": "resolver",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch.run",
+      "label": "run",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch.run_gate",
+      "label": "run_gate",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.run.Batch.run_report",
+      "label": "run_report",
+      "level": "method",
+      "parent": "devtools.run.Batch",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._analyze",
+      "label": "_analyze",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._annotations",
+      "label": "_annotations",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._bare_array_slots",
+      "label": "_bare_array_slots",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._functions",
+      "label": "_functions",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._is_array_anno",
+      "label": "_is_array_anno",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._is_jaxtyping_anno",
+      "label": "_is_jaxtyping_anno",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts._render",
+      "label": "_render",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.array_names",
+      "label": "array_names",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.run_assert",
+      "label": "run_assert",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.shape_contracts.ShapeContracts.scan",
+      "label": "scan",
+      "level": "method",
+      "parent": "devtools.shape_contracts.ShapeContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.Analytics.__init__",
+      "label": "__init__",
+      "level": "method",
+      "parent": "devtools.tools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.Analytics._code_lines",
+      "label": "_code_lines",
+      "level": "method",
+      "parent": "devtools.tools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.Analytics._test_lines",
+      "label": "_test_lines",
+      "level": "method",
+      "parent": "devtools.tools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.Analytics.analyze",
+      "label": "analyze",
+      "level": "method",
+      "parent": "devtools.tools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.Analytics.analyze_file",
+      "label": "analyze_file",
+      "level": "method",
+      "parent": "devtools.tools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.Analytics.report",
+      "label": "report",
+      "level": "method",
+      "parent": "devtools.tools.analytics.Analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.AreaStat.branches",
+      "label": "branches",
+      "level": "method",
+      "parent": "devtools.tools.analytics.AreaStat",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.AreaStat.code_lines",
+      "label": "code_lines",
+      "level": "method",
+      "parent": "devtools.tools.analytics.AreaStat",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.analytics.AreaStat.defs",
+      "label": "defs",
+      "level": "method",
+      "parent": "devtools.tools.analytics.AreaStat",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.config.Config.names",
+      "label": "names",
+      "level": "method",
+      "parent": "devtools.tools.config.Config",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.config.Config.path",
+      "label": "path",
+      "level": "method",
+      "parent": "devtools.tools.config.Config",
+      "role": null
+    }
+  ]
+}

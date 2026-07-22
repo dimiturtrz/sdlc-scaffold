@@ -23,20 +23,11 @@
  */
 (async () => {
   cytoscape.use(window.cytoscapeFcose);
-  // `randomize` is deliberately absent: it is a per-RUN decision, not a constant (see relayout).
-  // `tile` was carried over from cose-bilkent and is not an fcose option at all — it did nothing.
-  // `packComponents: true` was passed explicitly while already being the default; also dropped.
-  // `nestingFactor` feeds PER_LEVEL_IDEAL_EDGE_LENGTH_FACTOR, which LENGTHENS an edge that crosses compound
-  // boundaries, scaled by how many levels it crosses. It is the only force holding two boxes apart, and at
-  // the stock 0.1 a cross-module method->method edge earned about 48px of separation for two whole module
-  // boxes — so they simply sat on top of each other, worse the deeper the tier. Scaling with depth is the
-  // right shape (the deeper stops need more room); the coefficient was just far too small.
-  const FCOSE = { name: 'fcose', quality: 'proof', animate: false,
-    nodeSeparation: 130, idealEdgeLength: 80, nestingFactor: 0.8, gravity: 0.25, numIter: 2500,
-    // Our nodes are sized to their text (`width: 'label'`) and a compound draws its own label above its
-    // children. fcose measures raw boxes unless told otherwise, so without this it packs siblings into
-    // each other's labels — which is most of the overlap between module boxes.
-    nodeDimensionsIncludeLabels: true };
+  // The force pass (LAYOUT) AND the deterministic compaction (compact) live in ONE shared module, layout.js,
+  // imported here and by the headless measurement harness (measure.cjs) — so what the harness scores is
+  // exactly what this page renders, with no copy to drift (bd 42b.2). LAYOUT is randomize:false, which
+  // fcose's spectral init makes byte-deterministic; `compact` shrink-wraps every compound after it settles.
+  const { LAYOUT, compact } = window.archvizLayout;
 
   // ONE table owns every per-kind fact: how the arrow is drawn, and which band it belongs to. The cytoscape
   // stylesheet, the legend swatches and the band membership are all derived from it, so a colour cannot
@@ -285,7 +276,6 @@
   // Fold and filter state already SURVIVE a rebuild; position did not, which undid most of that benefit —
   // the arrangement you had just read was thrown away every time you touched a control.
   const POS = {};
-  let lastDepth = null;
 
   // Seeds for the nodes about to be added. An incremental run skips fcose's global placement phase and only
   // relaxes forces from where things already are, so WHERE new nodes start is the whole game — and my first
@@ -347,64 +337,21 @@
     relayout();
   }
 
-  // ---- parking the edgeless ---------------------------------------------------------------------------
-  // A force layout has NOTHING to place a node with no edges: repulsion pushes it away and only weak
-  // gravity pulls back, so it drifts until its parent box stretches to bound it. That is the whole reason
-  // `archmap` rendered as a mostly-empty box around three TypedDicts — the box was sized correctly, its
-  // children were placed badly. cose-bilkent had `tile` for exactly this and fcose has no equivalent, so
-  // this is that: tuck the edgeless into a tidy block under the part of the box that has structure.
-  //
-  // Deliberately only the EDGELESS. Gridding every child would scramble the intra-class calls, which are
-  // most of the arrows at the deepest stop and the reason that stop exists — physics places those well.
-  const PARK_GAP = 24;
-
-  function parkEdgeless() {
-    const groups = new Map();
-    cy.nodes().forEach((n) => {
-      if (n.isParent() || n.degree(false) > 0) return;     // a box, or something with structure to hold it
-      const key = n.parent().empty() ? '' : n.parent().id();
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(n);
-    });
-    for (const [key, loose] of groups) {
-      const siblings = key ? cy.getElementById(key).children() : cy.nodes().filter((n) => n.parent().empty());
-      const looseIds = new Set(loose.map((n) => n.id()));
-      const anchored = siblings.filter((n) => !looseIds.has(n.id()));
-      // Anchor UNDER the connected cluster, so the reading order is structure first, companions beneath.
-      // With nothing connected to anchor to, tidy them where they already are rather than dragging the
-      // whole group across the graph to sit under something unrelated.
-      const under = anchored.nonempty();
-      const box = under ? anchored.boundingBox() : cy.collection(loose).boundingBox();
-      const cellW = Math.max(...loose.map((n) => n.outerWidth())) + PARK_GAP;
-      const cellH = Math.max(...loose.map((n) => n.outerHeight())) + PARK_GAP;
-      // match the block's width to the cluster it sits under, so it reads as belonging to it
-      const cols = Math.max(1, Math.min(loose.length, Math.round(box.w / cellW) || 1));
-      const top = under ? box.y2 + PARK_GAP : box.y1;
-      loose.forEach((n, i) => n.position({
-        x: box.x1 + (i % cols) * cellW + cellW / 2,
-        y: top + Math.floor(i / cols) * cellH + cellH / 2,
-      }));
-    }
-  }
-
-  // Parking runs after the layout SETTLES, not after run() returns — fcose reports completion by event, and
-  // repositioning mid-solve would just be overwritten.
+  // Compaction runs after the layout SETTLES, not after run() returns — fcose reports completion by event,
+  // and repositioning mid-solve would just be overwritten. `compact` (layout.js) shrink-wraps every compound;
+  // then we fit the camera.
   function settle() {
-    parkEdgeless();
+    compact(cy);
     cy.fit(cy.elements(), 40);
   }
 
   function relayout() {
-    // Randomize ONCE. The first layout has nothing to improve on; every later one starts from positions the
-    // reader has already made sense of, so it should ADJUST the picture rather than re-solve it.
-    // Reseed when the DEPTH STOP changes, and only then. That is the semantic line rather than a threshold
-    // on how many nodes moved: a new depth is a different KIND of picture and deserves a fresh solve, while
-    // folding a package or switching arrow bands is the same picture rearranged — and folding is the main
-    // way this thing is read, so it is exactly where the reader's arrangement must survive.
-    const reseed = depth !== lastDepth;
-    lastDepth = depth;
+    // Deterministic and incremental: LAYOUT is randomize:false, so a fresh graph solves to the same positions
+    // (fcose's spectral init is stable) and a later fold/depth change ADJUSTS from where things already sit
+    // rather than reshuffling. The old reseed-on-depth-change was the one source of non-determinism; it is
+    // gone, and `compact` now guarantees the tight boxes the reseed's force-tuning was chasing.
     try {
-      const layout = cy.layout({ ...FCOSE, randomize: reseed });
+      const layout = cy.layout(LAYOUT);
       layout.one('layoutstop', settle);
       layout.run();          // fcose throws HERE, not on construction — so the fallback must cover the run
     } catch (e) {
@@ -418,12 +365,17 @@
   // the ONLY redraw path that preserves fold state — every control except `reset view` goes through here
   function apply() { rebuild(); applyDefaultFold(); refresh(); }
 
-  // focus = SPOTLIGHT: the node + its dependency neighbours + connecting edges (+ ancestor boxes) stay lit;
-  // everything else DIMS but remains on screen (context is kept, not hidden), and we zoom to the cluster.
+  // focus = SPOTLIGHT: the node + its dependency neighbours + connecting edges stay lit; everything else DIMS
+  // but remains on screen (context is kept, not hidden), and we zoom to the cluster.
   function focus(n) {
-    const hood = n.closedNeighborhood().union(n.ancestors());
+    const hood = n.closedNeighborhood();                       // n + its neighbours + the connecting edges
+    // ...plus the box each of those sits in, at EVERY level. Without this a neighbour in another module was
+    // lit inside a DIMMED box, so it floated with no container and you could not read which class/module it
+    // belonged to — the spotlight lost its place across the three tiers. `.ancestors()` of the whole
+    // neighbourhood lights those class and module boxes so each lit node keeps its address.
+    const lit = hood.union(hood.nodes().ancestors());
     cy.elements().removeClass('hl').addClass('dim');
-    hood.removeClass('dim').addClass('lit');
+    lit.removeClass('dim').addClass('lit');
     n.removeClass('dim').addClass('hl');
     cy.fit(hood, 60);
     focused = n;
@@ -500,7 +452,6 @@
     // position is reading state exactly like folding is, so the control that restores the default view
     // clears it too — otherwise `reset` would rebuild the default graph in the arrangement you just left
     Object.keys(POS).forEach((id) => delete POS[id]);
-    lastDepth = null;   // no previous stop to match, so `reset` always solves fresh
     apply();
   };
 

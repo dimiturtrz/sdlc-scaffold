@@ -13,7 +13,10 @@ from pathlib import Path
 
 import pytest
 
+import devtools
 from devtools.graph.archmap import Archmap, main
+
+_ARCHVIZ = Path(devtools.__file__).resolve().parent / "archviz"
 
 
 class _FakeGraph:
@@ -227,3 +230,41 @@ def test_main_requires_packages(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["devtools.archmap"])
     with pytest.raises(SystemExit):
         main()
+
+
+# The layout (the fcose force pass AND the deterministic compaction) has ONE home, layout.js, consumed by BOTH
+# the interactive viewer and the headless measurement harness (bd 42b.2). That is what lets the harness score
+# the layout the page actually renders. This test locks the single source in: it fails if either consumer
+# re-inlines its own copy of the constants, or if the interim force-tuning the compaction retired (a per-edge
+# `edgeElasticity` split, a `gravityCompound` override) creeps back into any archviz file.
+_RETIRED_KNOBS = ("gravityCompound", "gravityRangeCompound", "edgeElasticity")
+
+
+def test_layout_is_single_sourced():
+    """viewer.js and measure.cjs both take LAYOUT + compact from layout.js — neither declares its own. A copy
+    nothing checks drifts, and then the harness stops describing the real page."""
+    layout = (_ARCHVIZ / "layout.js").read_text(encoding="utf-8")
+    assert "archvizLayout" in layout and "function compact" in layout, "layout.js must export LAYOUT + compact"
+
+    viewer = (_ARCHVIZ / "viewer.js").read_text(encoding="utf-8")
+    assert "window.archvizLayout" in viewer, "viewer.js must consume the shared layout, not inline its own"
+    assert "quality: 'proof'" not in viewer, "viewer.js re-inlined an fcose config — it must use layout.js"
+
+    harness = (_ARCHVIZ / "measure.cjs").read_text(encoding="utf-8")
+    assert "require(path.join(HERE, 'layout.js'))" in harness, "measure.cjs must import the shared layout.js"
+
+
+def test_the_retired_force_tuning_stays_retired():
+    """Stage A replaced whack-a-mole force constants with deterministic compaction. If a `gravityCompound` or
+    per-edge `edgeElasticity` reappears as a layout OPTION in any archviz source, someone is tuning forces
+    again instead of fixing the compaction — the exact regression the rework exists to prevent. Matched as an
+    object key (`knob:`), so layout.js's prose recounting what it removed does not count as reintroducing it."""
+    offenders = {}
+    for f in _ARCHVIZ.glob("*.js"):
+        if f.name not in {"viewer.js", "layout.js"}:
+            continue
+        source = f.read_text(encoding="utf-8").replace(" ", "")
+        back = [k for k in _RETIRED_KNOBS if f"{k}:" in source]
+        if back:
+            offenders[f.name] = back
+    assert not offenders, f"retired force-tuning knobs are back — fix compaction, do not re-tune forces: {offenders}"

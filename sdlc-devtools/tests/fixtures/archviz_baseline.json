@@ -1,0 +1,161 @@
+{
+  "source": "sdlc-devtools\\tests\\fixtures\\archviz_graph.json",
+  "views": {
+    "module/imports": {
+      "nodes": 37,
+      "edges": 79,
+      "deterministic": true,
+      "maxPositionDelta": 0,
+      "compounds": 7,
+      "underfilled": 3,
+      "medianFill": 0.16036748557562122,
+      "crossings": 509,
+      "canvas": {
+        "w": 1171,
+        "h": 1008,
+        "area": 1179698
+      },
+      "worst": [
+        {
+          "id": "devtools.tools",
+          "fill": 0.056,
+          "ratio": 0.172,
+          "children": 2,
+          "box": "153x403"
+        },
+        {
+          "id": "devtools.cohesion",
+          "fill": 0.096,
+          "ratio": 0.34,
+          "children": 4,
+          "box": "423x219"
+        },
+        {
+          "id": "devtools.coupling",
+          "fill": 0.087,
+          "ratio": 0.372,
+          "children": 5,
+          "box": "431x227"
+        },
+        {
+          "id": "devtools.graph",
+          "fill": 0.185,
+          "ratio": 0.664,
+          "children": 5,
+          "box": "201x206"
+        },
+        {
+          "id": "devtools.plumbing",
+          "fill": 0.16,
+          "ratio": 0.684,
+          "children": 8,
+          "box": "274x257"
+        }
+      ]
+    },
+    "class/structure": {
+      "nodes": 84,
+      "edges": 29,
+      "deterministic": true,
+      "maxPositionDelta": 0,
+      "compounds": 17,
+      "underfilled": 0,
+      "medianFill": 0.2947772950017966,
+      "crossings": 10,
+      "canvas": {
+        "w": 1756,
+        "h": 1733,
+        "area": 3042345
+      },
+      "worst": [
+        {
+          "id": "devtools.graph.archmap",
+          "fill": 0.199,
+          "ratio": 0.61,
+          "children": 4,
+          "box": "244x143"
+        },
+        {
+          "id": "devtools.plumbing",
+          "fill": 0.161,
+          "ratio": 0.657,
+          "children": 8,
+          "box": "812x705"
+        },
+        {
+          "id": "devtools.plumbing.resolve",
+          "fill": 0.239,
+          "ratio": 0.662,
+          "children": 2,
+          "box": "191x84"
+        },
+        {
+          "id": "devtools.tools.analytics",
+          "fill": 0.199,
+          "ratio": 0.747,
+          "children": 3,
+          "box": "227x125"
+        },
+        {
+          "id": "devtools.run",
+          "fill": 0.243,
+          "ratio": 0.75,
+          "children": 2,
+          "box": "125x90"
+        }
+      ]
+    },
+    "all/all": {
+      "nodes": 370,
+      "edges": 459,
+      "deterministic": true,
+      "maxPositionDelta": 0,
+      "compounds": 51,
+      "underfilled": 25,
+      "medianFill": 0.14945098140284688,
+      "crossings": 3183,
+      "canvas": {
+        "w": 7649,
+        "h": 9670,
+        "area": 73965494
+      },
+      "worst": [
+        {
+          "id": "devtools.hygiene.mirror.MethodMirror",
+          "fill": 0.007,
+          "ratio": 0.026,
+          "children": 25,
+          "box": "2588x2650"
+        },
+        {
+          "id": "devtools.coupling.envy.FeatureEnvy",
+          "fill": 0.008,
+          "ratio": 0.029,
+          "children": 10,
+          "box": "1674x1652"
+        },
+        {
+          "id": "devtools.coupling.contracts.UseContracts",
+          "fill": 0.008,
+          "ratio": 0.033,
+          "children": 8,
+          "box": "1402x1408"
+        },
+        {
+          "id": "devtools.graph.archmap.Archmap",
+          "fill": 0.009,
+          "ratio": 0.034,
+          "children": 14,
+          "box": "1689x1898"
+        },
+        {
+          "id": "devtools.run.Batch",
+          "fill": 0.01,
+          "ratio": 0.038,
+          "children": 9,
+          "box": "1000x1523"
+        }
+      ]
+    }
+  }
+}
