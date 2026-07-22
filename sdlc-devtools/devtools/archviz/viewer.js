@@ -365,12 +365,17 @@
   // the ONLY redraw path that preserves fold state — every control except `reset view` goes through here
   function apply() { rebuild(); applyDefaultFold(); refresh(); }
 
-  // focus = SPOTLIGHT: the node + its dependency neighbours + connecting edges (+ ancestor boxes) stay lit;
-  // everything else DIMS but remains on screen (context is kept, not hidden), and we zoom to the cluster.
+  // focus = SPOTLIGHT: the node + its dependency neighbours + connecting edges stay lit; everything else DIMS
+  // but remains on screen (context is kept, not hidden), and we zoom to the cluster.
   function focus(n) {
-    const hood = n.closedNeighborhood().union(n.ancestors());
+    const hood = n.closedNeighborhood();                       // n + its neighbours + the connecting edges
+    // ...plus the box each of those sits in, at EVERY level. Without this a neighbour in another module was
+    // lit inside a DIMMED box, so it floated with no container and you could not read which class/module it
+    // belonged to — the spotlight lost its place across the three tiers. `.ancestors()` of the whole
+    // neighbourhood lights those class and module boxes so each lit node keeps its address.
+    const lit = hood.union(hood.nodes().ancestors());
     cy.elements().removeClass('hl').addClass('dim');
-    hood.removeClass('dim').addClass('lit');
+    lit.removeClass('dim').addClass('lit');
     n.removeClass('dim').addClass('hl');
     cy.fit(hood, 60);
     focused = n;
