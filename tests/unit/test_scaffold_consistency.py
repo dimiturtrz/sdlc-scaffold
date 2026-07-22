@@ -192,7 +192,7 @@ def test_every_structure_key_the_template_ships_is_known_to_the_reader():
     exactly how the first version of that validator rejected demeter's and envy's keys as typos.
     """
     sys.path.insert(0, str(REPO / "sdlc-devtools"))
-    from devtools.pyproject import STRUCTURE_DEFAULTS  # noqa: PLC0415 (the package is a sibling, not a dep)
+    from devtools.plumbing.pyproject import STRUCTURE_DEFAULTS  # noqa: PLC0415 (the package is a sibling, not a dep)
 
     section = re.search(r"^\[tool\.structure\]\n(.*?)(?=^\[)", _TEMPLATE_PYPROJECT, re.S | re.M)
     assert section, "the template no longer ships a [tool.structure] section"

@@ -5,7 +5,9 @@ dense container of parameter combinations rather than one case per behaviour.
 """
 
 import ast
+import sys
 
+import grimp
 import pytest
 
 from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
@@ -81,7 +83,10 @@ def test_edges(monkeypatch, tmp_path, write_pkg):
     assert ("arrows_self.mod.Node", "arrows_self.mod.Node", HOLDS) in loops, "self-composition is a real arrow"
 
     # A type both HELD and named in a signature is composition, not double-counted as an API reference.
-    both = "class Dep: ...\n\n\nclass A:\n    def __init__(self, d: Dep):\n        self._d = d\n\n    def use(self, d: Dep) -> None: ...\n"
+    both = (
+        "class Dep: ...\n\n\nclass A:\n    def __init__(self, d: Dep):\n        self._d = d\n\n"
+        "    def use(self, d: Dep) -> None: ...\n"
+    )
     assert {k for _, d, k in _kinds(monkeypatch, tmp_path, write_pkg, "arrows_dedup", both) if d.endswith(".Dep")} == {
         HOLDS
     }, "holds wins over references for the same type"
@@ -117,10 +122,6 @@ def test_arrows_roll_up_to_the_real_import_graph(monkeypatch, tmp_path):
     """`import` is the file-level ROLL-UP of the finer arrows (bd 4bl.2). Project each arrow's endpoints to
     their modules: a CROSS-file arrow must ride a real grimp import, and an INTRA-file arrow collapses to a
     self-loop the import graph legitimately cannot represent. This is the invariant tying the two tiers."""
-    import sys
-
-    import grimp
-
     pkg = tmp_path / "rollup_pkg"
     pkg.mkdir()
     (pkg / "__init__.py").write_text("")

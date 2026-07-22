@@ -36,10 +36,10 @@ from __future__ import annotations
 import ast
 import logging
 
-from devtools.cli import Cli
-from devtools.pyproject import Pyproject
-from devtools.resolve import Resolver
-from devtools.trees import Trees
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.pyproject import Pyproject
+from devtools.plumbing.resolve import Resolver
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.demeter")
 

@@ -18,8 +18,8 @@ import ast
 import logging
 from itertools import combinations
 
-from devtools.cli import Cli, Flag
-from devtools.trees import Trees
+from devtools.plumbing.cli import Cli, Flag
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.data_clumps")
 

@@ -38,10 +38,10 @@ import ast
 import logging
 from pathlib import Path
 
-from devtools._common import ENCODING
-from devtools.cli import Cli
-from devtools.layout import TestLayout
-from devtools.pyproject import Pyproject
+from devtools.plumbing._common import ENCODING
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.layout import TestLayout
+from devtools.plumbing.pyproject import Pyproject
 
 log = logging.getLogger("devtools.small")
 

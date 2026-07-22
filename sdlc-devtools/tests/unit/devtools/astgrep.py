@@ -83,6 +83,8 @@ def test_run_assert(monkeypatch):
     engine = AstGrep(["pkg"])
     for code, out in ((0, ""), (1, "error[py-top-level-function]: ...")):
         calls = []
-        monkeypatch.setattr(engine, "scan", lambda code=code, out=out: (calls.append(1), _done(code, out=out))[1])
+        monkeypatch.setattr(
+            engine, "scan", lambda code=code, out=out, calls=calls: (calls.append(1), _done(code, out=out))[1]
+        )
         assert engine.run_assert() == code, f"exit {code} is passed through as the verdict"
         assert len(calls) == 1, "one scan per gate run, pass or fail"

@@ -8,7 +8,7 @@ import ast
 
 import pytest
 
-from devtools.names import Names
+from devtools.plumbing.names import Names
 
 
 def _expr(src: str) -> ast.expr:

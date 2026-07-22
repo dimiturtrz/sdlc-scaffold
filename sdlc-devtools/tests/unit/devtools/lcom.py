@@ -8,6 +8,7 @@ import sys
 
 import pytest
 
+from devtools import lcom
 from devtools.lcom import Lcom
 
 # two disjoint self-field groups: {a,b} touch self.x, {c,d} touch self.y -> LCOM4 == 2
@@ -67,7 +68,8 @@ def test_lcom4(make_cls):
         # A DOMAIN base means a polymorphic impl: its method split mirrors the interface contract, not real
         # fusion. This is the exemption that keeps raw LCOM4 usable on a strategy-pattern codebase.
         (
-            "class Backend(BaseStore):\n    def read(self):\n        return self.a\n    def draw(self):\n        return self.b\n",
+            "class Backend(BaseStore):\n    def read(self):\n        return self.a\n"
+            "    def draw(self):\n        return self.b\n",
             False,
         ),
         # An ABC declares independent facets by design; a trivial-bodied stub holds no state to fuse at all.
@@ -77,11 +79,13 @@ def test_lcom4(make_cls):
         # fit writes learned state, transform reads different state -> raw LCOM4 == 2, but that split IS the
         # sklearn duck-typed contract (bd 76i). Name-based, since the contract has no base class to key on.
         (
-            "class Scaler:\n    def fit(self, X):\n        self.mean = X\n    def transform(self, X):\n        return self.scale\n",
+            "class Scaler:\n    def fit(self, X):\n        self.mean = X\n"
+            "    def transform(self, X):\n        return self.scale\n",
             False,
         ),
         (
-            "class Est:\n    def fit(self, X):\n        self.a = X\n    def __call__(self, X):\n        return self.b\n",
+            "class Est:\n    def fit(self, X):\n        self.a = X\n"
+            "    def __call__(self, X):\n        return self.b\n",
             False,
         ),
     ],
@@ -92,7 +96,10 @@ def test_is_split_candidate(make_cls, source, splits):
 
 def test_the_sklearn_contract_is_exempt_despite_a_real_split(make_cls):
     """The exemption is a POLICY layered over the metric, not a hole in it — the raw score still says 2."""
-    src = "class Scaler:\n    def fit(self, X):\n        self.mean = X\n    def transform(self, X):\n        return self.scale\n"
+    src = (
+        "class Scaler:\n    def fit(self, X):\n        self.mean = X\n"
+        "    def transform(self, X):\n        return self.scale\n"
+    )
     assert Lcom.lcom4(make_cls(src))[0] == 2, "fit/transform touch disjoint state -> raw LCOM4 is 2"
     assert Lcom._is_split_candidate(make_cls(src)) is None, "but fit+transform is exempt as the sklearn contract"
 
@@ -113,7 +120,8 @@ def test_scan(write_pkg, tmp_path):
 
     two = (
         _SPLIT
-        + "\nclass Wider:\n    def a(self):\n        return self.x\n    def b(self):\n        return self.y\n    def c(self):\n        return self.z\n"
+        + "\nclass Wider:\n    def a(self):\n        return self.x\n"
+        "    def b(self):\n        return self.y\n    def c(self):\n        return self.z\n"
     )
     scores = [row[0] for row in Lcom([write_pkg(tmp_path, "lcom_rank", two)]).scan()]
     assert scores == sorted(scores, reverse=True), f"worst cohesion first, got {scores}"
@@ -141,7 +149,5 @@ def test_lcom_main_requires_packages(monkeypatch):
     # nargs="+" -> no positional makes argparse exit(2), never a vacuous scan of a phantom 'src' (skr GAP2)
     monkeypatch.setattr(sys, "argv", ["devtools.lcom"])
     with pytest.raises(SystemExit) as exc:
-        from devtools import lcom
-
         lcom.main()
     assert exc.value.code == 2, "no-arg invocation must be an argparse usage error"

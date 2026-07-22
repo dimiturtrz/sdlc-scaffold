@@ -30,16 +30,16 @@ from typing import TypedDict
 import grimp
 import networkx as nx
 
-from devtools._common import ENCODING
 from devtools.arrows import ClassArrows
 from devtools.calls import CONSTRUCT, CallArrows
 from devtools.classes import ClassIndex
-from devtools.cli import Cli, Flag, Switch
-from devtools.layout import DEFAULT_TEST_ROOT, STRUCTURAL, TestLayout
-from devtools.names import Names
-from devtools.pyproject import Pyproject
-from devtools.resolve import Resolver
-from devtools.trees import Trees
+from devtools.plumbing._common import ENCODING
+from devtools.plumbing.cli import Cli, Flag, Switch
+from devtools.plumbing.layout import DEFAULT_TEST_ROOT, STRUCTURAL, TestLayout
+from devtools.plumbing.names import Names
+from devtools.plumbing.pyproject import Pyproject
+from devtools.plumbing.resolve import Resolver
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.graph")
 
@@ -123,7 +123,7 @@ class ImportGraph:
 
     def unmirrored(self, layout: str = "mirror", test_root: str = DEFAULT_TEST_ROOT) -> list[str]:
         """LOGIC source modules with no unit test. The universal rule is "every logic module HAS a test";
-        WHERE it lives is `test_layout`, and `devtools.layout` owns that convention for every gate that
+        WHERE it lives is `test_layout`, and `devtools.plumbing.layout` owns that convention for every gate that
         reads it (bd 1a8) — this one and the method-level mirror both resolve through the same strategy,
         over the same population, so they cannot disagree about what is covered."""
         convention = TestLayout.of(layout, test_root)

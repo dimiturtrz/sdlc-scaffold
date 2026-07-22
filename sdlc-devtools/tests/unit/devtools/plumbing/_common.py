@@ -6,7 +6,7 @@ subjects sharing a file. What is left is the SSOT constant, guarded here so a st
 elsewhere is a visible change rather than a silent divergence.
 """
 
-from devtools import _common
+from devtools.plumbing import _common
 
 
 def test_encoding_is_utf8():

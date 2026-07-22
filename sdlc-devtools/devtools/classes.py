@@ -26,9 +26,9 @@ import ast
 import logging
 from pathlib import Path
 
-from devtools.cli import Cli
-from devtools.names import Names
-from devtools.trees import Trees
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.names import Names
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.classes")
 

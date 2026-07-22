@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from devtools.resolve import FileScope, Resolver
+from devtools.plumbing.resolve import FileScope, Resolver
 
 
 def _module(src: str) -> ast.Module:

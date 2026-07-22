@@ -8,6 +8,7 @@ import sys
 
 import pytest
 
+from devtools import state_candidates
 from devtools.state_candidates import StateCandidates
 
 _BAG = """
@@ -118,7 +119,5 @@ def test_report(tmp_path, monkeypatch):
 def test_state_candidates_main_requires_packages(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["devtools.state_candidates"])
     with pytest.raises(SystemExit) as exc:
-        from devtools import state_candidates
-
         state_candidates.main()
     assert exc.value.code == 2, "no-arg invocation must be an argparse usage error"

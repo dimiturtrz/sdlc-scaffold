@@ -36,9 +36,9 @@ import ast
 import logging
 from dataclasses import dataclass
 
-from devtools.cli import Cli
-from devtools.names import Names
-from devtools.resolve import FileScope, Resolver
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.names import Names
+from devtools.plumbing.resolve import FileScope, Resolver
 
 log = logging.getLogger("devtools.calls")
 

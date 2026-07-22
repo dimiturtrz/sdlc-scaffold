@@ -8,6 +8,7 @@ import sys
 
 import pytest
 
+from devtools import data_clumps
 from devtools.data_clumps import DataClumps
 
 
@@ -83,7 +84,5 @@ def test_report(write_pkg, tmp_path):
 def test_data_clumps_main_requires_packages(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["devtools.data_clumps"])
     with pytest.raises(SystemExit) as exc:
-        from devtools import data_clumps
-
         data_clumps.main()
     assert exc.value.code == 2, "no-arg invocation must be an argparse usage error"

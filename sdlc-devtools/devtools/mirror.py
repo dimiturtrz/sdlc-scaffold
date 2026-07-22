@@ -75,11 +75,11 @@ from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 
-from devtools._common import ENCODING
-from devtools.cli import Cli
-from devtools.layout import TestLayout
-from devtools.pyproject import Pyproject
-from devtools.trees import Trees
+from devtools.plumbing._common import ENCODING
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.layout import TestLayout
+from devtools.plumbing.pyproject import Pyproject
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.mirror")
 

@@ -186,7 +186,10 @@ def test_overrides():
     Counting them separately did two wrong things at once: it demanded a test per strategy, and it made the
     method name look ambiguous, so the gate asked for `test___mirror_mirror_of`.
     """
-    src = "class Base:\n    def go(self): ...\nclass Mid(Base):\n    def go(self): ...\nclass Leaf(Mid):\n    def extra(self): ...\nclass Alone:\n    def go(self): ...\n"
+    src = (
+        "class Base:\n    def go(self): ...\nclass Mid(Base):\n    def go(self): ...\n"
+        "class Leaf(Mid):\n    def extra(self): ...\nclass Alone:\n    def go(self): ...\n"
+    )
     classes = {c.name: c for c in ast.walk(_module(src)) if isinstance(c, ast.ClassDef)}
     assert MethodMirror.overrides(classes["Mid"], classes) == {"go"}
     assert MethodMirror.overrides(classes["Leaf"], classes) == {"go"}, "transitively, through Mid"

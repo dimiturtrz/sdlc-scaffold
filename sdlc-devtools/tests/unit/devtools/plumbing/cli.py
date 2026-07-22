@@ -10,7 +10,7 @@ import logging
 
 import pytest
 
-from devtools.cli import Cli, Flag, Switch
+from devtools.plumbing.cli import Cli, Flag, Switch
 
 
 class Fake:

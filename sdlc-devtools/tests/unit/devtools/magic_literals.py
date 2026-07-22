@@ -8,6 +8,7 @@ import sys
 
 import pytest
 
+from devtools import magic_literals
 from devtools.magic_literals import MagicLiterals
 
 # A value-position token appearing >= 4x is vocabulary; 3x is incidental. Both live in one snippet so the
@@ -110,7 +111,5 @@ def test_magic_literals_main_requires_packages(monkeypatch):
     a no-arg invocation must be a usage error, not a scan of nothing that prints an empty report."""
     monkeypatch.setattr(sys, "argv", ["devtools.magic_literals"])
     with pytest.raises(SystemExit) as exc:
-        from devtools import magic_literals
-
         magic_literals.main()
     assert exc.value.code == 2, "no-arg invocation must be an argparse usage error"

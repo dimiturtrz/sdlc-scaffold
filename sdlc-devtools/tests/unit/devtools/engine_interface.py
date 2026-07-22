@@ -32,7 +32,10 @@ BESPOKE = {"config", "archmap", "run"}
 
 def _engine_modules():
     for info in pkgutil.iter_modules(devtools.__path__):
-        if info.name in PLUMBING or info.name in BESPOKE:
+        # A subpackage is never a top-level engine — `plumbing/` (bd 2wt) and `archviz/` are folders, not
+        # modules answering the contract. The tree says so via `ispkg`, so no name has to. PLUMBING still
+        # guards a stray plumbing module re-added at the top level; BESPOKE the top-level non-engines.
+        if info.ispkg or info.name in PLUMBING or info.name in BESPOKE:
             continue
         module = importlib.import_module(f"devtools.{info.name}")
         if hasattr(module, "main"):

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 
-from devtools.pyproject import Pyproject
+from devtools.plumbing.pyproject import Pyproject
 
 
 class Omit:

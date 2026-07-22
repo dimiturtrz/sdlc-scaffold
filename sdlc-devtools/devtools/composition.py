@@ -20,7 +20,7 @@ from collections.abc import Iterable
 import networkx as nx
 
 from devtools.arrows import HOLDS, ClassArrows
-from devtools.cli import Cli
+from devtools.plumbing.cli import Cli
 
 log = logging.getLogger("devtools.composition")
 

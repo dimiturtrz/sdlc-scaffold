@@ -9,7 +9,7 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-from devtools._common import ENCODING
+from devtools.plumbing._common import ENCODING
 
 # [tool.structure] is ONE section read by SEVERAL engines, so its key space belongs here rather than to any
 # one of them. graph.py owning the list privately meant its validator saw demeter's and envy's keys as

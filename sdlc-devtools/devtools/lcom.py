@@ -24,8 +24,8 @@ from __future__ import annotations
 import ast
 import logging
 
-from devtools.cli import Cli
-from devtools.trees import Trees
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.lcom")
 

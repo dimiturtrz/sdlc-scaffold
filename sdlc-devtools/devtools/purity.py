@@ -28,9 +28,9 @@ import logging
 from collections.abc import Iterator
 from pathlib import Path
 
-from devtools.cli import Cli
-from devtools.resolve import Resolver
-from devtools.trees import Trees
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.resolve import Resolver
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.purity")
 

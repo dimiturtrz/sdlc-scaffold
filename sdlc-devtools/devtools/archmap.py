@@ -29,11 +29,11 @@ from typing import TypedDict
 
 import grimp
 
-from devtools._common import ENCODING
 from devtools.arrows import ClassArrows
 from devtools.calls import CallArrows
 from devtools.classes import ClassIndex
-from devtools.resolve import Resolver
+from devtools.plumbing._common import ENCODING
+from devtools.plumbing.resolve import Resolver
 
 log = logging.getLogger("devtools.archmap")
 

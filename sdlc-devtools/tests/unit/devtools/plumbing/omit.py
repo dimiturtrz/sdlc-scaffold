@@ -6,7 +6,7 @@ container of parameter combinations rather than one case per behaviour.
 
 import pytest
 
-from devtools.omit import Omit
+from devtools.plumbing.omit import Omit
 
 
 def test_coverage_omit(tmp_path):

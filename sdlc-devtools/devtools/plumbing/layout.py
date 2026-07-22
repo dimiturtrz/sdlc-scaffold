@@ -39,7 +39,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import override
 
-from devtools.omit import Omit
+from devtools.plumbing.omit import Omit
 
 DEFAULT_TEST_ROOT = "tests/unit"
 

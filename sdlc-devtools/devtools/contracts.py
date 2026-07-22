@@ -32,9 +32,9 @@ import logging
 
 from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
 from devtools.calls import CALLS, CONSTRUCT, CallArrows
-from devtools.cli import Cli
-from devtools.pyproject import Pyproject
-from devtools.resolve import Resolver
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.pyproject import Pyproject
+from devtools.plumbing.resolve import Resolver
 
 log = logging.getLogger("devtools.contracts")
 

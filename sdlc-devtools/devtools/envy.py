@@ -30,10 +30,10 @@ from collections import Counter
 from dataclasses import dataclass
 
 from devtools.classes import SATELLITE, ClassIndex
-from devtools.cli import Cli
-from devtools.pyproject import Pyproject
-from devtools.resolve import FileScope, Resolver
-from devtools.trees import Trees
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.pyproject import Pyproject
+from devtools.plumbing.resolve import FileScope, Resolver
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.envy")
 

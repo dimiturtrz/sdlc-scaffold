@@ -18,7 +18,10 @@ _RANK_SRC = (
 
 # radon emits a `Class` aggregate block alongside its methods; the scan must count the METHODS and drop the
 # aggregate, or every class silently contributes a phantom high-CC row that outranks real functions.
-_METHOD_SRC = "class C:\n    def a(self):\n        return 1\n    def b(self, x):\n        if x:\n            return 1\n        return 0\n"
+_METHOD_SRC = (
+    "class C:\n    def a(self):\n        return 1\n"
+    "    def b(self, x):\n        if x:\n            return 1\n        return 0\n"
+)
 
 
 def test_scan(write_pkg, tmp_path):

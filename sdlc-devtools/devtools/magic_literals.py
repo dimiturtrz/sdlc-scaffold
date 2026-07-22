@@ -31,8 +31,8 @@ import re
 from collections import defaultdict
 from typing import TypeGuard
 
-from devtools.cli import Cli
-from devtools.trees import Trees
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.magic_literals")
 

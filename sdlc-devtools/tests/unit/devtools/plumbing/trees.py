@@ -6,7 +6,7 @@ container of parameter combinations rather than one case per behaviour.
 
 import ast
 
-from devtools.trees import Trees
+from devtools.plumbing.trees import Trees
 
 
 def test_walk(write_pkg, tmp_path):

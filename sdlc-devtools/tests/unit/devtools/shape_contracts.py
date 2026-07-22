@@ -9,6 +9,7 @@ import sys
 
 import pytest
 
+from devtools import shape_contracts
 from devtools.shape_contracts import ShapeContracts
 
 
@@ -137,7 +138,5 @@ def test_run_assert(write_pkg, tmp_path, monkeypatch, caplog):
 def test_shape_contracts_main_requires_packages(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["devtools.shape_contracts"])
     with pytest.raises(SystemExit) as exc:
-        from devtools import shape_contracts
-
         shape_contracts.main()
     assert exc.value.code == 2, "no-arg invocation must be an argparse usage error"

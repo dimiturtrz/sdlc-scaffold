@@ -10,7 +10,7 @@ import ast
 from collections.abc import Iterator
 from pathlib import Path
 
-from devtools._common import ENCODING
+from devtools.plumbing._common import ENCODING
 
 
 class Trees:

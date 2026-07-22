@@ -19,7 +19,7 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from devtools._common import ENCODING
+from devtools.plumbing._common import ENCODING
 
 log = logging.getLogger("devtools.analytics")
 

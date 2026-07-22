@@ -23,9 +23,9 @@ from __future__ import annotations
 import ast
 import logging
 
-from devtools.cli import Cli
-from devtools.names import Names
-from devtools.resolve import Resolver
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.names import Names
+from devtools.plumbing.resolve import Resolver
 
 log = logging.getLogger("devtools.arrows")
 

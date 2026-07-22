@@ -6,7 +6,7 @@ dense container of parameter combinations rather than one case per behaviour.
 
 import pytest
 
-from devtools.pyproject import STRUCTURE_DEFAULTS, Pyproject
+from devtools.plumbing.pyproject import STRUCTURE_DEFAULTS, Pyproject
 
 
 @pytest.mark.parametrize(
@@ -112,7 +112,7 @@ def test_structure_cfg(tmp_path):
     pp.write_text("[tool.structure]\nbetweenness_max = 0\n")
     assert Pyproject.structure_cfg(str(pp))["betweenness_max"] == 0
 
-    for body, why in (
+    for body, _why in (
         ("bottlneck_degree = 20", "a TYPO is the silent-drop shape this exists to stop"),
         ("file_max = 'lots'", "a str where an int belongs"),
         ("test_layout = 3", "an int where a str belongs"),

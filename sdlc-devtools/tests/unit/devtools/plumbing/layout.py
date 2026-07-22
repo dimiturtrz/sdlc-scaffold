@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from devtools.layout import DEFAULT_TEST_ROOT, STRUCTURAL, TestLayout
+from devtools.plumbing.layout import DEFAULT_TEST_ROOT, STRUCTURAL, TestLayout
 
 
 def test_names():

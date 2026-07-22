@@ -23,8 +23,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypeGuard
 
-from devtools.names import Names
-from devtools.trees import Trees
+from devtools.plumbing.names import Names
+from devtools.plumbing.trees import Trees
 
 
 @dataclass(frozen=True)

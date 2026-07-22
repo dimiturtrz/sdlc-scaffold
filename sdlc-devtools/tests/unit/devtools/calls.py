@@ -12,7 +12,7 @@ import ast
 import pytest
 
 from devtools.calls import CALLS, CONSTRUCT, CallArrows, CallEdge, CallSite
-from devtools.resolve import FileScope
+from devtools.plumbing.resolve import FileScope
 
 _DEP = "class Dep:\n    def run(self) -> None: ...\n\n\n"
 # `self._d: Dep` assigned in __init__, then invoked — the field-map path, needed by several rows.
@@ -107,7 +107,8 @@ def test_target_id(target, target_method, expected):
         # map is rightly empty for it; the name simply denotes a class, the resolver's usual question.
         (
             "static",
-            "class Dep:\n    @staticmethod\n    def make() -> None: ...\n\n\nclass A:\n    def go(self):\n        Dep.make()\n",
+            "class Dep:\n    @staticmethod\n    def make() -> None: ...\n\n\n"
+            "class A:\n    def go(self):\n        Dep.make()\n",
             {("static.mod.A.go", "static.mod.Dep.make", CALLS)},
             None,
         ),
@@ -171,7 +172,8 @@ def test_target_id(target, target_method, expected):
         (
             "declared",
             "class Base:\n    def run(self) -> None: ...\n\n\nclass Sub(Base): ...\n\n\n"
-            "class A:\n    def __init__(self, d: Base):\n        self._d = d\n\n    def go(self):\n        self._d.run()\n",
+            "class A:\n    def __init__(self, d: Base):\n        self._d = d\n\n"
+            "    def go(self):\n        self._d.run()\n",
             {("declared.mod.A.go", "declared.mod.Base.run", CALLS)},
             None,
         ),

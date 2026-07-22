@@ -9,6 +9,7 @@ import sys
 import networkx as nx
 import pytest
 
+from devtools import graph
 from devtools.graph import ImportGraph
 
 _DEFAULTS = {
@@ -199,8 +200,6 @@ def test_unmirrored(tmp_path, monkeypatch):
 def test_graph_main_requires_packages(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["devtools.graph"])
     with pytest.raises(SystemExit) as exc:
-        from devtools import graph
-
         graph.main()
     assert exc.value.code == 2, "no-arg invocation must be an argparse usage error"
 

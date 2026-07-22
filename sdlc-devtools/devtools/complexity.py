@@ -14,9 +14,9 @@ import logging
 
 from radon.complexity import cc_visit
 
-from devtools._common import ENCODING
-from devtools.cli import Cli
-from devtools.trees import Trees
+from devtools.plumbing._common import ENCODING
+from devtools.plumbing.cli import Cli
+from devtools.plumbing.trees import Trees
 
 log = logging.getLogger("devtools.complexity")
 
