@@ -102,13 +102,20 @@ both the viewer and the harness. The two interim magic knobs are gone (fcose kee
 
 | view | under-filled | median fill | crossings | canvas | determinism |
 |------|--------------|-------------|-----------|--------|-------------|
-| module / imports  | 3 → **0** | 0.16 → **0.39** | 509 → 637 | 1171×1008 → **908×502** | yes |
-| class / structure | 0 → 0 | 0.29 → **0.55** | 10 → 7 | 1756×1733 → **1212×1329** | yes |
-| all / all         | **25 → 0** | 0.15 → **0.39** | 3183 → 5773 | 7649×9670 → **4670×4821** | yes |
+| module / imports  | 3 → **0** | 0.16 → **0.38** | 509 → 584 | 1171×1008 → **899×516** | yes |
+| class / structure | 0 → 0 | 0.29 → **0.53** | 10 → 7 | 1756×1733 → **1215×1329** | yes |
+| all / all         | **25 → 0** | 0.15 → **0.38** | 3183 → 5722 | 7649×9670 → **4667×4834** | yes |
 
 The compaction's spread tolerance is 0.8 (tidy any box below 80% of a tidy pack): calibrated up from an
 initial 0.5 after the deep tiers (public/all) still read as "drawn out" — boxes packed at 0.5–0.8 of ideal
 carry visible gaps. 0.8 not 1.0 because re-gridding an already-tidy box only churns it.
+
+Compaction moves a nested box (a class inside a module, a subpackage inside a package) by translating its
+whole subtree, and reads its centre/size from its live bounding box — a compound's `position()` is derived
+from its children and unreliable to read or set. Missing that, higher levels never compacted: in the browser
+a class with all edges leaving its box was flung to the module's far corner, holding the box open around empty
+space (the metric's per-box ratio, forgiving for a few large children, under-reported this — the fix is
+verified by the module-level boxes now packing at 0.30–0.61 raw fill instead of ~0.01).
 
 **What Stage A delivered:** compression (#1) — zero pathological boxes in every view, median fill up 2.5× at
 all/all, canvas roughly halved in each axis; determinism (#3) — every view byte-identical across runs, the
@@ -116,11 +123,11 @@ viewer's reseed dropped; no magic constants (#5) — the two interim knobs retir
 Compaction preserves well-filled clusters (structure #2) and only tidies boxes the harness flags under-filled,
 so module/class views are near-untouched.
 
-**The cost, and what it hands the decision gate (42b.3):** crossings rose, sharply at all/all (3183 → 5773).
+**The cost, and what it hands the decision gate (42b.3):** crossings rose, sharply at all/all (3183 → 5722).
 That is the compression↔planarity tension made concrete — packing boxes tight forces edges to cross more, and
 fcose's larger, airier baseline had room to avoid them. Compaction does NOT deliver planarity (#4) or up-down
 (#6); it grids under-filled boxes in reading order, which reads as adjacency, not flow. So the gate's question
-is sharp: is 5773 crossings (with guaranteed compression + determinism, zero new deps, a working viewer) good
+is sharp: is 5722 crossings (with guaranteed compression + determinism, zero new deps, a working viewer) good
 enough — or does the crossing count + the want for #4/#6 justify ELK's 1.6 MB and a full engine swap? The
 fixture `archviz_baseline.json` holds the fcose floor; `node measure.cjs` reports the Stage A numbers above.
 

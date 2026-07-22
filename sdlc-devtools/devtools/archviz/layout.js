@@ -81,18 +81,38 @@
 
   // pack a compound's children into a near-square grid, ordered by their solved position (grouped into rows
   // by y, then left-to-right) so the force pass's spatial adjacency is kept while the gaps are squeezed out.
+  //
+  // A child may itself be a COMPOUND (a class box inside a module, a subpackage inside a package). A compound's
+  // geometry is DERIVED from its children, so its `position()` is unreliable to read or write — moving one
+  // means translating its whole subtree by a delta, and its CENTRE must be read from its bounding box, not its
+  // position (they disagree, badly, once children have been moved). Reading centre/size uniformly from the
+  // bounding box is correct for a leaf too, so one path serves both. Without this the higher levels never
+  // compacted: a class flung to the far corner of its module (all its edges leaving the box) stayed there,
+  // holding the module box open around a sea of empty space — exactly the untidied box the owner saw.
+  const centre = (n) => { const b = n.boundingBox(); return { x: (b.x1 + b.x2) / 2, y: (b.y1 + b.y2) / 2 }; };
+
+  function place(node, x, y) {
+    if (!node.isParent()) { node.position({ x, y }); return; }
+    const c = centre(node);
+    const dx = x - c.x, dy = y - c.y;
+    node.descendants().forEach((d) => {
+      if (d.isParent()) return;                      // parents follow their leaves; move only the leaves
+      const p = d.position();
+      d.position({ x: p.x + dx, y: p.y + dy });
+    });
+  }
   function gridInReadingOrder(kids) {
     const arr = kids.toArray().slice().sort((a, b) => {
-      const pa = a.position(), pb = b.position();
-      const sameRow = Math.abs(pa.y - pb.y) <= (a.outerHeight() + b.outerHeight()) / 2;
+      const pa = centre(a), pb = centre(b);
+      const sameRow = Math.abs(pa.y - pb.y) <= (a.boundingBox().h + b.boundingBox().h) / 2;
       return sameRow ? pa.x - pb.x : pa.y - pb.y;
     });
-    const cellW = Math.max(...arr.map((n) => n.outerWidth())) + GAP;
-    const cellH = Math.max(...arr.map((n) => n.outerHeight())) + GAP;
+    const cellW = Math.max(...arr.map((n) => n.boundingBox().w)) + GAP;
+    const cellH = Math.max(...arr.map((n) => n.boundingBox().h)) + GAP;
     const cols = Math.max(1, Math.round(Math.sqrt(arr.length)));
     const bb = kids.boundingBox();
     const x0 = bb.x1 + cellW / 2, y0 = bb.y1 + cellH / 2;
-    arr.forEach((n, i) => n.position({ x: x0 + (i % cols) * cellW, y: y0 + Math.floor(i / cols) * cellH }));
+    arr.forEach((n, i) => place(n, x0 + (i % cols) * cellW, y0 + Math.floor(i / cols) * cellH));
   }
 
   // fill a compound reaches vs the fill a tidy square grid-pack of the SAME children would. Both numerator and
@@ -105,8 +125,8 @@
     const fill = box.w * box.h ? occupied / (box.w * box.h) : 0;
     const cols = Math.max(1, Math.round(Math.sqrt(arr.length)));
     const rows = Math.ceil(arr.length / cols);
-    const cw = Math.max(...arr.map((c) => c.outerWidth())) + GAP;
-    const ch = Math.max(...arr.map((c) => c.outerHeight())) + GAP;
+    const cw = Math.max(...arr.map((c) => c.boundingBox().w)) + GAP;
+    const ch = Math.max(...arr.map((c) => c.boundingBox().h)) + GAP;
     const ideal = occupied / (cols * cw * rows * ch);
     return ideal ? fill / ideal : 0;
   }
