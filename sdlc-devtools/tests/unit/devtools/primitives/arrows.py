@@ -10,7 +10,7 @@ import sys
 import grimp
 import pytest
 
-from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
+from devtools.primitives.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
 
 
 def _cls(src: str) -> ast.ClassDef:

@@ -19,8 +19,8 @@ from collections.abc import Iterable
 
 import networkx as nx
 
-from devtools.arrows import HOLDS, ClassArrows
 from devtools.plumbing.cli import Cli
+from devtools.primitives.arrows import HOLDS, ClassArrows
 
 log = logging.getLogger("devtools.composition")
 

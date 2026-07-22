@@ -79,7 +79,8 @@ def lint(session: nox.Session) -> None:
     # Advisory explorers — print a ranked report, always exit 0 (never block): class-shape smells, recurring
     # magic literals (StrEnum/dataclass candidates), and radon cyclomatic complexity (ruff C901 is the FIXED
     # complexity gate; this just ranks). Reviewer signal only.
-    for _tool in ("state_candidates", "lcom", "data_clumps", "magic_literals", "complexity", "arrows", "calls"):
+    _advisory = ("state_candidates", "lcom", "data_clumps", "magic_literals", "complexity")
+    for _tool in (*_advisory, "primitives.arrows", "primitives.calls"):
         session.run("uv", "run", "--extra", "devtools", "python", "-m", f"devtools.{_tool}", *LAYERS, external=True)
     # Advisory (never blocks): flag a stale docs/architecture/graph.json — regenerate with `nox -s archmap`.
     # archmap --check exits 1 on drift; success_codes swallows it so CI/nox report without failing the gate

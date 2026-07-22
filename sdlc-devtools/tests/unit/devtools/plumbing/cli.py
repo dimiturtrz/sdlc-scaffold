@@ -11,6 +11,7 @@ import logging
 import pytest
 
 from devtools.plumbing.cli import Cli, Flag, Switch
+from devtools.primitives.arrows import ClassArrows  # a REAL in-package engine, for the subpackage-path proof
 
 
 class Fake:
@@ -165,5 +166,12 @@ def test_prog():
     `devtools.test_cli` — a module that has never existed, asserted as correct only because the prefix made
     the mirror's name differ from its subject's.
     """
-    assert Cli(Fake, "d").prog == "python -m devtools.cli"
     assert Cli(Fake, "d").prog.endswith(Cli(Fake, "d").tool), "prog is the tool, spelled as a runnable command"
+    # A stand-in defined in this test file sits OUTSIDE the package, so it exercises the stem FALLBACK.
+    assert Cli(Fake, "d").prog == "python -m devtools.cli"
+    # A REAL in-package engine exercises the path resolution: an engine in a SUBPACKAGE keeps its segment,
+    # so the header advertises the invocation that actually runs (bd yfv.2) rather than dropping to the bare
+    # module name — which would print `python -m devtools.arrows` for a tool that now answers only at
+    # `devtools.primitives.arrows`.
+    assert Cli(ClassArrows, "d").tool == "primitives.arrows"
+    assert Cli(ClassArrows, "d").prog == "python -m devtools.primitives.arrows"

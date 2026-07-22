@@ -137,13 +137,13 @@ repos:
         always_run: true
       - id: arrows
         name: class arrows — advisory (inherits / holds / references; the import edge decomposed by WHY)
-        entry: uv run --extra devtools python -m devtools.arrows {{ pkgs }}
+        entry: uv run --extra devtools python -m devtools.primitives.arrows {{ pkgs }}
         language: system
         pass_filenames: false
         always_run: true
       - id: calls
         name: call arrows — advisory (calls reach the CONTRACT, construct reaches the CONCRETE)
-        entry: uv run --extra devtools python -m devtools.calls {{ pkgs }}
+        entry: uv run --extra devtools python -m devtools.primitives.calls {{ pkgs }}
         language: system
         pass_filenames: false
         always_run: true

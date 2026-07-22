@@ -36,15 +36,18 @@ def _bespoke(name: str) -> bool:
 
 
 def _main_modules():
-    """Every top-level module owning a `main()` — the candidate engines. A subpackage (`plumbing/` per bd
-    2wt, `archviz/`) is never one: the tree says so via `ispkg`, so no name has to. PLUMBING stays as the
-    belt that catches a stray plumbing module re-added at the top level."""
-    for info in pkgutil.iter_modules(devtools.__path__):
-        if info.ispkg or info.name in PLUMBING:
+    """Every module owning a `main()`, at ANY depth — the candidate engines. Discovery recurses because the
+    engines no longer all live at the top level: `primitives/` (bd yfv.2) holds three that ARE engines, so a
+    top-level-only walk would silently drop them from the contract check. `plumbing/` holds none (machinery,
+    no CLI), so the `main()` test excludes it for free — no name has to. The yielded name is dotted under
+    `devtools` (`primitives.arrows`), exactly what `Batch.engine_class` re-imports and the invocation prints.
+    """
+    for info in pkgutil.walk_packages(devtools.__path__, prefix="devtools."):
+        if info.ispkg:
             continue
-        module = importlib.import_module(f"devtools.{info.name}")
+        module = importlib.import_module(info.name)
         if hasattr(module, "main"):
-            yield info.name, module
+            yield info.name.removeprefix("devtools."), module
 
 
 def _engine_modules():
@@ -71,6 +74,16 @@ ENGINES = sorted(_engine_modules())
 def test_the_engine_set_is_not_empty():
     """Guards the discovery itself: a broken filter would make every test below vacuously pass."""
     assert len(ENGINES) >= 10, f"expected the full analyzer set, found {[n for n, _ in ENGINES]}"
+
+
+def test_plumbing_holds_no_engines():
+    """The counterpart to the primitives move (bd 2wt / yfv.2): the `plumbing/` subpackage is machinery, so
+    a module misfiled there would be skipped by discovery and by every gate the runner drives, silently. None
+    of it may own a `main()`. PLUMBING is the derived membership set (run.py walks the folder), consumed here
+    so the folder's promise — "no engines live here" — is a checked invariant, not a naming convention."""
+    for name in PLUMBING:
+        module = importlib.import_module(f"devtools.plumbing.{name}")
+        assert not hasattr(module, "main"), f"plumbing/{name} owns a main() — it is an engine, misfiled"
 
 
 def test_the_bespoke_set_is_exactly_the_known_three():

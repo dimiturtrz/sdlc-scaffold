@@ -8,7 +8,7 @@ import ast
 
 import pytest
 
-from devtools.classes import PRIMARY, SATELLITE, ClassIndex
+from devtools.primitives.classes import PRIMARY, SATELLITE, ClassIndex
 
 
 def _roles(src: str) -> dict[str, str]:

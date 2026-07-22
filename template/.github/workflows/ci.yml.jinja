@@ -174,8 +174,8 @@ jobs:
           uv run --extra devtools python -m devtools.data_clumps {{ pkgs }}
           uv run --extra devtools python -m devtools.magic_literals {{ pkgs }}
           uv run --extra devtools python -m devtools.complexity {{ pkgs }}
-          uv run --extra devtools python -m devtools.arrows {{ pkgs }}
-          uv run --extra devtools python -m devtools.calls {{ pkgs }}
+          uv run --extra devtools python -m devtools.primitives.arrows {{ pkgs }}
+          uv run --extra devtools python -m devtools.primitives.calls {{ pkgs }}
       # ADVISORY (never blocks): flag a stale docs/architecture/graph.json — the committed graph drifted from
       # the real import graph. Regenerate locally with `nox -s archmap` and commit. Doc-gen, not enforcement
       # (import-linter is the directional gate); graduates to a gate per the creep-to-gate program.

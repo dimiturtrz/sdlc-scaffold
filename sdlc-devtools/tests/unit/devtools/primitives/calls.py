@@ -11,8 +11,8 @@ import ast
 
 import pytest
 
-from devtools.calls import CALLS, CONSTRUCT, CallArrows, CallEdge, CallSite
 from devtools.plumbing.resolve import FileScope
+from devtools.primitives.calls import CALLS, CONSTRUCT, CallArrows, CallEdge, CallSite
 
 _DEP = "class Dep:\n    def run(self) -> None: ...\n\n\n"
 # `self._d: Dep` assigned in __init__, then invoked — the field-map path, needed by several rows.

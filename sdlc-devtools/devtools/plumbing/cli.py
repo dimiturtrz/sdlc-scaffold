@@ -33,6 +33,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+import devtools
+
 ENGINE_LOG_FORMAT = "%(levelname)s %(name)s: %(message)s"
 PLAIN_LOG_FORMAT = "%(message)s"
 _PACKAGES_HELP = "root packages to scan (>=1 required — a no-arg run would scan nothing and pass --assert vacuously)"
@@ -94,13 +96,24 @@ class Cli:
 
     @property
     def tool(self) -> str:
-        """The engine's module name, resolved from its FILE rather than its `__module__`.
+        """The engine's dotted module path UNDER `devtools`, resolved from its FILE rather than `__module__`.
 
         Running `python -m devtools.demeter` loads that module a SECOND time under the name `__main__`, so
         `__module__` reads `__main__` there — which would advertise an invocation that does not exist in
-        `--help` and label every log line `__main__` instead of the tool that emitted it.
+        `--help` and label every log line `__main__` instead of the tool that emitted it. The FILE is stable
+        across that reload.
+
+        Taken RELATIVE to the package root so a subpackage is not dropped: `primitives/arrows.py` resolves to
+        `primitives.arrows`, which is what makes `python -m devtools.primitives.arrows` the invocation the
+        help header prints and the logger name it stamps (bd yfv.2). An engine defined OUTSIDE the package —
+        only a test fake — has no such path and falls back to the bare file stem.
         """
-        return Path(inspect.getfile(self.engine)).stem
+        file = Path(inspect.getfile(self.engine)).resolve()
+        root = Path(devtools.__file__).resolve().parent
+        try:
+            return ".".join(file.relative_to(root).with_suffix("").parts)
+        except ValueError:
+            return file.stem
 
     @property
     def prog(self) -> str:

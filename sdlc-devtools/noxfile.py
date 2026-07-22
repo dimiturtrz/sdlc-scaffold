@@ -75,7 +75,9 @@ def lint(session: nox.Session) -> None:
         # ADVISORY explorers — ranked reports that never fail. `classes` is here rather than under --gate
         # for the reason it is advisory everywhere: its survivors are genuine multi-abstraction files, i.e.
         # refactoring work rather than a classifier bug. It graduates when a real tree reaches zero.
-        "--report", "magic_literals,complexity,lcom,data_clumps,state_candidates,arrows,calls,classes",
+        "--report",
+        "magic_literals,complexity,lcom,data_clumps,state_candidates,"
+        "primitives.arrows,primitives.calls,primitives.classes",
         external=True,
     )
     # (class-shape — every helper a method on its engine class, only main() top-level — rides the batch run

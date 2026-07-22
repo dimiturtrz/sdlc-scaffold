@@ -30,11 +30,11 @@ from __future__ import annotations
 
 import logging
 
-from devtools.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
-from devtools.calls import CALLS, CONSTRUCT, CallArrows
 from devtools.plumbing.cli import Cli
 from devtools.plumbing.pyproject import Pyproject
 from devtools.plumbing.resolve import Resolver
+from devtools.primitives.arrows import HOLDS, INHERITS, REFERENCES, ClassArrows
+from devtools.primitives.calls import CALLS, CONSTRUCT, CallArrows
 
 log = logging.getLogger("devtools.contracts")
 

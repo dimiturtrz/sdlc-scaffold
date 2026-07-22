@@ -30,9 +30,6 @@ from typing import TypedDict
 import grimp
 import networkx as nx
 
-from devtools.arrows import ClassArrows
-from devtools.calls import CONSTRUCT, CallArrows
-from devtools.classes import ClassIndex
 from devtools.plumbing._common import ENCODING
 from devtools.plumbing.cli import Cli, Flag, Switch
 from devtools.plumbing.layout import DEFAULT_TEST_ROOT, STRUCTURAL, TestLayout
@@ -40,6 +37,9 @@ from devtools.plumbing.names import Names
 from devtools.plumbing.pyproject import Pyproject
 from devtools.plumbing.resolve import Resolver
 from devtools.plumbing.trees import Trees
+from devtools.primitives.arrows import ClassArrows
+from devtools.primitives.calls import CONSTRUCT, CallArrows
+from devtools.primitives.classes import ClassIndex
 
 log = logging.getLogger("devtools.graph")
 

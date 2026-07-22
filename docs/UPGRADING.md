@@ -10,6 +10,32 @@ Entries are keyed by the version that introduced the change, newest first.
 
 ---
 
+## v1.25.0 — the advisory arrow explorers move under `devtools.primitives`
+
+**What you'll see.** After `copier update` past v1.25.0, two advisory invocations change module path:
+
+| was | now |
+|---|---|
+| `python -m devtools.arrows` | `python -m devtools.primitives.arrows` |
+| `python -m devtools.calls` | `python -m devtools.primitives.calls` |
+
+**Nothing to do by hand.** Both paths are copier-rendered — they live in the template's `noxfile.py`, CI
+workflow and pre-commit config, so `copier update` rewrites them for you. The only way to see the old path
+after an update is a stale invocation you added yourself in a LOCAL-SLOT; if so, add `primitives.` to it.
+
+**Why it moved.** `arrows`, `calls` and `classes` are the three modules the other engines *import* — the
+shared structural read-models the gates build on (bd yfv). Every other analyzer wires to `plumbing`, not to a
+sibling, so these three are the one real fan-in cluster in the package; giving them a `primitives/` folder
+records a layering the import graph already had rather than inventing one. `classes` has no CLI, so only the
+two arrow explorers rename. The engines' behaviour, flags and output are identical — only the dotted path
+changed, and `--help` now prints the new one because the invocation header resolves the subpackage segment.
+
+**This is not a breaking change you can be caught by.** The old path simply stops existing; a script that
+still calls `python -m devtools.arrows` fails loudly with "No module named devtools.arrows" rather than
+silently doing the wrong thing.
+
+---
+
 ## v1.12 — `SLF001` (private-member access) is now an enforced ruff gate
 
 **What you'll see.** After `copier update` past v1.12, `ruff` fails with a wall of `SLF001 Private member

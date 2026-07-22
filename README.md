@@ -8,6 +8,15 @@ one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved
 inherited call points at the base where the code actually lives. [Open the live viewer
 →](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
 
+**v1.25** — the analyzer package's **structure now comes from its folders, not hand-kept lists**. The shared
+machinery every engine runs on moved into `plumbing/`, the three structural read-models the gates are built
+on (the class index, the call arrows, the dependency arrows) into `primitives/`, and the sets that used to
+name "what lives where" are now *walked* from the tree — a membership that cannot drift from the directory it
+describes. Because the test mirror follows a module's path, the test tree reorganised itself with no gate
+change and no config: moving `devtools/x.py` moves `tests/unit/devtools/x.py` for free. The one seam that
+faced outward — `python -m devtools.arrows|calls` → `devtools.primitives.arrows|calls` — re-renders into a
+consumer on `copier update`, not by hand.
+
 **v1.24** — the guardrails now reach **into the test suite**. "Is this module tested?" was answered by
 whether a test *file* existed, which one smoke test satisfies for a module of twenty methods. The new mirror
 gate asks it per method: each public `A.a` needs a `test_a` that calls it and asserts. Nothing else surveyed
