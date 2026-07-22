@@ -32,12 +32,21 @@ SELECT = (
     "PLR0124,PLR1714,PLW3301,RUF012,RUF005,RUF007,RUF010,RUF022,RUF046,C408,C420,SIM,PERF401,PLW0108,E731,"
     "E402,ICN001,S603,S607,PTH123,TID251,E501,SLF001,PGH003,PGH004"
 )
+# The package ships gates but never linted its OWN ~300 unit tests (bd a19) — LAYER is the package alone. The
+# `tests/**` carve-out is the template's, mirrored here by hand for the same standalone reason SELECT is: a
+# tests-only gate cannot read the scaffold's copier.yml. Asserts/magic/bool-args/mock-PascalCase/privates-
+# under-test/fixture-params are idiomatic in tests; the real-bug + import-order + dead-code gates still bite.
+TESTS = "tests"
+TESTS_IGNORE = "F722,F821,S101,PLR2004,FBT,SLF001,N801,N802,N803,N806,N812,PLR0913"
 
 
 @nox.session(venv_backend="none")
 def lint(session: nox.Session) -> None:
     """ruff + arch-fitness (--assert) + ast-grep class-shape + magic-literal ratchet — the enforced bar."""
     session.run("uvx", RUFF, "check", LAYER, "--select", SELECT, "--ignore", "F722,F821", external=True)
+    # The test suite meets the SAME house bar, minus the tests carve-out — symmetry with the scaffold half,
+    # which lints its own tests via test_scaffold_lint.py. Was unlinted entirely (bd a19).
+    session.run("uvx", RUFF, "check", TESTS, "--select", SELECT, "--ignore", TESTS_IGNORE, external=True)
     # Advisory, matching the template's posture. It was ABSENT here, and absence is why four files drifted
     # out of format unnoticed — the package can only be told it is clean by a gate that runs (bd iv5).
     session.run("uvx", RUFF, "format", "--check", LAYER, external=True, success_codes=[0, 1])
@@ -62,11 +71,15 @@ def lint(session: nox.Session) -> None:
     session.run(
         "uv", "run", "--group", "dev", "python", "-m", "devtools.run", LAYER,
         # god-module / import-cycle / god-file / test-mirror, then the arrow-level gates
-        "--gate", "graph,demeter,purity,composition,contracts,envy,astgrep,mirror,small",
+        "--gate",
+        "graph.fitness,coupling.demeter,coupling.purity,coupling.composition,coupling.contracts,"
+        "coupling.envy,astgrep,hygiene.mirror,hygiene.small",
         # ADVISORY explorers — ranked reports that never fail. `classes` is here rather than under --gate
         # for the reason it is advisory everywhere: its survivors are genuine multi-abstraction files, i.e.
         # refactoring work rather than a classifier bug. It graduates when a real tree reaches zero.
-        "--report", "magic_literals,complexity,lcom,data_clumps,state_candidates,arrows,calls,classes",
+        "--report",
+        "hygiene.magic_literals,cohesion.complexity,cohesion.lcom,cohesion.data_clumps,"
+        "cohesion.state_candidates,graph.arrows,graph.calls,graph.classes",
         external=True,
     )
     # (class-shape — every helper a method on its engine class, only main() top-level — rides the batch run
@@ -82,7 +95,7 @@ def lint(session: nox.Session) -> None:
     # three consumer repos even after the az9 fix, and those survivors are genuine multi-abstraction files,
     # i.e. real refactoring work rather than a classifier bug. It graduates when a real tree is clean.)
     # Self-scaffolding (advisory): the scaffold maps its OWN guardrail engines — archmap --check flags a
-    # stale committed docs/architecture/graph.json. Regenerate with `python -m devtools.archmap devtools`.
+    # stale committed docs/architecture/graph.json. Regenerate with `python -m devtools.graph.archmap devtools`.
     # success_codes swallows the exit-1-on-drift so it reports without blocking (doc-gen, not a gate).
     session.run(
         "uv",
@@ -91,7 +104,7 @@ def lint(session: nox.Session) -> None:
         "dev",
         "python",
         "-m",
-        "devtools.archmap",
+        "devtools.graph.archmap",
         LAYER,
         "--check",
         external=True,

@@ -6,17 +6,17 @@ one-line pin bump on `copier update` (no source diff in your PRs). They import a
 is invoked identically to before:
 
 ```bash
-uv run --extra devtools python -m devtools.graph --assert <packages>   # arch-fitness (+ test-mirror)
-uv run --extra devtools python -m devtools.magic_literals <packages>   # recurring-literal report (advisory)
-uv run --extra devtools python -m devtools.lcom <packages>             # + data_clumps / state_candidates (advisory)
+uv run --extra devtools python -m devtools.graph.fitness --assert <packages>   # arch-fitness (+ test-mirror)
+uv run --extra devtools python -m devtools.hygiene.magic_literals <packages>   # recurring-literal report (advisory)
+uv run --extra devtools python -m devtools.cohesion.lcom <packages>             # + data_clumps / state_candidates (advisory)
 ```
 
 The ast-grep module-shape rules and the jscpd config ship **inside** the package (no vendored `devtools/`
 config); the gates locate them from the install:
 
 ```bash
-uvx --from ast-grep-cli ast-grep scan -c "$(uv run --extra devtools python -m devtools.config sgconfig)" <packages>
-npx --yes jscpd <packages> --config "$(uv run --extra devtools python -m devtools.config jscpd)"
+uvx --from ast-grep-cli ast-grep scan -c "$(uv run --extra devtools python -m devtools.tools.config sgconfig)" <packages>
+npx --yes jscpd <packages> --config "$(uv run --extra devtools python -m devtools.tools.config jscpd)"
 ```
 
 Per-engine detail (what each flags, thresholds, exit semantics) lives in the package's own README. The

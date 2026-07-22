@@ -23,8 +23,8 @@ from __future__ import annotations
 import logging
 import subprocess
 
-from devtools.cli import Cli
-from devtools.config import Config
+from devtools.plumbing.cli import Cli
+from devtools.tools.config import Config
 
 log = logging.getLogger("devtools.astgrep")
 

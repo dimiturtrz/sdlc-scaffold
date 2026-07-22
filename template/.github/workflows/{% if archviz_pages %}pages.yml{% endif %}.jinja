@@ -48,7 +48,7 @@ jobs:
       - name: Build main architecture
         run: |
           uv sync --extra devtools
-          uv run --extra devtools python -m devtools.archmap {{ pkgs }}
+          uv run --extra devtools python -m devtools.graph.archmap {{ pkgs }}
           mkdir -p "$GITHUB_WORKSPACE/_site/architecture"
           cp docs/architecture/graph.json docs/architecture/index.html "$GITHUB_WORKSPACE/_site/architecture/"
       # /architecture/preview/ = dev. Extract dev's tree, rebuild archmap there so the preview tracks dev.
@@ -60,7 +60,7 @@ jobs:
             git archive origin/dev | tar -x -C /tmp/devbuild
             cd /tmp/devbuild
             uv sync --extra devtools
-            uv run --extra devtools python -m devtools.archmap {{ pkgs }}
+            uv run --extra devtools python -m devtools.graph.archmap {{ pkgs }}
             mkdir -p "$GITHUB_WORKSPACE/_site/architecture/preview"
             cp docs/architecture/graph.json docs/architecture/index.html "$GITHUB_WORKSPACE/_site/architecture/preview/"
           else

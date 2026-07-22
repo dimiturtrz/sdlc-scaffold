@@ -31,29 +31,25 @@ import argparse
 import importlib
 import inspect
 import logging
+import pkgutil
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cached_property
 from typing import cast
 
-from devtools import Engine, Gate
-from devtools.cli import ENGINE_LOG_FORMAT
-from devtools.resolve import Resolver
+from devtools import Engine, Gate, plumbing
+from devtools.plumbing.cli import ENGINE_LOG_FORMAT
+from devtools.plumbing.resolve import Resolver
 
 log = logging.getLogger("devtools.run")
 
-# Shared machinery with no findings of its own — not an engine under ANY reading, which is why this half is
-# the one home (`test_engine_interface` imports it rather than keeping a copy).
-PLUMBING = frozenset({"_common", "names", "trees", "pyproject", "resolve", "omit", "cli", "layout"})
-
-# What this RUNNER cannot drive, which is deliberately NOT the same question the interface test asks. That
-# test excludes what is exempt from the `report()/run_assert()` CONTRACT; this excludes what cannot be
-# constructed as `Engine(packages)`. `analytics` is the case that separates them: it honours the contract
-# perfectly and the test rightly holds it to that, but its `__init__(repo, areas)` takes something else
-# entirely, so a batch run cannot build it. Collapsing the two lists into one silently dropped analytics
-# from the contract test — a duplication worth keeping, because the facts are only coincidentally similar.
-UNDRIVEABLE = frozenset({"config", "archmap", "analytics", "run"})
-NOT_ENGINES = PLUMBING | UNDRIVEABLE
+# Shared machinery with no findings of its own — not an engine under ANY reading. WALKED from the plumbing
+# subpackage rather than hand-listed (bd 2wt): the folder is the authority, so the set is a fact about the
+# tree and cannot drift from it. The literal it replaced was hand-edited for `layout` during PR #30, and
+# forgetting it would have made the interface test demand an engine's verbs of a config strategy — the exact
+# silent disagreement between a list and the tree the folder move removes. `test_engine_interface` imports
+# this (one home) rather than keeping a copy.
+PLUMBING = frozenset(info.name for info in pkgutil.iter_modules(plumbing.__path__))
 
 
 @dataclass(frozen=True)

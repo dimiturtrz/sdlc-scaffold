@@ -9,7 +9,7 @@ from __PKG__.types import StoreConfig
 
 def _store(capacity: int = 2, namespace: str = "ns") -> MemoryStore:
     """A fixture produces INPUTS, never expected outputs. It is also SMALL — nothing here reaches outside
-    the process, which is what `devtools.small` enforces."""
+    the process, which is what `devtools.hygiene.small` enforces."""
     return MemoryStore(StoreConfig(capacity=capacity, namespace=namespace))
 
 

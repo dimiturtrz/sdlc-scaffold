@@ -17,8 +17,8 @@ dependencies = [
 dev = ["pytest", "pytest-cov"]
 # The guardrail ANALYZERS are an installed package pinned by scaffold tag (not vendored source) — an engine
 # update is a one-line `devtools_ref` bump on `copier update`, no source diff in your PRs. Imports as
-# `devtools` (`python -m devtools.graph …`); grimp/networkx arrive transitively. ast-grep/jscpd configs are
-# located from the install via `python -m devtools.config`. Pin lives in .copier-answers.yml (devtools_ref).
+# `devtools` (`python -m devtools.graph.fitness …`); grimp/networkx arrive transitively. ast-grep/jscpd configs are
+# located from the install via `python -m devtools.tools.config`. Pin lives in .copier-answers.yml (devtools_ref).
 devtools = ["sdlc-devtools @ git+https://github.com/dimiturtrz/sdlc-scaffold.git@{{ devtools_ref }}#subdirectory=sdlc-devtools"]
 
 [build-system]
@@ -34,7 +34,7 @@ pythonpath = ["."]
 addopts = "--import-mode=importlib"
 # REQUIRED by [tool.structure] test_layout = "mirror". pytest collects `test_*.py` by default, so a
 # mirror tree is not collected AT ALL without this — and an uncollected suite reports green while running
-# zero tests, which is worse than a red one. `devtools.mirror --assert` fails on the CONFIG if these two
+# zero tests, which is worse than a red one. `devtools.hygiene.mirror --assert` fails on the CONFIG if these two
 # settings ever disagree, so the failure mode cannot hide. Switch both together, or neither.
 python_files = ["*.py"]
 # The convention is `test_<method>` FUNCTIONS (docs/UNIT_TESTS.md) — there are no test classes. Left at the

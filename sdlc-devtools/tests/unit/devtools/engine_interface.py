@@ -20,23 +20,38 @@ import pytest
 import devtools
 from devtools.run import PLUMBING, Batch
 
-# PLUMBING is shared with run.py (one home — it is not an engine under any reading). This set is NOT:
-# it names what is exempt from the report()/run_assert() CONTRACT, which is a different question from
-# run.py's "what can I construct as Engine(packages)". `analytics` sits in that gap deliberately — the
-# runner cannot build it (its __init__ takes repo/areas) but it honours the contract, so it is held to it
-# HERE. `config` prints a packaged path and `archmap` writes files: genuinely different verbs. `run` is the
-# RUNNER, and it would pass by coincidence — `Batch.run_report(name)` is callable and takes self while the
-# contract means `report() -> str`, and a check that passes for the wrong reason is what this file prevents.
-BESPOKE = {"config", "archmap", "run"}
+
+# What is exempt from the report()/run_assert() CONTRACT — DERIVED, not listed (bd yfv.1). Enginehood is a
+# property of the class: a module is bespoke exactly when the class the runner would drive answers no
+# `report()`. `config` prints a packaged path, `archmap` writes files, `run` is the RUNNER (its `Batch` has
+# `run_report`, not `report`) — none owns the verb, so the code says so and no hand-list can omit a new one.
+#
+# This is deliberately NOT run.py's other question, "can I construct it as Engine(packages)". `analytics` is
+# the case that separates them: its `__init__(repo, areas)` is unconstructable by a batch run, yet it HONOURS
+# the contract with a real `report()` — so it is NOT bespoke and is held to the contract HERE. The
+# constructability axis was a dead, self-inconsistent literal in run.py (it listed archmap/run, which DO take
+# packages) and was removed; the only axis with a consumer is this one.
+def _bespoke(name: str) -> bool:
+    return not callable(getattr(Batch.engine_class(name), "report", None))
+
+
+def _main_modules():
+    """Every module owning a `main()`, at ANY depth — the candidate engines. Discovery recurses because the
+    engines no longer all live at the top level: `primitives/` (bd yfv.2) holds three that ARE engines, so a
+    top-level-only walk would silently drop them from the contract check. `plumbing/` holds none (machinery,
+    no CLI), so the `main()` test excludes it for free — no name has to. The yielded name is dotted under
+    `devtools` (`primitives.arrows`), exactly what `Batch.engine_class` re-imports and the invocation prints.
+    """
+    for info in pkgutil.walk_packages(devtools.__path__, prefix="devtools."):
+        if info.ispkg:
+            continue
+        module = importlib.import_module(info.name)
+        if hasattr(module, "main"):
+            yield info.name.removeprefix("devtools."), module
 
 
 def _engine_modules():
-    for info in pkgutil.iter_modules(devtools.__path__):
-        if info.name in PLUMBING or info.name in BESPOKE:
-            continue
-        module = importlib.import_module(f"devtools.{info.name}")
-        if hasattr(module, "main"):
-            yield info.name, module
+    return ((name, module) for name, module in _main_modules() if not _bespoke(name))
 
 
 def _engine_class(module):
@@ -59,6 +74,28 @@ ENGINES = sorted(_engine_modules())
 def test_the_engine_set_is_not_empty():
     """Guards the discovery itself: a broken filter would make every test below vacuously pass."""
     assert len(ENGINES) >= 10, f"expected the full analyzer set, found {[n for n, _ in ENGINES]}"
+
+
+def test_plumbing_holds_no_engines():
+    """The counterpart to the primitives move (bd 2wt / yfv.2): the `plumbing/` subpackage is machinery, so
+    a module misfiled there would be skipped by discovery and by every gate the runner drives, silently. None
+    of it may own a `main()`. PLUMBING is the derived membership set (run.py walks the folder), consumed here
+    so the folder's promise — "no engines live here" — is a checked invariant, not a naming convention."""
+    for name in PLUMBING:
+        module = importlib.import_module(f"devtools.plumbing.{name}")
+        assert not hasattr(module, "main"), f"plumbing/{name} owns a main() — it is an engine, misfiled"
+
+
+def test_the_bespoke_set_is_exactly_the_known_three():
+    """The DERIVED exemption must not silently grow (bd yfv.1). Deriving bespoke from "answers no report()"
+    means an engine that LOSES its report() would drop out of the tested set as bespoke rather than fail —
+    so this pins the only three modules allowed to be contract-exempt. A fourth is a loud failure here, not a
+    silent skip: the literal survives as this guard, which is the whole value the hand-list used to carry."""
+    bespoke = sorted(name for name, _ in _main_modules() if _bespoke(name))
+    assert bespoke == ["graph.archmap", "run", "tools.config"], (
+        f"the contract-exempt set changed to {bespoke}; a new module answering no report() is either a real "
+        f"bespoke tool (add it here) or an engine that lost its contract (a bug this test exists to catch)"
+    )
 
 
 @pytest.mark.parametrize(("name", "module"), ENGINES, ids=[n for n, _ in ENGINES])

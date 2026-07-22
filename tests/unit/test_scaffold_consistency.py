@@ -192,7 +192,7 @@ def test_every_structure_key_the_template_ships_is_known_to_the_reader():
     exactly how the first version of that validator rejected demeter's and envy's keys as typos.
     """
     sys.path.insert(0, str(REPO / "sdlc-devtools"))
-    from devtools.pyproject import STRUCTURE_DEFAULTS  # noqa: PLC0415 (the package is a sibling, not a dep)
+    from devtools.plumbing.pyproject import STRUCTURE_DEFAULTS  # noqa: PLC0415 (the package is a sibling, not a dep)
 
     section = re.search(r"^\[tool\.structure\]\n(.*?)(?=^\[)", _TEMPLATE_PYPROJECT, re.S | re.M)
     assert section, "the template no longer ships a [tool.structure] section"
@@ -248,13 +248,18 @@ def _enforced_gates(text: str) -> set[str]:
     match dead at the brace, hiding the ML gate in exactly the runner that batches it.
     """
     text = re.sub(r"{%.*?%}", "", text, flags=re.S)
+    # `[\w.]+` not `\w+`: a gate now lives at a DOTTED path (`devtools.coupling.demeter`), so the capture must
+    # span the subpackage or it would collapse every coupling gate to the folder name `coupling` (bd 5hg).
     single = {
         match.group(1)
-        for match in re.finditer(r"devtools\.(\w+)", text)
+        for match in re.finditer(r"devtools\.([\w.]+)", text)
         if match.group(1) != "run" and "--assert" in text[match.start() : match.start() + 250]
     }
     batched = {
-        name for match in re.finditer(r"--gate[\"',\s]+([\w,]+)", text) for name in match.group(1).split(",") if name
+        name
+        for match in re.finditer(r"--gate[\"',\s]+([\w,.]+)", text)
+        for name in match.group(1).split(",")
+        if name
     }
     return single | batched
 

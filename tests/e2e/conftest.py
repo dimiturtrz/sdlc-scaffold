@@ -225,9 +225,9 @@ def use_local_devtools(out: Path):
 
 def config_path(project: Path, name: str) -> str:
     """Resolve a packaged ast-grep/jscpd config path from the installed devtools package, as the gates do
-    (`python -m devtools.config <name>`) — for the e2e's direct ast-grep/jscpd invocations."""
+    (`python -m devtools.tools.config <name>`) — for the e2e's direct ast-grep/jscpd invocations."""
     return run(
-        ["uv", "run", "-q", "--extra", "devtools", "python", "-m", "devtools.config", name], project
+        ["uv", "run", "-q", "--extra", "devtools", "python", "-m", "devtools.tools.config", name], project
     ).stdout.strip()
 
 

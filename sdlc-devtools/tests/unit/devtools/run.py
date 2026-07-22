@@ -84,9 +84,9 @@ def test_engine_class():
     """Not monkeypatched: the real lookup, against real modules. `graph` imports several engine classes from
     its siblings, so a lookup that took the first class it found would return the wrong one — and the runner
     would silently drive somebody else's engine under this engine's name."""
-    assert Batch.engine_class("graph").__name__ == "ImportGraph", "the class graph.py DEFINES, not one it imports"
-    assert Batch.engine_class("demeter").__name__ == "Demeter"
-    assert Batch.engine_class("data_clumps").__name__ == "DataClumps", "underscored module names resolve too"
+    assert Batch.engine_class("graph.fitness").__name__ == "ImportGraph", "the class fitness DEFINES, not imports"
+    assert Batch.engine_class("coupling.demeter").__name__ == "Demeter", "a dotted subpackage name resolves"
+    assert Batch.engine_class("cohesion.data_clumps").__name__ == "DataClumps", "underscored + dotted resolve too"
 
 
 @pytest.mark.parametrize(

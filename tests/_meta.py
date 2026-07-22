@@ -19,3 +19,15 @@ def copier_default(key: str) -> str:
         msg = f"copier.yml: no default found for {key!r}"
         raise RuntimeError(msg)
     return match.group(1)
+
+
+def per_file_ignores_for_tests() -> str:
+    """The `tests/**` per-file-ignores carve-out read straight from the template — the single source of
+    truth, so the scaffold's own test bar cannot silently drift STRICTER (or looser) than the one it ships.
+    Returned comma-joined for `ruff --ignore`. Missing it is a malformed template, not an empty carve-out."""
+    text = (REPO / "template" / "pyproject.toml.jinja").read_text(encoding="utf-8")
+    match = re.search(r'^"tests/\*\*"\s*=\s*\[([^\]]*)\]', text, re.M)
+    if match is None:
+        msg = "template/pyproject.toml.jinja: no `tests/**` per-file-ignores found"
+        raise RuntimeError(msg)
+    return ",".join(re.findall(r'"([^"]+)"', match.group(1)))

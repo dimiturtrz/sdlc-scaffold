@@ -14,18 +14,18 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tests"))
-from _meta import copier_default  # noqa: E402  (shared copier.yml reader, one home)
-
-# Mirrors template/pyproject.toml.jinja [tool.ruff.lint.per-file-ignores] "tests/**": asserts/magic/bool
-# args/naming are idiomatic in tests; the real-bug + import-order + dead-code gates still apply.
-TESTS_IGNORE = "S101,PLR2004,FBT,N801,N802,N803,N806,N812,PLR0913"
+from _meta import copier_default, per_file_ignores_for_tests  # noqa: E402  (shared copier.yml reader, one home)
 
 
 def test_scaffold_own_code_passes_house_ruff():
     ruff = f"ruff@{copier_default('ruff_version')}"
     select = copier_default("ruff_select")
+    # The `tests/**` carve-out is READ from the template (tests_per_file_ignores), not restated here — a hand
+    # copy already drifted, dropping SLF001 and holding the scaffold's own tests STRICTER than consumers by
+    # accident (bd 1gj). One home means the two move together.
+    tests_ignore = per_file_ignores_for_tests()
     result = subprocess.run(  # noqa: S603 (controlled arg list — no shell/untrusted input)
-        ["uvx", ruff, "check", "tests", "--select", select, "--ignore", TESTS_IGNORE],  # noqa: S607 (uvx on PATH)
+        ["uvx", ruff, "check", "tests", "--select", select, "--ignore", tests_ignore],  # noqa: S607 (uvx on PATH)
         cwd=str(REPO),
         text=True,
         capture_output=True,

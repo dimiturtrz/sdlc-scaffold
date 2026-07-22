@@ -10,6 +10,41 @@ Entries are keyed by the version that introduced the change, newest first.
 
 ---
 
+## v1.25.0 — the analyzers move into domain folders; every `python -m devtools.<gate>` path gains its folder
+
+**What you'll see.** After `copier update` past v1.25.0, every devtools gate is invoked at a folder-qualified
+module path. The engines' behaviour, flags and output are unchanged — only the dotted path moved, and `--help`
+prints the new one (the invocation header resolves the subpackage segment).
+
+| folder | was → now |
+|---|---|
+| `graph/` | `devtools.graph` → `devtools.graph.fitness` · `devtools.archmap` → `devtools.graph.archmap` · `devtools.arrows\|calls\|classes` → `devtools.graph.arrows\|calls\|classes` |
+| `coupling/` | `devtools.{demeter,envy,composition,contracts,purity}` → `devtools.coupling.{…}` |
+| `cohesion/` | `devtools.{lcom,data_clumps,state_candidates,complexity}` → `devtools.cohesion.{…}` |
+| `hygiene/` | `devtools.{magic_literals,small,mirror}` → `devtools.hygiene.{…}` |
+| `tools/` | `devtools.config` → `devtools.tools.config` · `devtools.analytics` → `devtools.tools.analytics` |
+| root (unchanged) | `devtools.astgrep`, `devtools.shape_contracts`, `devtools.run` |
+
+Note `graph` renamed to `graph.fitness`: a module named `graph` cannot live in a package named `graph`, and
+the new name says what it is (the arch-FITNESS gate).
+
+**Nothing to do by hand.** Every one of these paths is copier-rendered — they live in the template's
+`noxfile.py`, CI workflow and pre-commit config, so `copier update` rewrites them all. The only way to see an
+old path after an update is a devtools invocation you added yourself in a LOCAL-SLOT; if so, fold in the
+folder segment. `$(python -m devtools.tools.config …)` substitutions in your own scripts likewise move.
+
+**Why it moved.** Thirty-one flat modules had outgrown a flat directory. `plumbing/` (machinery) and `graph/`
+(the read-model + fitness gate + viewer that all consume it) are genuine co-use clusters. The gate folders —
+`coupling/`, `cohesion/`, `hygiene/` — group by the question a gate answers; that is a *by-domain* layout
+rather than a by-import one (the gates wire to `plumbing`, not to each other), chosen so the tree is legible
+to a maintainer. The table above is the full path map.
+
+**This is not a breaking change you can be caught by.** An old path simply stops existing; a script that still
+calls `python -m devtools.demeter` fails loudly with "No module named devtools.demeter" rather than silently
+doing nothing.
+
+---
+
 ## v1.12 — `SLF001` (private-member access) is now an enforced ruff gate
 
 **What you'll see.** After `copier update` past v1.12, `ruff` fails with a wall of `SLF001 Private member
