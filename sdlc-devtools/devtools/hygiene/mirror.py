@@ -34,9 +34,13 @@ properties, and exempting the whole family to work around it also left an unreac
 Nothing can satisfy that. So the member kind picks the SYNTAX the matching site looks for — a call for a
 method, an attribute touch for a property — and the message says "calls" or "reads" to match.
 
-EXEMPT: `main()` (argparse plumbing exercised by the e2e), private methods, declarations (below), and a
-method a same-module base already declares. Every class in the module is in scope — the rule is about the
-METHOD, and where it happens to be defined is not a second question.
+EXEMPT: `main()` (argparse plumbing exercised by the e2e), private methods, and declarations (below). Every
+class in the module is in scope — the rule is about the METHOD, and where it happens to be defined is not a
+second question. A method a same-module BASE also declares is NOT exempt: a strategy override is a different
+implementation with different behaviour (`_Off.mirror_of` returns None, `_Mirror.mirror_of` computes a path),
+so it is its own public member wanting its own named test. Exempting it once rested on a presumption nothing
+checked — that the base's test drives every subclass — and existed to spare the one module written in the
+same session as the rule (bd kai). The ambiguity rule already names the per-strategy replacements.
 
 TWO REMEDIES, and the message names both, because "nothing tests this" has two correct fixes:
 
@@ -196,9 +200,9 @@ class MethodMirror:
         a `@x.setter` is not a pure read, so it was never exempt, and the gate asked for a `test_x` that
         CALLS `x()` — which nothing can satisfy.
 
-        The question is asked of the METHOD alone. Its class is not a second filter: a strategy whose methods
-        need no test of their own is already answered by `overrides`, which says so for a reason that is
-        about the code rather than about how anyone spelled a name.
+        The question is asked of the METHOD alone. Its class is not a second filter: an override is a public
+        member in its own right, and the ambiguity rule already gives each same-named strategy method a
+        distinct qualified test name, so nothing needs to exempt one on the presumption another covers it.
         """
         return not fn.name.startswith("_") and fn.name not in EXEMPT and not MethodMirror.is_declaration(fn)
 
@@ -212,31 +216,6 @@ class MethodMirror:
         first = min([fn.lineno, *(d.lineno for d in fn.decorator_list)])
         return any(IGNORE in lines[i - 1] for i in range(first, fn.lineno + 1) if 0 < i <= len(lines))
 
-    @staticmethod
-    def overrides(cls: ast.ClassDef, classes: dict[str, ast.ClassDef]) -> set[str]:
-        """Method names this class inherits from an ancestor DEFINED IN THE SAME MODULE.
-
-        An override is not a second obligation. `_Mirror.mirror_of` and `_Off.mirror_of` are one polymorphic
-        contract declared by `TestLayout.mirror_of`, and the base's `test_mirror_of` — driven over every
-        strategy, which is what a dense container test is FOR — covers all of them. Counting them separately
-        did two wrong things at once: it demanded a test per strategy, and it made the name look ambiguous,
-        so the gate asked for `test___mirror_mirror_of`.
-        """
-        seen: set[str] = set()
-        queue = [base.id for base in cls.bases if isinstance(base, ast.Name)]
-        while queue:
-            ancestor = classes.get(queue.pop())
-            if ancestor is None or ancestor.name in seen:
-                continue
-            seen.add(ancestor.name)
-            queue += [base.id for base in ancestor.bases if isinstance(base, ast.Name)]
-        return {
-            fn.name
-            for name in seen
-            for fn in classes[name].body
-            if isinstance(fn, ast.FunctionDef | ast.AsyncFunctionDef)
-        }
-
     def methods(self) -> dict[Path, list[tuple[str, Function]]]:
         """{module: [(class, method)]} — every public method the rule covers, by the module that owns it.
 
@@ -248,24 +227,26 @@ class MethodMirror:
         for path, tree in self.trees:
             if path not in covered:
                 continue
-            classes = {c.name: c for c in ast.walk(tree) if isinstance(c, ast.ClassDef)}
-            out[path] = [m for cls in classes.values() for m in self._members(cls, classes)]
+            classes = [c for c in ast.walk(tree) if isinstance(c, ast.ClassDef)]
+            out[path] = [m for cls in classes for m in self._members(cls)]
         return out
 
-    def _members(self, cls: ast.ClassDef, classes: dict[str, ast.ClassDef]) -> list[tuple[str, Function]]:
+    def _members(self, cls: ast.ClassDef) -> list[tuple[str, Function]]:
         """The members of ONE class the rule covers — at most one entry per NAME.
 
         A property's getter, setter and deleter are three `def`s implementing ONE member. Listed separately,
         `A.size` looked like a name shared by two members, so the ambiguity rule demanded the qualified
         `test_a_size` to disambiguate a collision that does not exist. Within a class a name means exactly
         one thing, so keeping the first is not a heuristic — it is the member.
+
+        An OVERRIDE of a same-module base is a member in full: a strategy's implementation has its own
+        behaviour to pin, and the cross-class ambiguity rule gives it a distinct qualified test name (bd kai).
         """
-        inherited = self.overrides(cls, classes)
         members: dict[str, Function] = {}
         for fn in cls.body:
             if not isinstance(fn, ast.FunctionDef | ast.AsyncFunctionDef):
                 continue
-            if not self.is_public(fn) or fn.name in inherited or fn.name in members:
+            if not self.is_public(fn) or fn.name in members:
                 continue
             members[fn.name] = fn
         return [(cls.name, fn) for fn in members.values()]

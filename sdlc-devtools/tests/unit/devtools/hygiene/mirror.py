@@ -180,23 +180,6 @@ def test_ignored():
     assert not MethodMirror.ignored(by_name["e"], lines), "a line above the def is ambiguous, so it does not count"
 
 
-def test_overrides():
-    """An override is one polymorphic contract, not a second obligation.
-
-    Counting them separately did two wrong things at once: it demanded a test per strategy, and it made the
-    method name look ambiguous, so the gate asked for `test___mirror_mirror_of`.
-    """
-    src = (
-        "class Base:\n    def go(self): ...\nclass Mid(Base):\n    def go(self): ...\n"
-        "class Leaf(Mid):\n    def extra(self): ...\nclass Alone:\n    def go(self): ...\n"
-    )
-    classes = {c.name: c for c in ast.walk(_module(src)) if isinstance(c, ast.ClassDef)}
-    assert MethodMirror.overrides(classes["Mid"], classes) == {"go"}
-    assert MethodMirror.overrides(classes["Leaf"], classes) == {"go"}, "transitively, through Mid"
-    assert MethodMirror.overrides(classes["Base"], classes) == set(), "a base overrides nothing"
-    assert MethodMirror.overrides(classes["Alone"], classes) == set(), "an unrelated class sharing a name"
-
-
 def test_methods(tmp_path, monkeypatch):
     """Which members the rule covers — decided by the METHOD, never by its class.
 
@@ -211,6 +194,16 @@ def test_methods(tmp_path, monkeypatch):
     engine = _mirror(tmp_path, src, "")
     found = {(cls, fn.name) for members in engine.methods().values() for cls, fn in members}
     assert found == {("Alpha", "a"), ("_Beta", "c")}, "the class name is a label, not a filter"
+
+    # An OVERRIDE of a same-module base is a member in full — its own behaviour to pin (bd kai). The base's
+    # concrete method AND each override are counted; the abstract declaration falls out via is_declaration.
+    strat = (
+        "class Base:\n    def go(self):\n        raise NotImplementedError\n"
+        "class Sub(Base):\n    def go(self):\n        return 1\n"
+        "class Alt(Base):\n    def go(self):\n        return 2\n"
+    )
+    over = {(cls, fn.name) for members in _mirror(tmp_path, strat, "").methods().values() for cls, fn in members}
+    assert over == {("Sub", "go"), ("Alt", "go")}, "both overrides are members; the abstract base is a declaration"
 
 
 def test_callers(monkeypatch, tmp_path):
