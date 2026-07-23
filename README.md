@@ -8,6 +8,16 @@ one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved
 inherited call points at the base where the code actually lives. [Open the live viewer
 →](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
 
+**v1.27** — a review pass **sharpened five gates against their own claims**. The behavioural graph never
+walked module-level function bodies, so `main()` constructing the `Cli` every engine reuses produced no
+arrow and the most-reused plumbing rendered as an isolated box — top-level functions are now method-tier
+nodes and `cli` carries its 18 construct edges. A forward reference nested in a subscript (`list['Store']`,
+the ordinary `TYPE_CHECKING` field) was dropped, blinding every arrow-level gate to that edge; the resolver
+now re-parses it (while leaving a `Literal[...]`'s values alone, so it still never invents an edge). The
+method-mirror gate stopped exempting a strategy override on an unchecked presumption that the base's test
+covered it — each override now earns its own named test. And two same-named predicates that answered
+different questions were renamed so neither can be mistaken for the other.
+
 **v1.26** — the architecture viewer's **layout is now deterministic and self-compacting**. The interactive
 map (the marked package tree → nested boxes + typed arrows) was force-directed, so a single stranded child
 ballooned its box into an empty strip and every fix was another magic force-constant. Now the force pass and
