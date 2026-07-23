@@ -27,9 +27,12 @@ bd close <id>         # Complete work
 Releases tag **themselves**. `.github/workflows/release.yml` reads the version from
 `sdlc-devtools/pyproject.toml` on every merge to `main` and publishes the matching `v{version}` tag.
 
-So: bump that version in the PR, and merge. **Never hand-roll a tag** — that is how `v1.19.1` ended up
-pointing at a deleted branch, unreachable from `main`. A unit test holds the README headline and
-copier.yml's `devtools_ref` to the same version, so all three move together or CI goes red.
+So: bump that version in `sdlc-devtools/pyproject.toml`, run `python sync_version.py` (it derives copier.yml's
+`devtools_ref` pin and the README's `**vX.Y**` headline token from it — you still write the release blurb
+prose by hand), and merge. **Never hand-roll a tag** — that is how `v1.19.1` ended up pointing at a deleted
+branch, unreachable from `main`. Unit tests hold all three homes in sync (and fail if you skip the writer),
+and — because a template/copier change reaches consumers only via a new tag — a further test fails a PR that
+touches `template/` or `copier.yml` without bumping, so such a change cannot strand unreleased on `main`.
 
 ## Session Completion
 
