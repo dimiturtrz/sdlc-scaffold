@@ -186,6 +186,60 @@ def test_the_template_only_calls_engines_the_pinned_release_actually_has():
     )
 
 
+def _package_version() -> str:
+    """The version sdlc-devtools declares — the SINGLE source release.yml cuts a tag from."""
+    package = (REPO / "sdlc-devtools" / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'^version = "([^"]+)"', package, re.M)
+    assert match, "sdlc-devtools/pyproject.toml must declare a version"
+    return match.group(1)
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    """`1.27.0` -> (1, 27, 0) for an ordered comparison — a plain string compare puts `1.9` above `1.10`."""
+    return tuple(int(part) for part in version.split("."))
+
+
+def test_a_template_change_must_carry_a_version_bump():
+    """A template-only change ships NOTHING unless the version moves, so it must not be able to (bd vc4).
+
+    A consumer receives `template/` and `copier.yml` changes only by updating to a newer scaffold TAG, and
+    release.yml cuts a tag ONLY when sdlc-devtools/pyproject.toml's version changes. So a PR that edits the
+    template without bumping merges, release.yml correctly no-ops (that version is already tagged), and the
+    change is stranded on main — reachable by nobody. It bit live: PR #27 added ruff rules to copier.yml that
+    no consumer could receive until a manual bump cut a tag. The existing guards check the three version
+    homes AGREE and that the template only calls engines the pin ships; neither notices that the template
+    MOVED and no release carries it.
+
+    Anchored on the last published tag rather than a merge base (unambiguous, and available both locally and
+    in CI once tags are fetched): if anything under `template/` or `copier.yml` changed since v{last tag},
+    the package version must have advanced past it, so merging cuts a NEW tag that carries the change.
+
+    Skipped when no release tag is reachable (a fresh repo has nothing to strand against) or when git cannot
+    answer (a shallow checkout without tags) — the gate is a backstop against a real stranding, not a reason
+    to fail a green tree that simply lacks the history to judge.
+    """
+    described = subprocess.run(  # noqa: S603 (fixed git args)
+        ["git", "describe", "--tags", "--abbrev=0", "--match", "v*"], **_CAPTURE  # noqa: S607
+    )
+    tag = described.stdout.strip()
+    if described.returncode != 0 or not tag:
+        pytest.skip("no v* release tag reachable yet — nothing to strand a template change against")
+    changed = subprocess.run(  # noqa: S603 (fixed git args)
+        ["git", "diff", "--name-only", f"{tag}..HEAD", "--", "template", "copier.yml"], **_CAPTURE  # noqa: S607
+    )
+    if changed.returncode != 0:
+        pytest.skip(f"git cannot diff against {tag} (shallow checkout?) — cannot judge template drift")
+    stranded = changed.stdout.strip()
+    if not stranded:
+        return  # nothing in template/ or copier.yml has moved since the last release — the pin is coherent
+    package = _package_version()
+    assert _version_tuple(package) > _version_tuple(tag.removeprefix("v")), (
+        f"template/ or copier.yml changed since {tag} but sdlc-devtools is still {package} — a template "
+        f"change reaches consumers only via a newer tag, so this change would strand on main. Bump the "
+        f"version (any bump cuts a tag that carries it):\n{stranded}"
+    )
+
+
 def test_every_structure_key_the_template_ships_is_known_to_the_reader():
     """[tool.structure] is validated on load — an unknown key RAISES so a typo cannot silently leave a gate
     at its default. That makes this relationship load-bearing: a key added to the template but not to
