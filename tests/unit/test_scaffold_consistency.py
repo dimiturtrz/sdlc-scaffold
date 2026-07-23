@@ -218,7 +218,7 @@ def test_a_template_change_must_carry_a_version_bump():
     answer (a shallow checkout without tags) — the gate is a backstop against a real stranding, not a reason
     to fail a green tree that simply lacks the history to judge.
     """
-    described = subprocess.run(  # noqa: S603 (fixed git args)
+    described = subprocess.run(
         ["git", "describe", "--tags", "--abbrev=0", "--match", "v*"], **_CAPTURE  # noqa: S607
     )
     tag = described.stdout.strip()
@@ -356,3 +356,56 @@ def test_the_scaffolds_own_workflows_invoke_only_real_devtools_modules():
         f"{wf}: {mod}" for wf, mod in invoked if not (pkg / Path(*mod.split(".")[1:])).with_suffix(".py").exists()
     )
     assert not missing, "scaffold workflows invoke devtools modules that do not exist:\n  " + "\n  ".join(missing)
+
+
+# A pre-commit hook `entry:` is ONE command. These tokens compose two, and composition is where a
+# producer's failure hides behind a checker's exit code — `bash`/`sh -c` also do not run on Windows.
+_SHELL_CHAINS = (";", "&&", "||", "bash -c", "sh -c")
+_PRECOMMIT = "template/.pre-commit-config.yaml.jinja"
+
+
+def _hook_entries(text: str) -> list[str]:
+    """Every hook `entry:` command in a pre-commit config, jinja tags stripped first.
+
+    Stripped for the same reason `_enforced_gates` strips them: a conditional token inside an entry
+    (`--ignore F722,F821{% if enable_ml %} ...{% endif %}`) would otherwise stop a naive read at the brace.
+    Reading the entry TEXT rather than parsing YAML keeps this blind to the jinja that makes the file
+    invalid YAML in the first place — the token check does not need structure.
+    """
+    return re.findall(r"^\s*entry:\s*(.+)$", re.sub(r"{%.*?%}", "", text), re.M)
+
+
+def test_no_hook_masks_a_producer_behind_a_shell_chain():
+    """A pre-commit hook entry must be a single command — no `;`, `&&`, `||`, or `bash -c` (bd v3c.2).
+
+    This is the archmap hook's own failure, generalised so it cannot recur. That hook was
+    `bash -c 'archmap ...; git diff --quiet || {...}'`, and the `;` discarded the regen's exit code: when
+    archmap FAILED the following diff saw no change and the hook reported Passed — green precisely when its
+    job had not happened. A hook that chains a producer into a checker takes the CHECKER's exit as its
+    verdict, so the producer can fail silently. One command per hook removes the seam; two steps are two
+    hooks. Measured at ZERO across the shipped template and the remote manifest when written, so it blocks
+    from day one rather than grandfathering a backlog — and it is checked over every {% if %} branch a
+    consumer could receive, since a chained token can hide inside a conditional slice of an entry.
+
+    Scoped to hook entries, not CI `run:` blocks: a hook entry is contractually a single command (one gate),
+    while a run block is a legitimate multi-line script whose lines each propagate failure under GitHub's
+    default `set -eo pipefail`. Holding a run block to one command would be the check misreading its subject.
+    """
+    manifest = (REPO / ".pre-commit-hooks.yaml").read_text(encoding="utf-8")
+    rendered = {
+        "-".join(k for k, on in dict(zip(_TEMPLATE_SWITCHES, combo, strict=True)).items() if on) or "none": _render(
+            REPO / _PRECOMMIT, dict(zip(_TEMPLATE_SWITCHES, combo, strict=True))
+        )
+        for combo in itertools.product([False, True], repeat=len(_TEMPLATE_SWITCHES))
+    }
+    offenders = [
+        f"{source}: {entry.strip()}  (contains {token!r})"
+        for source, text in {"pre-commit-hooks.yaml": manifest, **rendered}.items()
+        for entry in _hook_entries(text)
+        for token in _SHELL_CHAINS
+        if token in entry
+    ]
+    assert not offenders, (
+        "a hook entry chains a producer into a checker, where a failure can hide behind the later command's "
+        "exit code (the archmap green-on-failure). Split it into two hooks:\n  " + "\n  ".join(sorted(offenders))
+    )

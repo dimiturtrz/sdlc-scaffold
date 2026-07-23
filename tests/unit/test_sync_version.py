@@ -29,7 +29,9 @@ def test_write_derives_both_copies_and_leaves_prose_untouched(tmp_path, monkeypa
         encoding="utf-8",
     )
     readme = tmp_path / "README.md"
-    readme.write_text("# title\n\n**v1.0** — newest, hand-written prose\n\n**v0.9** — older release\n", encoding="utf-8")
+    readme.write_text(
+        "# title\n\n**v1.0** — newest, hand-written prose\n\n**v0.9** — older release\n", encoding="utf-8"
+    )
 
     monkeypatch.setattr(sync_version, "_PACKAGE", pkg)
     monkeypatch.setattr(
@@ -49,7 +51,8 @@ def test_write_derives_both_copies_and_leaves_prose_untouched(tmp_path, monkeypa
     assert 'default: "keep-me"' in copier_text, "no other default line is touched"
 
     readme_text = readme.read_text(encoding="utf-8")
-    assert readme_text.startswith("# title\n\n**v9.9** — newest, hand-written prose"), "token -> major.minor, prose kept"
+    kept = readme_text.startswith("# title\n\n**v9.9** — newest, hand-written prose")
+    assert kept, "token -> major.minor, prose kept"
     assert "**v0.9** — older release" in readme_text, "older release paragraphs are left alone"
 
     assert sync_version.write(version) == [], "a second run is a no-op — writing is idempotent"
