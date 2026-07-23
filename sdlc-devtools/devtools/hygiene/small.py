@@ -46,10 +46,18 @@ log = logging.getLogger("devtools.hygiene.small")
 # Entry points whose trailing name is enough to identify them. Matched on the trailing name because
 # `import time; time.sleep(1)` and `from time import sleep; sleep(1)` are the same defect.
 SLEEP = frozenset({"sleep"})
-NETWORK = frozenset({"urlopen", "urlretrieve", "socket", "create_connection", "connect", "getaddrinfo"})
-# The requests/httpx verb set. Bare `get`/`post` are far too common as domain method names to match on the
-# trailing name alone, so these are matched on the full dotted chain instead.
-NETWORK_CHAINS = ("requests.", "httpx.", "urllib.request.", "aiohttp.")
+# Trailing-name matches — names distinctive enough that the last segment alone identifies a network call,
+# whoever imported it. `connect` and `socket` are deliberately NOT here: `connect` is an ordinary domain verb
+# (a Qt `signal.connect()`, a `db.connect()` test double) and a bare `socket()` collides just as easily, so
+# matching either on the trailing name would report code that never touches a network as if it did — the one
+# thing this gate must not do. They are caught on the `socket.` dotted chain instead (bd 5ck).
+NETWORK = frozenset({"urlopen", "urlretrieve", "create_connection", "getaddrinfo"})
+# Dotted-chain matches. Bare `get`/`post` (requests/httpx) and `connect`/`socket` (the socket module) are all
+# too common as domain names to match on the trailing name alone, so they are matched on the full dotted
+# chain — `socket.` catches `socket.socket()`, `socket.connect()`, `socket.create_connection()`. A `.connect`
+# on a socket held in a variable is genuinely ambiguous and is let through: a missing finding, never a wrong
+# one, which is this gate's stated bargain.
+NETWORK_CHAINS = ("requests.", "httpx.", "urllib.request.", "aiohttp.", "socket.")
 # Sampling entry points. `default_rng` is EXCLUDED — it is the seeded constructor, and flagging the fix
 # alongside the fault is how a gate teaches the wrong lesson.
 SAMPLERS = frozenset(

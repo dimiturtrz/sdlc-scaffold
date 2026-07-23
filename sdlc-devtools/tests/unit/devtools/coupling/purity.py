@@ -100,16 +100,15 @@ def test_violations_message_and_scope():
         ("@lru_cache", False),  # a cache that is not a property is not this gate's subject
     ],
 )
-def test_is_property(decorator, expected):
-    """Which functions the purity rule applies to at all.
-
-    Load-bearing because `mirror.py` reuses this to EXEMPT properties from the method-mirror gate: a wrong
-    answer here does not just mis-scope purity, it makes a second gate demand a call to something the
-    language does not let a caller write.
+def test_is_property_read(decorator, expected):
+    """Which functions the purity rule applies to at all — a pure READ (`@property`/`@cached_property`, not a
+    setter/deleter). Distinct from `mirror.MethodMirror.is_property_member`, which INCLUDES setters because
+    it asks a different question (how a member is exercised); the two are separate predicates, not one reused
+    across gates, and the names now say so (bd 0d1).
     """
     src = f"class A:\n    {decorator}\n    def total(self):\n        return 1\n"
     func = next(n for n in ast.parse(src).body[0].body if isinstance(n, ast.FunctionDef))
-    assert PropertyPurity.is_property(func) is expected, f"{decorator} -> {expected}"
+    assert PropertyPurity.is_property_read(func) is expected, f"{decorator} -> {expected}"
 
 
 def test_assigned_selves():

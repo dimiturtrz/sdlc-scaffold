@@ -101,16 +101,16 @@ def test_is_public(src, public):
         ("@cached_property\ndef total(self):\n    return 1", True),
         ("@functools.cached_property\ndef total(self):\n    return 1", True),
         # The SETTER and DELETER are in, which is where this deliberately differs from
-        # `purity.PropertyPurity.is_property`. That one asks "is this a pure read" and excludes them on
-        # purpose; this one asks "how is it exercised", and all three answer "by attribute access".
+        # `purity.PropertyPurity.is_property_read`. That one asks "is this a pure read" and excludes them on
+        # purpose; this one asks "how is it exercised", and all three answer "by attribute access" (bd 0d1).
         ("@total.setter\ndef total(self, v):\n    self._t = v", True),
         ("@total.deleter\ndef total(self):\n    del self._t", True),
         ("def total(self):\n    return 1", False),
         ("@staticmethod\ndef total():\n    return 1", False),
     ],
 )
-def test_is_property(src, prop):
-    assert MethodMirror.is_property(_fn(src)) is prop
+def test_is_property_member(src, prop):
+    assert MethodMirror.is_property_member(_fn(src)) is prop
 
 
 @pytest.mark.parametrize(

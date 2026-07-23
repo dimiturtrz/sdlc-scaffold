@@ -1299,7 +1299,7 @@
     {
       "kind": "calls",
       "source": "devtools.coupling.purity.PropertyPurity._violations_in",
-      "target": "devtools.coupling.purity.PropertyPurity.is_property",
+      "target": "devtools.coupling.purity.PropertyPurity.is_property_read",
       "weight": 1
     },
     {
@@ -2349,19 +2349,13 @@
     {
       "kind": "calls",
       "source": "devtools.hygiene.mirror.MethodMirror._finding",
-      "target": "devtools.hygiene.mirror.MethodMirror.is_property",
+      "target": "devtools.hygiene.mirror.MethodMirror.is_property_member",
       "weight": 1
     },
     {
       "kind": "calls",
       "source": "devtools.hygiene.mirror.MethodMirror._members",
       "target": "devtools.hygiene.mirror.MethodMirror.is_public",
-      "weight": 1
-    },
-    {
-      "kind": "calls",
-      "source": "devtools.hygiene.mirror.MethodMirror._members",
-      "target": "devtools.hygiene.mirror.MethodMirror.overrides",
       "weight": 1
     },
     {
@@ -2397,7 +2391,7 @@
     {
       "kind": "calls",
       "source": "devtools.hygiene.mirror.MethodMirror._violations_in",
-      "target": "devtools.hygiene.mirror.MethodMirror.is_property",
+      "target": "devtools.hygiene.mirror.MethodMirror.is_property_member",
       "weight": 1
     },
     {
@@ -4566,8 +4560,8 @@
     },
     {
       "descendants": 0,
-      "id": "devtools.coupling.purity.PropertyPurity.is_property",
-      "label": "is_property",
+      "id": "devtools.coupling.purity.PropertyPurity.is_property_read",
+      "label": "is_property_read",
       "level": "method",
       "parent": "devtools.coupling.purity.PropertyPurity",
       "role": null
@@ -5398,8 +5392,8 @@
     },
     {
       "descendants": 0,
-      "id": "devtools.hygiene.mirror.MethodMirror.is_property",
-      "label": "is_property",
+      "id": "devtools.hygiene.mirror.MethodMirror.is_property_member",
+      "label": "is_property_member",
       "level": "method",
       "parent": "devtools.hygiene.mirror.MethodMirror",
       "role": null
@@ -5440,14 +5434,6 @@
       "descendants": 0,
       "id": "devtools.hygiene.mirror.MethodMirror.name_of",
       "label": "name_of",
-      "level": "method",
-      "parent": "devtools.hygiene.mirror.MethodMirror",
-      "role": null
-    },
-    {
-      "descendants": 0,
-      "id": "devtools.hygiene.mirror.MethodMirror.overrides",
-      "label": "overrides",
       "level": "method",
       "parent": "devtools.hygiene.mirror.MethodMirror",
       "role": null

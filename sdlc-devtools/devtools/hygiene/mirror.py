@@ -89,7 +89,10 @@ log = logging.getLogger("devtools.hygiene.mirror")
 EXEMPT = frozenset({"main"})
 IGNORE = "devtools-ignore: test-mirror"
 # What counts as asserting, beyond a bare `assert`: `raise AssertionError` is the same statement with the
-# ruff S101 escape hatch on, and `pytest.raises` is the assertion when the outcome IS the exception.
+# ruff S101 escape hatch on, and `pytest.raises` is the assertion when the outcome IS the exception. These
+# are matched as a PREFIX, deliberately, so the `assert_that`/`assertEqual`/`assertIn` families and any
+# `.raises(...)` all count — the coverage is worth the looseness that a would-be helper named `assertions_off`
+# or a stray `.raises` on a non-pytest object would slip through. A prefix, not the exact set (bd 5ck).
 ASSERT_CALLS = ("raises", "assert")
 # The property FAMILY. All three are exercised by attribute access, so they share one rule here even though
 # `purity` deliberately splits them (there, a setter is the declared exception; here it is the same shape).
@@ -175,12 +178,14 @@ class MethodMirror:
         )
 
     @staticmethod
-    def is_property(fn: Function) -> bool:
+    def is_property_member(fn: Function) -> bool:
         """Is this a member of the property FAMILY — getter, setter or deleter?
 
-        Broader than `PropertyPurity.is_property`, which asks "is this a pure read" and therefore excludes
-        setters on purpose. Here the question is only "how is this member EXERCISED", and all three are
-        exercised the same way: by attribute access. So all three belong on the same side of the split.
+        Broader than `PropertyPurity.is_property_read`, which asks "is this a pure read" and therefore
+        excludes setters on purpose. Here the question is only "how is this member EXERCISED", and all three
+        are exercised the same way: by attribute access. So all three belong on the same side of the split.
+        The two names now say which question each answers, so a future change to one cannot quietly assume
+        the other agrees (bd 0d1).
         """
         names = {
             d.attr if isinstance(d, ast.Attribute) else d.id
@@ -346,16 +351,21 @@ class MethodMirror:
         cls, fn = member
         # A property is READ, a method is CALLED. Saying "calls it" about a property would describe
         # something the language does not let anyone write, which is how a message stops being followable.
-        verb, past = ("reads", "read") if self.is_property(fn) else ("calls", "called")
+        verb, past = ("reads", "read") if self.is_property_member(fn) else ("calls", "called")
         where = f"{path.as_posix()}:{fn.lineno}: `{cls}.{fn.name}`"
         if covers:
             return (
                 f"{where} — a test in {mirror.as_posix()} {verb} it and asserts, but is not named "
                 f"`{names[0]}`; rename it"
             )
+        # `callers` is keyed by bare method NAME across all packages, so `reached` counts modules calling any
+        # method of this name, not provably THIS class's. It steers the wording of the remedy, never whether
+        # the finding fires, so the message says "by name" rather than claiming a resolved call graph it does
+        # not have — honest about its own precision instead of implying resolve.py's (bd 5ck).
         reached = self.callers[fn.name] - {path}
         remedy = (
-            f"reached by {len(reached)} other module(s) — a contract with no test; write `{names[0]}`"
+            f"reached by name from {len(reached)} other module(s) — likely a contract with no test; "
+            f"write `{names[0]}`"
             if reached
             else f"{past} only inside its own file — public by naming accident; add the underscore, or "
             f"write `{names[0]}`"
@@ -390,7 +400,7 @@ class MethodMirror:
                 continue
             names = self.expected(cls, fn.name, shared=fn.name in shared)
             # The member KIND picks the syntax: a method must be CALLED, a property must be ACCESSED.
-            reached = coverage.accessed if self.is_property(fn) else coverage.called
+            reached = coverage.accessed if self.is_property_member(fn) else coverage.called
             if any(name in asserting and fn.name in reached.get(name, set()) for name in names):
                 continue
             elsewhere = any(fn.name in reached.get(name, set()) for name in asserting)
