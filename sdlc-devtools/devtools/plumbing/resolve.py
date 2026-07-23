@@ -74,15 +74,35 @@ class Resolver:
 
     @staticmethod
     def annotation_names(node: ast.expr | None) -> set[str]:
-        """Every type name inside an annotation — unwraps `T | None`, `list[T]`, `Optional[T]`, strings."""
+        """Every type name inside an annotation — unwraps `T | None`, `list[T]`, `Optional[T]`, and re-parses
+        forward-reference strings at ANY depth: `x: 'Store'` and `x: list['Store']` both yield `Store`.
+
+        Re-parsing used to fire only for a WHOLE-annotation string, so a string nested inside a subscript was
+        dropped — a `TYPE_CHECKING` field typed `list['Store']` produced no `holds`/`references` arrow and
+        every arrow-level gate went blind to that edge (bd eq6). The recursion re-parses each string wherever
+        it sits.
+
+        A `Literal[...]`'s arguments are VALUES, not types (`Literal['read']` is the string "read", not a
+        class), so its slice is NOT re-parsed. Re-parsing it would mint a name from a value — the one thing
+        this resolver never does: a wrong edge. Everything else keeps the precise-but-incomplete contract —
+        an unknown qualifier still leaks a name that resolves to nothing, never to a class we do not mean.
+        """
         if node is None:
             return set()
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        if isinstance(node, ast.Constant):
+            if not isinstance(node.value, str):
+                return set()
             try:
-                node = ast.parse(node.value, mode="eval").body
+                return Resolver.annotation_names(ast.parse(node.value, mode="eval").body)
             except SyntaxError:  # a jaxtyping shape string is not a type expression — nothing to resolve
                 return set()
-        return {name for sub in ast.walk(node) if (name := Names.trailing(sub)) is not None}
+        if isinstance(node, ast.Subscript) and Names.trailing(node.value) == "Literal":
+            return Resolver.annotation_names(node.value)  # the `Literal` name only; its args are values
+        names = {name} if (name := Names.trailing(node)) is not None else set()
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.expr):
+                names |= Resolver.annotation_names(child)
+        return names
 
     def _class_homes(self) -> dict[tuple[str, str], str]:
         """{(module, class-name): qualified id} — every class we own, so a name can resolve to one."""
