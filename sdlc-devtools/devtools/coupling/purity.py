@@ -47,8 +47,12 @@ class PropertyPurity:
         self.trees = trees if trees is not None else list(Trees(packages).walk())
 
     @staticmethod
-    def is_property(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-        """Decorated `@property` (or `@cached_property`) and NOT `@x.setter`/`@x.deleter`.
+    def is_property_read(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        """Decorated `@property` (or `@cached_property`) and NOT `@x.setter`/`@x.deleter` — a pure READ.
+
+        Named for the question it answers, distinct from `mirror.MethodMirror.is_property_member`, which
+        INCLUDES setters/deleters because it asks "how is this member exercised" (all three: attribute
+        access). Both are correct; the names now say which so neither is mistaken for the other (bd 0d1).
 
         `functools.cached_property` is included deliberately. Its caching is done by the DESCRIPTOR, not by
         the body, so a cached_property whose body assigns to self is a hand-rolled second cache on top of
@@ -87,7 +91,7 @@ class PropertyPurity:
             for cls in ast.walk(tree)
             if isinstance(cls, ast.ClassDef)
             for func in cls.body
-            if isinstance(func, ast.FunctionDef | ast.AsyncFunctionDef) and self.is_property(func)
+            if isinstance(func, ast.FunctionDef | ast.AsyncFunctionDef) and self.is_property_read(func)
             for write in self.assigned_selves(func)
         ]
 

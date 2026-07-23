@@ -44,24 +44,32 @@ def test_of():
             TestLayout.of(gone)
 
 
+# `mirror_of` and `missing` are polymorphic: each strategy overrides them with its own behaviour, so each
+# override is its own public member with its own named test (bd kai). The abstract `TestLayout` versions are
+# declarations (they raise NotImplementedError), so they need no test of their own.
+
+
 @pytest.mark.parametrize(
-    ("layout", "module", "expected"),
+    ("module", "expected"),
     [
         # The test file carries the MODULE's name — that is what makes the path a mirror.
-        ("mirror", "pkg/store.py", "tests/unit/pkg/store.py"),
-        ("mirror", "pkg/deep/nested.py", "tests/unit/pkg/deep/nested.py"),
-        # `off` demands nothing and so names no file — exactly when the METHOD-level gate has nowhere to
-        # look and must stand down rather than guess.
-        ("off", "pkg/store.py", None),
+        ("pkg/store.py", "tests/unit/pkg/store.py"),
+        ("pkg/deep/nested.py", "tests/unit/pkg/deep/nested.py"),
     ],
 )
-def test_mirror_of(layout, module, expected):
-    got = TestLayout.of(layout).mirror_of(Path(module))
-    assert (got.as_posix() if got else None) == expected
+def test_mirror_mirror_of(module, expected):
+    """`_Mirror.mirror_of` — the strict path mirror always names a file, mirroring the module's own path."""
+    assert TestLayout.of("mirror").mirror_of(Path(module)).as_posix() == expected
 
 
-def test_missing(tmp_path, monkeypatch):
-    """The file-level finding, over both outcomes.
+def test_off_mirror_of():
+    """`_Off.mirror_of` — demands nothing and so names no file, exactly when the METHOD-level gate has
+    nowhere to look and must stand down rather than guess."""
+    assert TestLayout.of("off").mirror_of(Path("pkg/store.py")) is None
+
+
+def test_mirror_missing(tmp_path, monkeypatch):
+    """`_Mirror.missing` — the file-level finding, over both outcomes.
 
     Driven through a real tree rather than a stubbed `exists`, because the thing under test IS a filesystem
     question — a double here would be asserting that our arithmetic matches itself.
@@ -84,7 +92,10 @@ def test_missing(tmp_path, monkeypatch):
     (tmp_path / "tests" / "somewhere" / "lonely.py").write_text("")
     assert convention.missing(Path("pkg/lonely.py")) is not None, "neither the prefix nor a stray path counts"
 
-    assert TestLayout.of("off").missing(Path("pkg/lonely.py")) is None, "off demands nothing"
+
+def test_off_missing():
+    """`_Off.missing` — demands nothing, so it never reports a module as uncovered."""
+    assert TestLayout.of("off").missing(Path("pkg/lonely.py")) is None
 
 
 def test_testable(tmp_path, monkeypatch):

@@ -535,6 +535,18 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.astgrep.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.astgrep.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
       "kind": "calls",
       "source": "devtools.cohesion.complexity.Complexity.report",
       "target": "devtools.cohesion.complexity.Complexity._render",
@@ -562,6 +574,18 @@
       "kind": "calls",
       "source": "devtools.cohesion.complexity.Complexity.scan",
       "target": "devtools.plumbing.trees.Trees.files",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.cohesion.complexity.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.complexity.main",
+      "target": "devtools.plumbing.cli.Cli.run",
       "weight": 1
     },
     {
@@ -610,6 +634,24 @@
       "kind": "calls",
       "source": "devtools.cohesion.data_clumps.DataClumps.report",
       "target": "devtools.cohesion.data_clumps.DataClumps.clumps",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.cohesion.data_clumps.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.data_clumps.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.cohesion.data_clumps.main",
+      "target": "devtools.plumbing.cli.Flag",
       "weight": 1
     },
     {
@@ -721,6 +763,18 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.cohesion.lcom.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.lcom.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
       "kind": "calls",
       "source": "devtools.cohesion.state_candidates.StateCandidates._analyze",
       "target": "devtools.cohesion.state_candidates.StateCandidates._staticmethods",
@@ -805,6 +859,18 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.cohesion.state_candidates.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.cohesion.state_candidates.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
       "kind": "calls",
       "source": "devtools.coupling.composition.CompositionCycles.cycles",
       "target": "devtools.coupling.composition.CompositionCycles._names",
@@ -838,6 +904,18 @@
       "kind": "calls",
       "source": "devtools.coupling.composition.CompositionCycles.run_assert",
       "target": "devtools.coupling.composition.CompositionCycles.cycles",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.composition.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.composition.main",
+      "target": "devtools.plumbing.cli.Cli.run",
       "weight": 1
     },
     {
@@ -937,6 +1015,18 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.coupling.contracts.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.contracts.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
       "kind": "calls",
       "source": "devtools.coupling.demeter.Demeter.__init__",
       "target": "devtools.coupling.demeter.Demeter.load_max_depth",
@@ -1006,6 +1096,18 @@
       "kind": "calls",
       "source": "devtools.coupling.demeter.Demeter.violations",
       "target": "devtools.plumbing.trees.Trees.walk",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.demeter.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.demeter.main",
+      "target": "devtools.plumbing.cli.Cli.run",
       "weight": 1
     },
     {
@@ -1166,6 +1268,18 @@
     },
     {
       "kind": "construct",
+      "source": "devtools.coupling.envy.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.envy.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
       "source": "devtools.coupling.purity.PropertyPurity.__init__",
       "target": "devtools.plumbing.trees.Trees",
       "weight": 1
@@ -1185,7 +1299,7 @@
     {
       "kind": "calls",
       "source": "devtools.coupling.purity.PropertyPurity._violations_in",
-      "target": "devtools.coupling.purity.PropertyPurity.is_property",
+      "target": "devtools.coupling.purity.PropertyPurity.is_property_read",
       "weight": 1
     },
     {
@@ -1210,6 +1324,18 @@
       "kind": "calls",
       "source": "devtools.coupling.purity.PropertyPurity.violations",
       "target": "devtools.coupling.purity.PropertyPurity._violations_in",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.coupling.purity.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.coupling.purity.main",
+      "target": "devtools.plumbing.cli.Cli.run",
       "weight": 1
     },
     {
@@ -1269,7 +1395,19 @@
     {
       "kind": "calls",
       "source": "devtools.graph.archmap.Archmap._method_nodes",
+      "target": "devtools.graph.archmap.Archmap._method_row",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._method_nodes",
       "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.Archmap._method_nodes",
+      "target": "devtools.plumbing.resolve.Resolver.functions_in",
       "weight": 1
     },
     {
@@ -1387,6 +1525,42 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.graph.archmap.main",
+      "target": "devtools.graph.archmap.Archmap",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.main",
+      "target": "devtools.graph.archmap.Archmap.check",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.main",
+      "target": "devtools.graph.archmap.Archmap.diff",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.main",
+      "target": "devtools.graph.archmap.Archmap.regen",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.main",
+      "target": "devtools.graph.archmap.Archmap.write_json",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.archmap.main",
+      "target": "devtools.graph.archmap.Archmap.write_viewer",
+      "weight": 1
+    },
+    {
       "kind": "references",
       "source": "devtools.graph.arrows.ClassArrows",
       "target": "devtools.plumbing.resolve.Resolver",
@@ -1447,6 +1621,18 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.graph.arrows.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.arrows.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
       "kind": "references",
       "source": "devtools.graph.calls.CallArrows",
       "target": "devtools.graph.calls.CallEdge",
@@ -1502,32 +1688,38 @@
     },
     {
       "kind": "calls",
-      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "source": "devtools.graph.calls.CallArrows._edges_for_body",
       "target": "devtools.graph.calls.CallArrows._edge_for_call",
       "weight": 1
     },
     {
       "kind": "calls",
-      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "source": "devtools.graph.calls.CallArrows._edges_for_body",
       "target": "devtools.graph.calls.CallArrows._local_types",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edges_for_body",
+      "target": "devtools.graph.calls.CallArrows._param_types",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.calls.CallArrows._edges_for_body",
+      "target": "devtools.graph.calls.CallSite",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows._edges_for_class",
+      "target": "devtools.graph.calls.CallArrows._edges_for_body",
       "weight": 1
     },
     {
       "kind": "calls",
       "source": "devtools.graph.calls.CallArrows._edges_for_class",
       "target": "devtools.graph.calls.CallArrows._methods",
-      "weight": 1
-    },
-    {
-      "kind": "calls",
-      "source": "devtools.graph.calls.CallArrows._edges_for_class",
-      "target": "devtools.graph.calls.CallArrows._param_types",
-      "weight": 1
-    },
-    {
-      "kind": "construct",
-      "source": "devtools.graph.calls.CallArrows._edges_for_class",
-      "target": "devtools.graph.calls.CallSite",
       "weight": 1
     },
     {
@@ -1562,6 +1754,24 @@
     },
     {
       "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.class_edges",
+      "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.class_edges",
+      "target": "devtools.plumbing.resolve.Resolver.module_of",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.edges",
+      "target": "devtools.graph.calls.CallArrows._edges_for_body",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
       "source": "devtools.graph.calls.CallArrows.edges",
       "target": "devtools.graph.calls.CallArrows._edges_for_class",
       "weight": 1
@@ -1570,6 +1780,12 @@
       "kind": "calls",
       "source": "devtools.graph.calls.CallArrows.edges",
       "target": "devtools.plumbing.resolve.Resolver.classes_in",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.CallArrows.edges",
+      "target": "devtools.plumbing.resolve.Resolver.functions_in",
       "weight": 1
     },
     {
@@ -1600,6 +1816,18 @@
       "kind": "calls",
       "source": "devtools.graph.calls.CallSite.receiver_type_names",
       "target": "devtools.plumbing.resolve.Resolver.is_self_attr",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.calls.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.calls.main",
+      "target": "devtools.plumbing.cli.Cli.run",
       "weight": 1
     },
     {
@@ -1726,6 +1954,18 @@
       "kind": "calls",
       "source": "devtools.graph.classes.ClassIndex.run_assert",
       "target": "devtools.graph.classes.ClassIndex.multi_primary",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.classes.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.classes.main",
+      "target": "devtools.plumbing.cli.Cli.run",
       "weight": 1
     },
     {
@@ -1951,6 +2191,30 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.graph.fitness.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.main",
+      "target": "devtools.plumbing.cli.Flag",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.graph.fitness.main",
+      "target": "devtools.plumbing.cli.Switch",
+      "weight": 1
+    },
+    {
       "kind": "calls",
       "source": "devtools.hygiene.magic_literals.MagicLiterals._string_literals",
       "target": "devtools.hygiene.magic_literals.MagicLiterals._excluded_value_ids",
@@ -2017,6 +2281,18 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.hygiene.magic_literals.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.magic_literals.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
       "kind": "references",
       "source": "devtools.hygiene.mirror.MethodMirror",
       "target": "devtools.hygiene.mirror.Coverage",
@@ -2073,19 +2349,13 @@
     {
       "kind": "calls",
       "source": "devtools.hygiene.mirror.MethodMirror._finding",
-      "target": "devtools.hygiene.mirror.MethodMirror.is_property",
+      "target": "devtools.hygiene.mirror.MethodMirror.is_property_member",
       "weight": 1
     },
     {
       "kind": "calls",
       "source": "devtools.hygiene.mirror.MethodMirror._members",
       "target": "devtools.hygiene.mirror.MethodMirror.is_public",
-      "weight": 1
-    },
-    {
-      "kind": "calls",
-      "source": "devtools.hygiene.mirror.MethodMirror._members",
-      "target": "devtools.hygiene.mirror.MethodMirror.overrides",
       "weight": 1
     },
     {
@@ -2121,7 +2391,7 @@
     {
       "kind": "calls",
       "source": "devtools.hygiene.mirror.MethodMirror._violations_in",
-      "target": "devtools.hygiene.mirror.MethodMirror.is_property",
+      "target": "devtools.hygiene.mirror.MethodMirror.is_property_member",
       "weight": 1
     },
     {
@@ -2239,6 +2509,18 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.hygiene.mirror.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.mirror.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
       "kind": "calls",
       "source": "devtools.hygiene.small.SmallTests.__init__",
       "target": "devtools.hygiene.small.SmallTests._layout",
@@ -2314,6 +2596,18 @@
       "kind": "calls",
       "source": "devtools.hygiene.small.SmallTests.violations",
       "target": "devtools.hygiene.small.SmallTests.files",
+      "weight": 1
+    },
+    {
+      "kind": "construct",
+      "source": "devtools.hygiene.small.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.hygiene.small.main",
+      "target": "devtools.plumbing.cli.Cli.run",
       "weight": 1
     },
     {
@@ -2629,6 +2923,24 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.run.main",
+      "target": "devtools.run.Batch",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.run.main",
+      "target": "devtools.run.Batch.names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.run.main",
+      "target": "devtools.run.Batch.run",
+      "weight": 1
+    },
+    {
       "kind": "calls",
       "source": "devtools.shape_contracts.ShapeContracts._analyze",
       "target": "devtools.shape_contracts.ShapeContracts._bare_array_slots",
@@ -2719,6 +3031,18 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.shape_contracts.main",
+      "target": "devtools.plumbing.cli.Cli",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.shape_contracts.main",
+      "target": "devtools.plumbing.cli.Cli.run",
+      "weight": 1
+    },
+    {
       "kind": "references",
       "source": "devtools.tools.analytics.Analytics",
       "target": "devtools.tools.analytics.AreaStat",
@@ -2779,9 +3103,33 @@
       "weight": 1
     },
     {
+      "kind": "construct",
+      "source": "devtools.tools.analytics.main",
+      "target": "devtools.tools.analytics.Analytics",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.analytics.main",
+      "target": "devtools.tools.analytics.Analytics.report",
+      "weight": 1
+    },
+    {
       "kind": "calls",
       "source": "devtools.tools.config.Config.path",
       "target": "devtools.tools.config.Config.names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.config.main",
+      "target": "devtools.tools.config.Config.names",
+      "weight": 1
+    },
+    {
+      "kind": "calls",
+      "source": "devtools.tools.config.main",
+      "target": "devtools.tools.config.Config.path",
       "weight": 1
     }
   ],
@@ -3516,6 +3864,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.astgrep.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.astgrep",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.cohesion.complexity.Complexity.__init__",
       "label": "__init__",
       "level": "method",
@@ -3552,6 +3908,14 @@
       "label": "scan",
       "level": "method",
       "parent": "devtools.cohesion.complexity.Complexity",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.complexity.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.cohesion.complexity",
       "role": null
     },
     {
@@ -3616,6 +3980,14 @@
       "label": "report",
       "level": "method",
       "parent": "devtools.cohesion.data_clumps.DataClumps",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.cohesion.data_clumps.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.cohesion.data_clumps",
       "role": null
     },
     {
@@ -3748,6 +4120,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.cohesion.lcom.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.cohesion.lcom",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.cohesion.state_candidates.StateCandidates.__init__",
       "label": "__init__",
       "level": "method",
@@ -3836,6 +4216,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.cohesion.state_candidates.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.cohesion.state_candidates",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.coupling.composition.CompositionCycles.__init__",
       "label": "__init__",
       "level": "method",
@@ -3880,6 +4268,14 @@
       "label": "run_assert",
       "level": "method",
       "parent": "devtools.coupling.composition.CompositionCycles",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.composition.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.coupling.composition",
       "role": null
     },
     {
@@ -3944,6 +4340,14 @@
       "label": "violations",
       "level": "method",
       "parent": "devtools.coupling.contracts.UseContracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.contracts.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.coupling.contracts",
       "role": null
     },
     {
@@ -4024,6 +4428,14 @@
       "label": "violations",
       "level": "method",
       "parent": "devtools.coupling.demeter.Demeter",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.coupling.demeter.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.coupling.demeter",
       "role": null
     },
     {
@@ -4116,6 +4528,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.coupling.envy.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.coupling.envy",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.coupling.purity.PropertyPurity.__init__",
       "label": "__init__",
       "level": "method",
@@ -4140,8 +4560,8 @@
     },
     {
       "descendants": 0,
-      "id": "devtools.coupling.purity.PropertyPurity.is_property",
-      "label": "is_property",
+      "id": "devtools.coupling.purity.PropertyPurity.is_property_read",
+      "label": "is_property_read",
       "level": "method",
       "parent": "devtools.coupling.purity.PropertyPurity",
       "role": null
@@ -4172,6 +4592,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.coupling.purity.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.coupling.purity",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.graph.archmap.Archmap.__init__",
       "label": "__init__",
       "level": "method",
@@ -4198,6 +4626,14 @@
       "descendants": 0,
       "id": "devtools.graph.archmap.Archmap._method_nodes",
       "label": "_method_nodes",
+      "level": "method",
+      "parent": "devtools.graph.archmap.Archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.archmap.Archmap._method_row",
+      "label": "_method_row",
       "level": "method",
       "parent": "devtools.graph.archmap.Archmap",
       "role": null
@@ -4284,6 +4720,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.graph.archmap.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.graph.archmap",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.graph.arrows.ClassArrows.__init__",
       "label": "__init__",
       "level": "method",
@@ -4324,6 +4768,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.graph.arrows.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.graph.arrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.graph.calls.CallArrows.__init__",
       "label": "__init__",
       "level": "method",
@@ -4334,6 +4786,14 @@
       "descendants": 0,
       "id": "devtools.graph.calls.CallArrows._edge_for_call",
       "label": "_edge_for_call",
+      "level": "method",
+      "parent": "devtools.graph.calls.CallArrows",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.calls.CallArrows._edges_for_body",
+      "label": "_edges_for_body",
       "level": "method",
       "parent": "devtools.graph.calls.CallArrows",
       "role": null
@@ -4444,6 +4904,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.graph.calls.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.graph.calls",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.graph.classes.ClassIndex.__init__",
       "label": "__init__",
       "level": "method",
@@ -4544,6 +5012,14 @@
       "label": "run_assert",
       "level": "method",
       "parent": "devtools.graph.classes.ClassIndex",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.graph.classes.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.graph.classes",
       "role": null
     },
     {
@@ -4724,6 +5200,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.graph.fitness.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.graph.fitness",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.hygiene.magic_literals.MagicLiterals.__init__",
       "label": "__init__",
       "level": "method",
@@ -4792,6 +5276,14 @@
       "label": "scan_strings",
       "level": "method",
       "parent": "devtools.hygiene.magic_literals.MagicLiterals",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.magic_literals.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.hygiene.magic_literals",
       "role": null
     },
     {
@@ -4900,8 +5392,8 @@
     },
     {
       "descendants": 0,
-      "id": "devtools.hygiene.mirror.MethodMirror.is_property",
-      "label": "is_property",
+      "id": "devtools.hygiene.mirror.MethodMirror.is_property_member",
+      "label": "is_property_member",
       "level": "method",
       "parent": "devtools.hygiene.mirror.MethodMirror",
       "role": null
@@ -4948,14 +5440,6 @@
     },
     {
       "descendants": 0,
-      "id": "devtools.hygiene.mirror.MethodMirror.overrides",
-      "label": "overrides",
-      "level": "method",
-      "parent": "devtools.hygiene.mirror.MethodMirror",
-      "role": null
-    },
-    {
-      "descendants": 0,
       "id": "devtools.hygiene.mirror.MethodMirror.reachable",
       "label": "reachable",
       "level": "method",
@@ -4992,6 +5476,14 @@
       "label": "violations",
       "level": "method",
       "parent": "devtools.hygiene.mirror.MethodMirror",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.mirror.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.hygiene.mirror",
       "role": null
     },
     {
@@ -5096,6 +5588,14 @@
       "label": "violations",
       "level": "method",
       "parent": "devtools.hygiene.small.SmallTests",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.hygiene.small.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.hygiene.small",
       "role": null
     },
     {
@@ -5396,6 +5896,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.plumbing.resolve.Resolver.functions_in",
+      "label": "functions_in",
+      "level": "method",
+      "parent": "devtools.plumbing.resolve.Resolver",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.plumbing.resolve.Resolver.imported_names",
       "label": "imported_names",
       "level": "method",
@@ -5564,6 +6072,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.run.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.run",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.shape_contracts.ShapeContracts.__init__",
       "label": "__init__",
       "level": "method",
@@ -5660,6 +6176,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.shape_contracts.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.shape_contracts",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.tools.analytics.Analytics.__init__",
       "label": "__init__",
       "level": "method",
@@ -5732,6 +6256,14 @@
     },
     {
       "descendants": 0,
+      "id": "devtools.tools.analytics.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.tools.analytics",
+      "role": null
+    },
+    {
+      "descendants": 0,
       "id": "devtools.tools.config.Config.names",
       "label": "names",
       "level": "method",
@@ -5744,6 +6276,14 @@
       "label": "path",
       "level": "method",
       "parent": "devtools.tools.config.Config",
+      "role": null
+    },
+    {
+      "descendants": 0,
+      "id": "devtools.tools.config.main",
+      "label": "main",
+      "level": "method",
+      "parent": "devtools.tools.config",
       "role": null
     }
   ]

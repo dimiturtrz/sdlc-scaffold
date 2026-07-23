@@ -65,6 +65,20 @@ def test_classes_in():
     assert Resolver.classes_in(_module("x = 1\n")) == [], "a module with no classes is no nodes, not an error"
 
 
+def test_functions_in():
+    """TOP-LEVEL functions only — a call source with no class to hang from (bd 94j). It must NOT reach into a
+    class body (those are methods, walked at the class tier) nor into a nested def (attributed to its
+    enclosing function), or a `main` and a method named `main` would collide as graph nodes."""
+    tree = _module(
+        "def main(): ...\n\n\nasync def serve(): ...\n\n\n"
+        "class A:\n    def method(self): ...\n\n\ndef outer():\n    def inner(): ...\n"
+    )
+    # `serve` is absent: an `async def` is an AsyncFunctionDef, excluded here as it is uniformly across the
+    # walk (methods, class bodies) — not a 94j gap, just the same sync-only scope everywhere.
+    assert [f.name for f in Resolver.functions_in(tree)] == ["main", "outer"], "top level, declaration order"
+    assert Resolver.functions_in(_module("class A: ...\n")) == [], "a class-only module has no free functions"
+
+
 def test_imported_names():
     """{local name: home module} for the bindings a bare name can travel through.
 
@@ -98,10 +112,17 @@ def test_imported_names():
         # A string forward reference is PARSED, not treated as opaque — the common shape in a
         # `TYPE_CHECKING` import, where every arrow would otherwise vanish.
         ("'Store'", {"Store"}),
-        # Only a WHOLE-annotation string is re-parsed; a string NESTED inside a subscript is not, so the
-        # inner name is dropped. Recorded rather than fixed: that is the precise-but-incomplete rule
-        # choosing a missing edge over a wrong one, and it is the behaviour callers must expect.
-        ("list['Store']", {"list"}),
+        # A string forward reference NESTED in a subscript is re-parsed too — the `list['Store']` /
+        # `dict[str, 'Store']` form is an ordinary TYPE_CHECKING field, and dropping its inner name blinded
+        # every arrow-level gate to that edge (bd eq6). The re-parse now recurses to any depth.
+        ("list['Store']", {"list", "Store"}),
+        ("dict[str, 'Store']", {"dict", "str", "Store"}),
+        ("list['a.Store']", {"list", "Store", "a"}),
+        # A `Literal[...]`'s arguments are VALUES, not types, so they are NOT re-parsed: `Literal['Store']`
+        # is the string "Store", and minting a `Store` name from it would be the one thing this resolver
+        # forbids — a wrong edge. Only the `Literal` name itself leaks (and resolves to nothing).
+        ("Literal['Store', 'Mid']", {"Literal"}),
+        ("list[Literal['Store']]", {"list", "Literal"}),
         # A jaxtyping shape string is not a type expression. It must return empty rather than raise: one
         # such annotation anywhere in a repo would otherwise take down every gate standing on this.
         ("'b n'", set()),

@@ -109,6 +109,13 @@ def test_absolute_paths(tmp_path, monkeypatch):
         ("import time\n\ndef test_a():\n    time.sleep(1)\n    assert 1\n", ["sleep"]),
         ("def test_a():\n    requests.get('http://x')\n    assert 1\n", ["network"]),
         ("def test_a():\n    urllib.request.urlopen(u)\n    assert 1\n", ["network"]),
+        # The socket module IS network, matched on its dotted chain: `socket.socket`, `socket.connect`.
+        ("def test_a():\n    socket.socket()\n    assert 1\n", ["network"]),
+        # ...but a bare `connect`/`socket` is an ordinary domain verb, not a network reach (bd 5ck). A Qt-style
+        # signal wiring and a `socket` local both stay clean — the gate must never report code that touches no
+        # network as if it did.
+        ("def test_a():\n    signal.connect(handler)\n    assert 1\n", []),
+        ("def test_a():\n    db.connect()\n    assert 1\n", []),
         ("def test_a():\n    Path.home()\n    assert 1\n", ["outside its own fixtures"]),
         ("def test_a():\n    Path('/data/x').read_text()\n    assert 1\n", ["absolute path"]),
         ("def test_a():\n    assert random.randint(0, 9) >= 0\n", ["nothing in this file seeds"]),

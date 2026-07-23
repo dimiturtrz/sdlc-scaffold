@@ -123,6 +123,13 @@ class Archmap:
             key=lambda n: n["id"],
         )
 
+    @staticmethod
+    def _method_row(mod: str, parent: str, name: str) -> NodeRow:
+        """One method-tier node — a class method (`parent` = the class) or a module-level function
+        (`parent` = the module). Same tier, same shape; only the box it nests in differs."""
+        return {"id": f"{parent}.{name}", "label": name, "parent": parent, "descendants": 0,
+                "level": "method", "role": None}
+
     def _method_nodes(self) -> list[NodeRow]:
         """The METHOD tier (bd 433.4) — the deepest fold level, so a class can be opened to read its actual
         surface instead of guessing it from the class name.
@@ -130,24 +137,25 @@ class Archmap:
         The tier is where the BEHAVIOURAL arrows now terminate (bd f1u.2): a `calls` edge lands on the
         method it invokes, so opening a class shows what its methods actually do rather than a wall of
         labels with no connectivity.
+
+        A module-level FUNCTION (`main()`, the rare free function) is a method-tier node too, nested directly
+        in its module (bd 94j). It has no class to hang from, so it is the one method whose parent is a
+        module — which is exactly where a top-level function is contained, and lets its behavioural arrows
+        (e.g. `main` constructing the shared `Cli`) terminate on a real node instead of dangling.
         """
-        return sorted(
-            (
-                {
-                    "id": f"{Resolver.module_of(path)}.{cls.name}.{fn.name}",
-                    "label": fn.name,
-                    "parent": f"{Resolver.module_of(path)}.{cls.name}",
-                    "descendants": 0,
-                    "level": "method",
-                    "role": None,
-                }
-                for path, tree in self.resolver.trees
-                for cls in Resolver.classes_in(tree)
-                for fn in cls.body
-                if isinstance(fn, ast.FunctionDef)
-            ),
-            key=lambda n: n["id"],
+        methods = (
+            self._method_row(Resolver.module_of(path), f"{Resolver.module_of(path)}.{cls.name}", fn.name)
+            for path, tree in self.resolver.trees
+            for cls in Resolver.classes_in(tree)
+            for fn in cls.body
+            if isinstance(fn, ast.FunctionDef)
         )
+        functions = (
+            self._method_row(Resolver.module_of(path), Resolver.module_of(path), fn.name)
+            for path, tree in self.resolver.trees
+            for fn in Resolver.functions_in(tree)
+        )
+        return sorted([*methods, *functions], key=lambda n: n["id"])
 
     def _typed_edges(self) -> list[EdgeRow]:
         """The finer arrows an import edge decomposes into, each tagged with its KIND. Deduped and sorted so

@@ -167,15 +167,18 @@ class CallArrows:
             return [site.cls]
         return self.resolver.resolve_all(site.receiver_type_names(recv), site.scope)
 
+    def _edges_for_body(self, fn: ast.FunctionDef, owner: str, scope: FileScope,
+                        fields: dict[str, set[str]]) -> list[CallEdge]:
+        """Every arrow one function body makes. `owner` is the node the arrows LEAVE — a class for a method,
+        the module itself for a top-level function (bd 94j), which is the only difference between the two and
+        why one routine serves both. A top-level function has no instance state, so `fields` is empty for it
+        and `self.<x>` receivers simply resolve to nothing there."""
+        site = CallSite(owner, fn.name, scope, fields, self._param_types(fn) | self._local_types(fn))
+        return [e for node in ast.walk(fn) if isinstance(node, ast.Call) for e in self._edge_for_call(node, site)]
+
     def _edges_for_class(self, cls: ast.ClassDef, src: str, scope: FileScope) -> list[CallEdge]:
         fields = Resolver.field_types(cls)
-        out: list[CallEdge] = []
-        for fn in self._methods(cls):
-            site = CallSite(src, fn.name, scope, fields, self._param_types(fn) | self._local_types(fn))
-            for node in ast.walk(fn):
-                if isinstance(node, ast.Call):
-                    out += self._edge_for_call(node, site)
-        return out
+        return [e for fn in self._methods(cls) for e in self._edges_for_body(fn, src, scope, fields)]
 
     def _edge_for_call(self, node: ast.Call, site: CallSite) -> list[CallEdge]:
         """The arrow one call site yields: a CONSTRUCT when the callee names a class, else a CALL landing on
@@ -229,6 +232,12 @@ class CallArrows:
             scope = Resolver.scope_of(path, tree)
             for cls in Resolver.classes_in(tree):
                 out += self._edges_for_class(cls, f"{scope.module}.{cls.name}", scope)
+            # Module-level function bodies too: `main()` constructing the shared `Cli` is real coupling, and
+            # the walk used to see only classes so it vanished. The owner is the MODULE — a top-level
+            # function is contained directly in it — so the arrow leaves `module.main` and rolls up to the
+            # module's own import edge, the same invariant every finer arrow rests on (bd 94j).
+            for fn in Resolver.functions_in(tree):
+                out += self._edges_for_body(fn, scope.module, scope, {})
         return sorted(set(out))
 
     def class_edges(self) -> list[tuple[str, str, str]]:
@@ -237,8 +246,21 @@ class CallArrows:
         The coarse view every existing consumer reads. Intra-class calls project to a self-pair and are
         dropped here — at the class tier they are internal detail, not a dependency between two classes,
         and this is the same fold the import graph performs on an intra-file arrow.
+
+        A MODULE-level function's arrow is dropped too: its source is a module, not a class, so it has no
+        place in a class->class projection (bd 94j). It surfaces at the METHOD tier via `edges()` — which is
+        what the viewer reads — and its module-level roll-up is already governed by the import (layer) gate,
+        so re-injecting it here would hand contracts/fitness a pseudo-edge whose source no class-level rule
+        can name.
         """
-        return sorted({(e.source, e.target, e.kind) for e in self.edges() if e.source != e.target})
+        classes = {
+            f"{Resolver.module_of(path)}.{cls.name}"
+            for path, tree in self.resolver.trees
+            for cls in Resolver.classes_in(tree)
+        }
+        return sorted(
+            {(e.source, e.target, e.kind) for e in self.edges() if e.source != e.target and e.source in classes}
+        )
 
     def report(self) -> str:
         """Calls split by what they reach: the CONTRACT (calls) versus the CONCRETE (construct)."""

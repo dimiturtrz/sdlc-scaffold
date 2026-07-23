@@ -188,6 +188,16 @@ def test_target_id(target, target_method, expected):
             set(),
             None,
         ),
+        # ---- module-level functions are a call source too (bd 94j) -----------------------------------
+        # `main()` has no class to hang from, so the arrow leaves the MODULE node (`topfn.mod.main`, no class
+        # segment). The walk saw only classes before, so this coupling vanished and `Cli` — constructed by
+        # every engine's `main` — rendered as an isolated box. Both cuts still partition: build + call.
+        (
+            "topfn",
+            _DEP + "def main():\n    Dep().run()\n",
+            {("topfn.mod.main", "topfn.mod.Dep.run", CALLS), ("topfn.mod.main", "topfn.mod.Dep", CONSTRUCT)},
+            None,
+        ),
         # A method calling itself is one node, not two — there is no relationship to draw.
         ("rec", "class A:\n    def go(self, n: int):\n        self.go(n)\n", set(), None),
         # An unowned annotation resolves to nothing: we do not invent edges into types we do not have.
@@ -262,6 +272,13 @@ def test_class_edges(monkeypatch, tmp_path, write_pkg):
     )
     engine = _engine(monkeypatch, tmp_path, write_pkg, "ce_fold", twice)
     assert len(engine.edges()) == 2 and len(engine.class_edges()) == 1
+
+    # A module-level function's arrow has a MODULE source, so it is NOT a class->class edge and drops from
+    # this projection (bd 94j) — it lives at the method tier only. Otherwise contracts/fitness, which read
+    # this coarse view, would get a pseudo-edge whose source no class-level rule can name.
+    topfn = _engine(monkeypatch, tmp_path, write_pkg, "ce_topfn", _DEP + "def main():\n    Dep().run()\n")
+    assert topfn.edges(), "the module-level arrow exists at the method tier"
+    assert topfn.class_edges() == [], "...and is absent from the class projection (module source, not a class)"
 
 
 def test_report(monkeypatch, tmp_path, write_pkg):
