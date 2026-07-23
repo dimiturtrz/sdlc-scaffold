@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history AND tags — test_a_template_change_must_carry_a_version_bump
+                           # anchors on the last v* release tag, which a shallow checkout would not fetch
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
