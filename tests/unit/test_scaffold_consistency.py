@@ -218,7 +218,7 @@ def test_a_template_change_must_carry_a_version_bump():
     answer (a shallow checkout without tags) — the gate is a backstop against a real stranding, not a reason
     to fail a green tree that simply lacks the history to judge.
     """
-    described = subprocess.run(  # noqa: S603 (fixed git args)
+    described = subprocess.run(
         ["git", "describe", "--tags", "--abbrev=0", "--match", "v*"], **_CAPTURE  # noqa: S607
     )
     tag = described.stdout.strip()
