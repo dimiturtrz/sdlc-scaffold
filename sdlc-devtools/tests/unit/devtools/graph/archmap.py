@@ -66,6 +66,24 @@ def test_parent_is_the_existing_containment_prefix():
     assert Archmap._parent("gap.child", ms) is None, "a prefix that isn't a node yields None (gap)"
 
 
+def test_method_nodes_include_module_level_functions(tmp_path, monkeypatch):
+    """A module-level function (`main()`) is a method-tier node nested directly in its MODULE — the one
+    method whose parent is a module, not a class (bd 94j). Without the node its behavioural arrows (e.g.
+    `main` constructing the shared `Cli`) would terminate on nothing and vanish. A real class method still
+    nests under its class, proving the two shapes coexist. No grimp: `_method_nodes` reads the resolver only.
+    """
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "app").mkdir()
+    (tmp_path / "app" / "__init__.py").write_text("", encoding="utf-8")
+    (tmp_path / "app" / "mod.py").write_text(
+        "class Dep:\n    def run(self): ...\n\n\ndef main():\n    Dep().run()\n", encoding="utf-8")
+    by_id = {n["id"]: n for n in Archmap(["app"])._method_nodes()}
+    assert by_id["app.mod.main"] == {
+        "id": "app.mod.main", "label": "main", "parent": "app.mod", "descendants": 0,
+        "level": "method", "role": None}, "a top-level function nests in its module, at the method tier"
+    assert by_id["app.mod.Dep.run"]["parent"] == "app.mod.Dep", "a real method still nests under its class"
+
+
 def test_graph(tmp_path, monkeypatch):
     """The one REAL grimp build in this file — everything else stubs the graph, so if `build_graph` were
     called wrongly (per-package instead of combined, externals included) nothing else here would notice.

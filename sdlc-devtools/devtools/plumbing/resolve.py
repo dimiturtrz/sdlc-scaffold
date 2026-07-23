@@ -63,6 +63,14 @@ class Resolver:
         return [n for n in tree.body if isinstance(n, ast.ClassDef)]
 
     @staticmethod
+    def functions_in(tree: ast.Module) -> list[ast.FunctionDef]:
+        """The top-level FUNCTIONS of a module — a call source with no class to hang from (`main()` and the
+        rare sanctioned free function). Their bodies were the one blind spot in the behavioural walk: it
+        iterated classes only, so a `construct`/`calls` edge made from module-level code was never emitted
+        (`main` constructing the `Cli` every engine reuses rendered as an isolated box, bd 94j)."""
+        return [n for n in tree.body if isinstance(n, ast.FunctionDef)]
+
+    @staticmethod
     def imported_names(tree: ast.Module) -> dict[str, str]:
         """{local name: home module} for `from X import Y [as Z]` — how a bare name reaches another file."""
         return {

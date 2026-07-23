@@ -65,6 +65,20 @@ def test_classes_in():
     assert Resolver.classes_in(_module("x = 1\n")) == [], "a module with no classes is no nodes, not an error"
 
 
+def test_functions_in():
+    """TOP-LEVEL functions only — a call source with no class to hang from (bd 94j). It must NOT reach into a
+    class body (those are methods, walked at the class tier) nor into a nested def (attributed to its
+    enclosing function), or a `main` and a method named `main` would collide as graph nodes."""
+    tree = _module(
+        "def main(): ...\n\n\nasync def serve(): ...\n\n\n"
+        "class A:\n    def method(self): ...\n\n\ndef outer():\n    def inner(): ...\n"
+    )
+    # `serve` is absent: an `async def` is an AsyncFunctionDef, excluded here as it is uniformly across the
+    # walk (methods, class bodies) — not a 94j gap, just the same sync-only scope everywhere.
+    assert [f.name for f in Resolver.functions_in(tree)] == ["main", "outer"], "top level, declaration order"
+    assert Resolver.functions_in(_module("class A: ...\n")) == [], "a class-only module has no free functions"
+
+
 def test_imported_names():
     """{local name: home module} for the bindings a bare name can travel through.
 
