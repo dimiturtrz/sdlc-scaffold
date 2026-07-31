@@ -14,9 +14,10 @@
 #
 # tier 1 — churny line file you never read by hand (fully hidden + auto-merged):
 .beads/issues.jsonl            -diff linguist-generated=true merge=union
-# tier 3 — generated, but its diff is the architecture-erosion signal when you want it (collapsed, expandable,
-# regenerate on conflict — never union a JSON object):
-docs/architecture/graph.json   linguist-generated=true
+# tier 2 — generated JSON, never hand-read: hide the 10k-line git churn. The erosion signal is NOT this raw
+# diff (unreadable) — it is CI's archmap --diff semantic changelog, which reads file CONTENT (immune to -diff).
+# Never union a JSON object:
+docs/architecture/graph.json   -diff linguist-generated=true
 # >>> LOCAL-SLOT: generated-tracked paths — this repo's own generated-but-committed files. Pick a tier:
 #   tier 1  line file, never read (beads-like):   <path>  -diff linguist-generated=true merge=union
 #   tier 2  structured dump, never read:          <path>  -diff linguist-generated=true
