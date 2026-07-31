@@ -6,6 +6,7 @@
 
 # Generated but TRACKED — dogfood the same rules the template ships (see template/.gitattributes for the
 # three-tier rationale). tier 1 = beads state (line file, wholesale re-export, never hand-read → hide +
-# union); tier 3 = archmap graph.json (generated, but the diff is the erosion signal → collapse, expandable).
+# union); tier 2 = archmap graph.json (generated JSON, never hand-read → hide the git churn; CI's archmap
+# --diff reads content for the erosion changelog, immune to -diff).
 .beads/issues.jsonl                        -diff linguist-generated=true merge=union
-sdlc-devtools/docs/architecture/graph.json linguist-generated=true
+sdlc-devtools/docs/architecture/graph.json -diff linguist-generated=true
