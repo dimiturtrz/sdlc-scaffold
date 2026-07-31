@@ -687,9 +687,10 @@ def test_gitattributes_marks_generated_tracked(project):
     graph = next(ln for ln in lines if ln.startswith("docs/architecture/graph.json"))
     # tier 1 — beads state: fully hidden + auto-merged (a line file re-exported wholesale each session)
     assert "-diff" in beads and "linguist-generated=true" in beads and "merge=union" in beads
-    # tier 3 — graph.json: collapsed but expandable; NO -diff/union (its diff is the erosion signal, and a
-    # JSON object can't be union-merged without corrupting it)
-    assert "linguist-generated=true" in graph and "-diff" not in graph and "merge=union" not in graph
+    # tier 2 — graph.json: hidden (-diff) but NO union (a JSON object can't be union-merged without
+    # corrupting it). The erosion signal is CI's archmap --diff semantic changelog, which reads file
+    # CONTENT (immune to -diff) — not the raw 10k-line JSON git diff.
+    assert "-diff" in graph and "linguist-generated=true" in graph and "merge=union" not in graph
     assert any("LOCAL-SLOT: generated-tracked paths" in ln for ln in lines), "consumer slot ships (izdo)"
 
 
