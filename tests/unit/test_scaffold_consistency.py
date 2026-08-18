@@ -246,13 +246,15 @@ def test_a_template_change_must_carry_a_version_bump():
     to fail a green tree that simply lacks the history to judge.
     """
     described = subprocess.run(
-        ["git", "describe", "--tags", "--abbrev=0", "--match", "v*"], **_CAPTURE  # noqa: S607
+        ["git", "describe", "--tags", "--abbrev=0", "--match", "v*"],  # noqa: S607 (git on PATH)
+        **_CAPTURE,
     )
     tag = described.stdout.strip()
     if described.returncode != 0 or not tag:
         pytest.skip("no v* release tag reachable yet — nothing to strand a template change against")
     changed = subprocess.run(  # noqa: S603 (fixed git args)
-        ["git", "diff", "--name-only", f"{tag}..HEAD", "--", "template", "copier.yml"], **_CAPTURE  # noqa: S607
+        ["git", "diff", "--name-only", f"{tag}..HEAD", "--", "template", "copier.yml"],  # noqa: S607 (git on PATH)
+        **_CAPTURE,
     )
     if changed.returncode != 0:
         pytest.skip(f"git cannot diff against {tag} (shallow checkout?) — cannot judge template drift")
@@ -339,10 +341,7 @@ def _enforced_gates(text: str) -> set[str]:
         if match.group(1) != "run" and "--assert" in text[match.start() : match.start() + 250]
     }
     batched = {
-        name
-        for match in re.finditer(r"--gate[\"',\s]+([\w,.]+)", text)
-        for name in match.group(1).split(",")
-        if name
+        name for match in re.finditer(r"--gate[\"',\s]+([\w,.]+)", text) for name in match.group(1).split(",") if name
     }
     return single | batched
 

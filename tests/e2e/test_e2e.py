@@ -496,9 +496,9 @@ def test_calls_advisory_splits_contract_from_concrete(project):
     assert intruders == [], f"a call never reaches the concrete impl from outside: {intruders}"
     # ...and the concrete is reached exactly once, by the class that wires it — on the class itself
     builds = _arrow_pairs(concrete)
-    assert any(
-        s.startswith(f"{pkg}.service.Service.") and t == f"{pkg}.memory_store.MemoryStore" for s, t in builds
-    ), f"construct lands on the CLASS: {builds}"
+    assert any(s.startswith(f"{pkg}.service.Service.") and t == f"{pkg}.memory_store.MemoryStore" for s, t in builds), (
+        f"construct lands on the CLASS: {builds}"
+    )
 
 
 def test_magic_literals_advisory_runs_clean(project):
@@ -891,7 +891,15 @@ def test_graph_assert_catches_cycle(full_project):
 
 
 DEMETER_ASSERT = [
-    "uv", "run", "--extra", "devtools", "python", "-m", "devtools.coupling.demeter", "full_pkg", "--assert",
+    "uv",
+    "run",
+    "--extra",
+    "devtools",
+    "python",
+    "-m",
+    "devtools.coupling.demeter",
+    "full_pkg",
+    "--assert",
 ]
 
 
@@ -992,7 +1000,7 @@ def test_mirror_catches_a_public_method_with_no_named_test(full_project):
 
 
 def test_mirror_names_the_rename_remedy_separately(full_project):
-    """"Nothing tests this" has two costs, and the gate must not charge the expensive one for the cheap
+    """ "Nothing tests this" has two costs, and the gate must not charge the expensive one for the cheap
     case: a test that already calls the method and asserts, under the wrong name, is a RENAME."""
 
     def mutate(p):

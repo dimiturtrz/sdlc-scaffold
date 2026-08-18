@@ -21,8 +21,12 @@ The existing consistency tests stay as an independent backstop; this is the mech
 from __future__ import annotations
 
 import argparse
+import logging
 import re
+import sys
 from pathlib import Path
+
+log = logging.getLogger("sync_version")
 
 REPO = Path(__file__).resolve().parent
 _PACKAGE = REPO / "sdlc-devtools" / "pyproject.toml"
@@ -36,7 +40,7 @@ def package_version() -> str:
     """The full `X.Y.Z` version sdlc-devtools declares — the single source the other two derive from."""
     match = re.search(r'^version = "([^"]+)"', _PACKAGE.read_text(encoding=_ENCODING), re.M)
     if match is None:
-        raise SystemExit(f"{_PACKAGE.as_posix()}: no `version = \"...\"` to derive from")
+        raise SystemExit(f'{_PACKAGE.as_posix()}: no `version = "..."` to derive from')
     return match.group(1)
 
 
@@ -85,6 +89,10 @@ def write(version: str) -> list[str]:
 
 
 def main() -> None:
+    # `%(message)s` so the output reads as a CLI's, not a log's — the same shape every devtools entrypoint
+    # uses (devtools/tools/analytics.py). The house rule is logging over prints even for a script whose
+    # output IS its result: a logger can be silenced, redirected and captured by a caller; a print cannot.
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
     ap = argparse.ArgumentParser(prog="python sync_version.py", description=__doc__)
     ap.add_argument("--check", action="store_true", help="report drift and exit 1 instead of writing")
     args = ap.parse_args()
@@ -92,13 +100,13 @@ def main() -> None:
     if args.check:
         stale = drift(version)
         if stale:
-            print(f"version drift from sdlc-devtools {version} — run `python sync_version.py`:")
-            print("\n".join(f"  {path}" for path in stale))
+            log.info(f"version drift from sdlc-devtools {version} — run `python sync_version.py`:")
+            log.info("\n".join(f"  {path}" for path in stale))
             raise SystemExit(1)
-        print(f"version in sync: copier.yml pin + README headline both track {version}")
+        log.info(f"version in sync: copier.yml pin + README headline both track {version}")
         return
     changed = write(version)
-    print(f"synced to {version}" + (": " + ", ".join(changed) if changed else " (already in sync)"))
+    log.info(f"synced to {version}" + (": " + ", ".join(changed) if changed else " (already in sync)"))
 
 
 if __name__ == "__main__":
