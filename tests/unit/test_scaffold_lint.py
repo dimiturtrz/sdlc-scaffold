@@ -32,3 +32,30 @@ def test_scaffold_own_code_passes_house_ruff():
         check=False,
     )
     assert result.returncode == 0, f"scaffold must pass its own house ruff bar:\n{result.stdout}\n{result.stderr}"
+
+
+# Every scaffold-owned .py outside the devtools package, which gates itself (sdlc-devtools/noxfile.py). The
+# generated project's tree is `template/`'s business and is proven by the e2e, not from here.
+_OWN_PYTHON = ("tests", "sync_version.py")
+
+
+def test_scaffold_own_code_is_ruff_formatted():
+    """`ruff format --check` on the scaffold's own python — the check it ships to consumers as ENFORCED.
+
+    Wired because it was not, and three files had drifted (bd 0t5): `sync_version.py` was gated by nothing at
+    all, and `tests/` was ruff CHECKed by the test above while nothing ever looked at its formatting. Since
+    09f6bf8 a consumer cannot merge an unformatted tree, so the scaffold failing its own shipped gate is the
+    defect — the standard-setter is the one repo that must not need the exemption.
+
+    Enforced from the start rather than advisory: the graduation bar is a clean tree, the three files were
+    formatted in the same commit that added this, and an advisory format check is precisely what let those
+    three drift in the package half (bd iv5 -> 0t5).
+    """
+    result = subprocess.run(  # noqa: S603 (controlled arg list — no shell/untrusted input)
+        ["uvx", f"ruff@{copier_default('ruff_version')}", "format", "--check", *_OWN_PYTHON],  # noqa: S607 (uvx on PATH)
+        cwd=str(REPO),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, f"scaffold must pass the format gate it ships:\n{result.stdout}\n{result.stderr}"

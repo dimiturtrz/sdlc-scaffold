@@ -36,7 +36,7 @@ def package_version() -> str:
     """The full `X.Y.Z` version sdlc-devtools declares — the single source the other two derive from."""
     match = re.search(r'^version = "([^"]+)"', _PACKAGE.read_text(encoding=_ENCODING), re.M)
     if match is None:
-        raise SystemExit(f"{_PACKAGE.as_posix()}: no `version = \"...\"` to derive from")
+        raise SystemExit(f'{_PACKAGE.as_posix()}: no `version = "..."` to derive from')
     return match.group(1)
 
 

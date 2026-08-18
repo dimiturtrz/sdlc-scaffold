@@ -76,11 +76,17 @@ def test_method_nodes_include_module_level_functions(tmp_path, monkeypatch):
     (tmp_path / "app").mkdir()
     (tmp_path / "app" / "__init__.py").write_text("", encoding="utf-8")
     (tmp_path / "app" / "mod.py").write_text(
-        "class Dep:\n    def run(self): ...\n\n\ndef main():\n    Dep().run()\n", encoding="utf-8")
+        "class Dep:\n    def run(self): ...\n\n\ndef main():\n    Dep().run()\n", encoding="utf-8"
+    )
     by_id = {n["id"]: n for n in Archmap(["app"])._method_nodes()}
     assert by_id["app.mod.main"] == {
-        "id": "app.mod.main", "label": "main", "parent": "app.mod", "descendants": 0,
-        "level": "method", "role": None}, "a top-level function nests in its module, at the method tier"
+        "id": "app.mod.main",
+        "label": "main",
+        "parent": "app.mod",
+        "descendants": 0,
+        "level": "method",
+        "role": None,
+    }, "a top-level function nests in its module, at the method tier"
     assert by_id["app.mod.Dep.run"]["parent"] == "app.mod.Dep", "a real method still nests under its class"
 
 

@@ -119,8 +119,7 @@ def test_scan(write_pkg, tmp_path):
     assert {frozenset(c) for c in comps} == {frozenset({"a", "b"}), frozenset({"c", "d"})}
 
     two = (
-        _SPLIT
-        + "\nclass Wider:\n    def a(self):\n        return self.x\n"
+        _SPLIT + "\nclass Wider:\n    def a(self):\n        return self.x\n"
         "    def b(self):\n        return self.y\n    def c(self):\n        return self.z\n"
     )
     scores = [row[0] for row in Lcom([write_pkg(tmp_path, "lcom_rank", two)]).scan()]

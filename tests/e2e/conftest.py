@@ -113,7 +113,7 @@ def _npx():
     jscpd tests then died on FileNotFoundError. Resolving the real spelling makes them RUN rather than
     merely fail honestly; skipping would have been the smaller half of the fix.
     """
-    for candidate in (["npx.cmd", "npx"] if sys.platform == "win32" else ["npx"]):
+    for candidate in ["npx.cmd", "npx"] if sys.platform == "win32" else ["npx"]:
         try:
             subprocess.run([candidate, "--version"], capture_output=True, check=True, text=True)  # noqa: S603
         except (OSError, subprocess.CalledProcessError):

@@ -127,8 +127,14 @@ class Archmap:
     def _method_row(mod: str, parent: str, name: str) -> NodeRow:
         """One method-tier node — a class method (`parent` = the class) or a module-level function
         (`parent` = the module). Same tier, same shape; only the box it nests in differs."""
-        return {"id": f"{parent}.{name}", "label": name, "parent": parent, "descendants": 0,
-                "level": "method", "role": None}
+        return {
+            "id": f"{parent}.{name}",
+            "label": name,
+            "parent": parent,
+            "descendants": 0,
+            "level": "method",
+            "role": None,
+        }
 
     def _method_nodes(self) -> list[NodeRow]:
         """The METHOD tier (bd 433.4) — the deepest fold level, so a class can be opened to read its actual

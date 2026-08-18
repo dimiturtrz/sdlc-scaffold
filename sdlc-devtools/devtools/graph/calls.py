@@ -167,8 +167,9 @@ class CallArrows:
             return [site.cls]
         return self.resolver.resolve_all(site.receiver_type_names(recv), site.scope)
 
-    def _edges_for_body(self, fn: ast.FunctionDef, owner: str, scope: FileScope,
-                        fields: dict[str, set[str]]) -> list[CallEdge]:
+    def _edges_for_body(
+        self, fn: ast.FunctionDef, owner: str, scope: FileScope, fields: dict[str, set[str]]
+    ) -> list[CallEdge]:
         """Every arrow one function body makes. `owner` is the node the arrows LEAVE — a class for a method,
         the module itself for a top-level function (bd 94j), which is the only difference between the two and
         why one routine serves both. A top-level function has no instance state, so `fields` is empty for it

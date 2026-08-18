@@ -364,8 +364,7 @@ class MethodMirror:
         # not have — honest about its own precision instead of implying resolve.py's (bd 5ck).
         reached = self.callers[fn.name] - {path}
         remedy = (
-            f"reached by name from {len(reached)} other module(s) — likely a contract with no test; "
-            f"write `{names[0]}`"
+            f"reached by name from {len(reached)} other module(s) — likely a contract with no test; write `{names[0]}`"
             if reached
             else f"{past} only inside its own file — public by naming accident; add the underscore, or "
             f"write `{names[0]}`"

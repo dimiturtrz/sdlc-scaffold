@@ -47,9 +47,12 @@ def lint(session: nox.Session) -> None:
     # The test suite meets the SAME house bar, minus the tests carve-out — symmetry with the scaffold half,
     # which lints its own tests via test_scaffold_lint.py. Was unlinted entirely (bd a19).
     session.run("uvx", RUFF, "check", TESTS, "--select", SELECT, "--ignore", TESTS_IGNORE, external=True)
-    # Advisory, matching the template's posture. It was ABSENT here, and absence is why four files drifted
-    # out of format unnoticed — the package can only be told it is clean by a gate that runs (bd iv5).
-    session.run("uvx", RUFF, "format", "--check", LAYER, external=True, success_codes=[0, 1])
+    # ENFORCED — GRADUATED advisory -> blocking (bd 0t5), and the template graduated the same check in the
+    # same direction (09f6bf8). Advisory was not enough: `success_codes` swallowed the exit, so THREE more
+    # files drifted out of format after bd iv5 fixed four. A check whose failure is discarded is a report,
+    # and a report nobody reads is how the package selling the gate ends up the tree that fails it. `tests`
+    # was never format-checked at all — the same absence, one directory over.
+    session.run("uvx", RUFF, "format", "--check", LAYER, TESTS, external=True)
     # ENFORCED dead code — measured at 0 findings on conf80 AND conf60, so it blocks from day one.
     session.run("uvx", VULTURE, LAYER, "--min-confidence", "80", external=True)
     session.run("uvx", VULTURE, LAYER, "--min-confidence", "60", external=True, success_codes=[0, 3])
