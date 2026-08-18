@@ -13,7 +13,7 @@ repos:
         always_run: true
 
       - id: ruff-format-gate
-        name: ruff — format check (advisory)
+        name: ruff — format check (enforced)
         entry: uvx ruff@{{ ruff_version }} format --check .
         language: system
         pass_filenames: false

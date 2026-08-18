@@ -94,7 +94,7 @@ Computed / never asked (`when: false`, one home in copier.yml): `enable_ml` (=`d
 | # | gate | engine | portable params | local-slot / answer |
 |---|---|---|---|---|
 | 1 | ruff lint (enforced) | vendored ruff | `line-length`, `select` (=`ruff_select`), `ignore`, `per-file-ignores` | `extend-exclude` (slot); scope=`lint_paths` (R1 hygiene, default `packages`, widenable — 9mu). The enforced CLI passes `--ignore F722` iff `enable_ml` — an explicit `--select` bypasses pyproject `ignore`, so the jaxtyping waiver is repeated on the CLI (else a fresh ml gen red-CIs on its own config; bd skr GAP1) |
-| 2 | ruff format --check (advisory) | vendored ruff | (never blocks) | — |
+| 2 | ruff format --check (enforced) | vendored ruff | (blocks in all three runners) | — |
 | 3 | vulture dead-code | vendored vulture | `min_confidence`, `ignore_decorators`, `ignore_names` core | `paths`, `exclude` (slot) |
 | 4 | coverage floor | vendored coverage/pytest-cov | `exclude_lines`, `show_missing` | `source`, `omit` (slot); `fail-under`=`coverage_floor` (answer) |
 | 5 | arch fitness | OURS `graph.py --assert` | (mechanism; `--no-test-mirror` skips the mirror check for a test-less tree) | `[tool.structure]` thresholds (slot) |

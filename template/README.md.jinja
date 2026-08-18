@@ -27,7 +27,7 @@ nox -s lint test cov
 
 `nox -s lint test cov` (or `nox -s gates`) runs exactly what CI runs:
 
-- **lint** — ruff check (pinned) + ruff format --check (advisory) + vulture + arch-fitness (`graph.py --assert`) + ast-grep + jscpd.
+- **lint** — ruff check (pinned) + ruff format --check (enforced) + vulture + arch-fitness (`graph.py --assert`) + ast-grep + jscpd.
 - **test** — pytest.
 - **cov** — pytest --cov with a `--fail-under={{ coverage_floor }}` floor.
 
