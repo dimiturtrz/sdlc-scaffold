@@ -35,9 +35,10 @@ jobs:
       # (E501/SLF001 graduated into the enforced union, bd 4c2/8ex); the extend flag rides only when it's set.
       - name: Lint — advisory full (non-blocking)
         run: uvx ruff@{{ ruff_version }} check . --statistics{% if ruff_advisory_select %} --extend-select {{ ruff_advisory_select }}{% endif %} || true
-      # ADVISORY: format drift, shown but never blocks.
-      - name: Format — advisory (non-blocking)
-        run: uvx ruff@{{ ruff_version }} format --check . || true
+      # ENFORCED: pre-commit has always run this for real, so leaving CI advisory meant the merge gate
+      # passed a tree that could not be committed. A generated repo arrives formatted.
+      - name: Format — enforced
+        run: uvx ruff@{{ ruff_version }} format --check .
       # Dead code — the axis ruff can't see (paths/ignores in [tool.vulture]). BLOCKS at conf>=80
       # (near-certain: unreachable, unused locals — precision high enough to fail the merge).
       - name: Dead code — enforced (vulture conf>=80)
