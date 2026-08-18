@@ -11,7 +11,15 @@ nox.options.sessions = ["lint", "test", "cov"]
 
 RUFF = "ruff@{{ ruff_version }}"
 VULTURE = "vulture@{{ vulture_version }}"
-SELECT = "{{ ruff_select }}"
+# The enforced ruff select, chunked purely so no line runs past the 120 limit — the value is the flat
+# comma list ruff's `--select` takes, and `,`.join restores it exactly. Written wrapped because the flat
+# literal is a single 274-char string that `ruff format` cannot split, so it would ship an E501 to every
+# consumer forever (bd 98d); the chunking also makes a rule arriving or leaving a one-line diff.
+SELECT = ",".join(
+    (
+{% for chunk in ruff_select.split(",") | batch(8) %}        "{{ chunk | join(",") }}",
+{% endfor %}    )
+)
 LAYERS = [{% for p in packages.split(",") %}"{{ p | trim }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 # ruff + jscpd are R1 HYGIENE gates — they may scan WIDER than the R2/R3 arch set LAYERS (a viewer / tests
 # tree worth linting). Default = LAYERS; widen via lint_paths/jscpd_paths in .copier-answers.yml (bd 9mu).

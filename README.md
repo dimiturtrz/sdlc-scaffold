@@ -8,6 +8,21 @@ one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved
 inherited call points at the base where the code actually lives. [Open the live viewer
 →](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
 
+**v1.28** — three defects a **consuming repo** found by reading what the scaffold told it, and the tests that
+stop each from recurring. The agent doc — the map an agent reads *before* touching code — named five gates
+while the runners enforced twelve, so demeter, purity, composition, envy, ast-grep, the method-level mirror
+and the unit-test size rule all blocked while undocumented, and the two commands it did print resolved to a
+package and to a module that had moved. Every one of those arrived by a graduation that updated the runners
+and skipped the prose, so the doc is now derived-checked: a gate in the `--gate` list that the doc does not
+name fails a test, as does a `python -m` command that would not run. The generated `noxfile.py` shipped an
+E501 in every consumer — a 274-char `SELECT` literal `ruff format` cannot split — and the test written to
+catch exactly that read green, because the render context omitted the answer and jinja renders an undefined
+as the empty string, replacing the longest line with the shortest before the check ran. The select is now
+chunked (a rule arriving is a one-line diff), and a round-trip test holds the chunks to the answer
+byte-for-byte, since a shorter select still passes E501. `ruff format --check` also **graduates to enforced**
+in nox and CI, as pre-commit always ran it: the documented merge gate had been reporting green on trees the
+very next commit refused.
+
 **v1.27** — a review pass **sharpened five gates against their own claims**. The behavioural graph never
 walked module-level function bodies, so `main()` constructing the `Cli` every engine reuses produced no
 arrow and the most-reused plumbing rendered as an isolated box — top-level functions are now method-tier

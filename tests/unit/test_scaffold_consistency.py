@@ -4,6 +4,7 @@
 versions can silently drift from copier.yml when a version is bumped. This guard fails the drift.
 """
 
+import ast
 import itertools
 import re
 import subprocess
@@ -20,6 +21,9 @@ from _meta import copier_default  # noqa: E402  (shared copier.yml reader, one h
 # The `{{ version }}` substitutions the python templates read, resolved from copier.yml so the rendered
 # output is pinned to exactly what a consumer receives.
 _PINNED_VERSIONS = ("ruff_version", "vulture_version", "deptry_version", "pyrefly_version", "pip_audit_version")
+# Non-version copier answers the python templates interpolate as LITERALS. Same reason as the versions: an
+# answer missing from the render context becomes "" and shortens the very line under test (bd 98d).
+_LITERAL_ANSWERS = ("ruff_select",)
 _CAPTURE = {"capture_output": True, "text": True, "cwd": REPO, "check": False}
 _TEMPLATE_PYPROJECT = (REPO / "template" / "pyproject.toml.jinja").read_text(encoding="utf-8")
 
@@ -45,6 +49,12 @@ def _render(template: Path, switches: dict) -> str:
     The context is CONCRETE, not copier's own defaults: `packages` and friends default to jinja expressions
     (`{{ project_name.replace('-', '_') }}`) that copier resolves itself. Resolving them here would test
     copier, which the e2e already does — this test is about the FORMAT of the python that comes out.
+
+    `_LITERAL_ANSWERS` is the exception, and it is load-bearing: those answers are plain literals in
+    copier.yml, and leaving one out does not render a placeholder — jinja renders an undefined as the EMPTY
+    STRING, so the longest line in the file is silently replaced by the shortest before the length check
+    runs. That is exactly how a 274-char `SELECT = "{{ ruff_select }}"` read green here while shipping an
+    E501 to every consumer (bd 98d). Any literal answer a python template interpolates belongs in this set.
     """
     context = {
         "project_name": "demo",
@@ -52,7 +62,7 @@ def _render(template: Path, switches: dict) -> str:
         "lint_paths": "demo",
         "jscpd_paths": "demo",
         "coverage_floor": "80",
-        **{key: copier_default(key) for key in _PINNED_VERSIONS},
+        **{key: copier_default(key) for key in (*_PINNED_VERSIONS, *_LITERAL_ANSWERS)},
         **switches,
     }
     source = template.read_text(encoding="utf-8")
@@ -103,6 +113,23 @@ def test_python_templates_render_exactly_as_ruff_would_format_them(tmp_path):
         + "\n  ".join(f"{name} <- {src}" for name, src in sorted(rendered.items()))
         + f"\n--- ruff format ---\n{fmt.stdout}{fmt.stderr}\n--- E501 ---\n{lint.stdout}{lint.stderr}"
     )
+
+
+def test_the_wrapped_ruff_select_still_joins_back_to_the_answer_exactly():
+    """`SELECT` is written CHUNKED in the template (the flat literal is 274 chars, an E501 ruff cannot split
+    and formatting cannot fix — bd 98d). Chunking is presentation, so the joined value must be the answer
+    byte-for-byte: a wrong separator or a lost chunk would silently narrow the enforced rule set, and the
+    format test above cannot see it — a shorter select still renders and still passes E501.
+    """
+    answer = copier_default("ruff_select")
+    rendered = _render(REPO / "template" / "noxfile.py.jinja", dict.fromkeys(_TEMPLATE_SWITCHES, True))
+    assign = next(
+        node.value
+        for node in ast.parse(rendered).body
+        if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name) and node.targets[0].id == "SELECT"
+    )
+    joined = ",".join(ast.literal_eval(assign.args[0]))
+    assert joined == answer, f"the chunked SELECT joins to\n  {joined}\nbut copier.yml answers\n  {answer}"
 
 
 def test_the_readme_headline_version_matches_the_package():
@@ -333,6 +360,51 @@ def test_every_enforced_gate_is_wired_into_all_three_runners():
     missing = {label: sorted(gates - everywhere) for label, gates in found.items() if gates - everywhere}
     assert not missing, "enforced gates must run in EVERY runner; these are wired in only some:\n  " + "\n  ".join(
         f"{label}: only there -> {gates}" for label, gates in missing.items()
+    )
+
+
+_AGENT_DOC = REPO / "_partials" / "agent_body.md.jinja"
+
+
+def _module_file(dotted: str) -> Path:
+    """The .py a `devtools.a.b` path must resolve to. A PACKAGE has no such file, which is the point."""
+    return (REPO / "sdlc-devtools" / "devtools" / Path(*dotted.split(".")[1:])).with_suffix(".py")
+
+
+def test_the_agent_doc_names_every_gate_the_runners_enforce():
+    """`agent_body.md.jinja` is the map an agent reads BEFORE touching code. A gate missing from it is a
+    rule the agent cannot write TO — it discovers the rule by failing it, which is the expensive way.
+
+    Measured in a consumer (bd k3r): the doc listed five gates while the runners enforced twelve, so
+    demeter, purity, composition, envy, ast-grep, the METHOD-level mirror and the unit-test size rule were
+    all blocking and all undocumented. Every one of those arrived by a graduation that updated the runners
+    and not the prose. Deriving the expected set from `--gate` itself means the next graduation cannot.
+
+    Matching on the `devtools.<module>` token rather than on prose: it is unambiguous, and it doubles as the
+    command the agent runs to check that one gate while fixing it.
+    """
+    gates = _enforced_gates((REPO / _RUNNERS["noxfile"]).read_text(encoding="utf-8"))
+    doc = _AGENT_DOC.read_text(encoding="utf-8")
+    unnamed = sorted(gate for gate in gates if f"devtools.{gate}" not in doc)
+    assert not unnamed, (
+        "these gates BLOCK but the agent doc never names them, so an agent meets each one as a red gate "
+        f"instead of as a rule it was shown:\n  {unnamed}\n"
+        f"Name each as `python -m devtools.<gate>` in {_AGENT_DOC.name}."
+    )
+
+
+def test_the_agent_doc_prints_only_devtools_entrypoints_that_run():
+    """Every `python -m devtools.X` the doc prints must be a real MODULE, not a package.
+
+    Both entrypoints the doc offered were unrunnable (bd k3r): `devtools.graph` is a package and answers
+    'No module named devtools.graph.__main__', and `devtools.archmap` moved to `devtools.graph.archmap`.
+    A copy-pasted command that errors teaches the agent to distrust the doc, which is worse than silence.
+    """
+    doc = re.sub(r"{%.*?%}", "", _AGENT_DOC.read_text(encoding="utf-8"), flags=re.S)
+    broken = sorted({mod for mod in re.findall(r"python -m (devtools\.[\w.]+)", doc) if not _module_file(mod).exists()})
+    assert not broken, (
+        "the agent doc prints `python -m` commands that do not resolve to a module file "
+        f"(a package without __main__ fails the same way):\n  {broken}"
     )
 
 
