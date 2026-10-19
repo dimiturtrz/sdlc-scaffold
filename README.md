@@ -8,6 +8,16 @@ one tree (`package ⊃ module ⊃ class ⊃ method`); every arrow is a *resolved
 inherited call points at the base where the code actually lives. [Open the live viewer
 →](https://dimiturtrz.github.io/sdlc-scaffold/)</sub>
 
+**v1.29** — the test suite **runs in parallel**, at a consumer's request after `nox -s cov` reached 21
+minutes serial. `pytest-xdist` ships in the dev extra and `addopts` carries `-n auto --dist loadfile`, so
+every runner — nox, CI, a bare `pytest` — inherits it from one home, and pytest-cov still combines the
+workers into the single `.coverage` the floor reads. `--durations=25` names the slowest tests in every log.
+The worker count is an **answer**, not a hand-edited line: a GPU suite that cannot share its device
+answers `pytest_workers=0` and keeps it across updates, while the rest of `addopts` stays house-owned and
+keeps arriving — a slot around the whole line would have frozen the first edit in place. Deptry's
+`extend_exclude` becomes a LOCAL-SLOT, so a repo folding in a `legacy/` scripts dir excludes it without
+forking the template.
+
 **v1.28** — three defects a **consuming repo** found by reading what the scaffold told it, and the tests that
 stop each from recurring. The agent doc — the map an agent reads *before* touching code — named five gates
 while the runners enforced twelve, so demeter, purity, composition, envy, ast-grep, the method-level mirror
@@ -213,7 +223,7 @@ state. The full contract (exact rule values, the superset-vs-slot boundary) live
 
 ## Using it
 
-Five questions, asked once:
+Six questions, asked once:
 
 | question | default | effect |
 |---|---|---|
@@ -221,6 +231,7 @@ Five questions, asked once:
 | `packages` | `project_name` snake_cased | comma-list the guardrails target (`core,neuroscan,neuroviz`) |
 | `domain` | `ml` | `ml` adds numpy + an ML-workflow gitignore (data-outside-repo/`paths.yaml`, MLflow, `runs/`) + a data-skip CI env; `none` = domain-neutral |
 | `coverage_floor` | `80` | `coverage report --fail-under` |
+| `pytest_workers` | `auto` | pytest-xdist workers; `0` = serial, for a suite that cannot share its GPU |
 | `author` | `project_name` | copyright holder for the generated MIT `LICENSE` |
 
 Three more default from `packages`/name and are usually accepted with Enter — `lint_paths` / `jscpd_paths`

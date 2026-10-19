@@ -90,6 +90,7 @@ Facts asked once and baked into the generated files (survive `copier update` via
 | `packages` | the architected set every arch gate scans |
 | `domain` (`enable_ml`) | ml bundle: numpy/jaxtyping deps, shape gate wiring, naming vocab, doc layers |
 | `coverage_floor` | the enforced coverage % |
+| `pytest_workers` | xdist worker count (`auto`; `0` = serial, a suite that cannot share its GPU) |
 | `lint_paths` / `jscpd_paths` | R1-hygiene scan scope (widenable past the arch set) |
 | `data_env_var` | the ml data-skip env name |
 | `author` | LICENSE copyright |
@@ -105,6 +106,7 @@ The irreducible facts about *this* codebase. Can't be derived — they're inputs
 | `vulture-ignore-names` | documented dead-code false positives (framework dispatch) |
 | `shape-aliases` | type names that mean "an array" (`Volume`, `Mask`) |
 | `deptry-unused` | shipped starters ignored until wired (prune as used) |
+| `deptry-exclude` | trees deptry must not scan — not packaged code (noxfile.py; a legacy/ scripts dir) |
 | `arch-thresholds` | per-repo overrides of the decided absolutes |
 | `vulture-scan` / `coverage-scan` / `ruff-exclude` | per-gate scope |
 | `ci-lint-steps` / `ci-test-steps` | repo-only extra CI steps |

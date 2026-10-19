@@ -10,6 +10,29 @@ Entries are keyed by the version that introduced the change, newest first.
 
 ---
 
+## v1.29.0 — the suite runs in parallel (`pytest_workers` answer); deptry's `extend_exclude` becomes a LOCAL-SLOT
+
+**What you'll see.** `pytest-xdist` joins the `dev` extra and `[tool.pytest.ini_options] addopts` gains
+`-n auto --dist loadfile --durations=25`, so `nox -s test`/`cov`, the CI tests step and any bare `pytest`
+spread across cores and end with the 25 slowest tests. pytest-cov combines the workers into one `.coverage`,
+so the floor and the 95% target still read the whole run. `pytest-xdist` is added to the `deptry-unused`
+DEP002 list (deptry does not scan `tests/`). The pre-push unit hook passes `-n 0`: a small suite finishes
+before a worker pool has imported.
+
+**What to do.**
+- `uv lock` after the update (a new dev dependency), then commit the lock — CI runs `uv sync --frozen`.
+- If you had edited the `deptry-unused` list, copier merges around your edit or leaves a `.rej`; keep your
+  values and add `"pytest-xdist"`. `addopts` is template-owned: a flag you had added there by hand belongs in
+  a conftest or a `PYTEST_ADDOPTS` export instead.
+- A suite that cannot run concurrently (tests sharing one GPU, a fixed port, a shared on-disk fixture)
+  answers `uvx copier update --data pytest_workers=0` once — it is stored, so later updates keep it — or sets
+  `PYTEST_ADDOPTS="-n 0"` for a single run. A test that only fails under xdist was order-dependent before;
+  it is worth fixing rather than opting the whole suite out.
+- Trees that are not packaged code (old scripts, a `legacy/` dir) go in the `deptry-exclude` slot beside
+  `noxfile.py`.
+
+---
+
 ## v1.25.0 — the analyzers move into domain folders; every `python -m devtools.<gate>` path gains its folder
 
 **What you'll see.** After `copier update` past v1.25.0, every devtools gate is invoked at a folder-qualified

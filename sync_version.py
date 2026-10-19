@@ -83,7 +83,7 @@ def write(version: str) -> list[str]:
         before = path.read_text(encoding=_ENCODING)
         after = transform(before, version)
         if after != before:
-            path.write_text(after, encoding=_ENCODING)
+            path.write_text(after, encoding=_ENCODING, newline="\n")
             changed.append(path.as_posix())
     return changed
 

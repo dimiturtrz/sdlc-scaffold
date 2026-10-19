@@ -108,6 +108,22 @@ coverage_floor:
   help: "Coverage floor (coverage report --fail-under)"
   default: 80
 
+# pytest-xdist worker count, rendered into `addopts` as `-n <this>` (bd dqe). An ANSWER, not a LOCAL-SLOT:
+# whether a suite can run concurrently is a per-repo FACT (tests sharing one GPU, a fixed port or an on-disk
+# fixture cannot), while the rest of `addopts` is house-owned — `--import-mode=importlib` is what the mirror
+# layout's same-named test files depend on. A slot around the whole line would hand those to the consumer,
+# and the first `-n 0` edit would stop every later house flag from arriving. ASKED so a non-default persists
+# in .copier-answers.yml and survives `copier update` (bd fsl). One run overrides it with
+# pytest's own `PYTEST_ADDOPTS="-n 0"`.
+pytest_workers:
+  type: str
+  help: "pytest-xdist workers for the test suite — `auto` (one per core), a count, or `0` for serial (a GPU suite)"
+  default: "auto"
+  validator: >-
+    {%- if pytest_workers not in ['auto', 'logical'] and not pytest_workers.isdigit() -%}
+    must be auto, logical or a worker count (0 = serial)
+    {%- endif -%}
+
 # Copyright holder for the generated MIT LICENSE (bd c64). A scaffold that ships guardrails but no LICENSE
 # leaves every generated repo legally all-rights-reserved (defeats reuse). Default = the project's own name;
 # set your name/org so the copyright line is real.
@@ -210,5 +226,5 @@ pyrefly_version:
 # sdlc-devtools/ was published at. `when: false` (never asked, always the release value).
 devtools_ref:
   type: str
-  default: "v1.28.0"
+  default: "v1.29.0"
   when: false

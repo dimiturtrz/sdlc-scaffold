@@ -381,6 +381,17 @@ def test_vulture_conf80(project):
     run(["uvx", VULTURE, "--min-confidence", "80"], path)
 
 
+def test_suite_runs_parallel_with_a_serial_opt_out(project):
+    """dqe: every runner inherits xdist from the one house-owned addopts; the worker count is an answer, and
+    the serial value a GPU suite picks must still run against the shipped `--dist loadfile`."""
+    _, path = project
+    pyproject_text = (path / "pyproject.toml").read_text()
+    assert "-n auto --dist loadfile --durations=25" in pyproject_text, "the suite runs parallel by default"
+    assert '"pytest-xdist"' in pyproject_text, "xdist ships in the dev extra, else `-n` is unrecognised"
+    assert "LOCAL-SLOT: deptry-exclude" in pyproject_text, "non-packaged trees are excluded in a slot, not a fork"
+    run(["uv", "run", "pytest", "tests", "-q"], path, env={"PYTEST_ADDOPTS": "-n 0"})
+
+
 def test_coverage_floor(project):
     _, path = project
     run(["uv", "run", "pytest", "tests", "--cov", "-q"], path)
