@@ -392,6 +392,17 @@ def test_suite_runs_parallel_with_a_serial_opt_out(project):
     run(["uv", "run", "pytest", "tests", "-q"], path, env={"PYTEST_ADDOPTS": "-n 0"})
 
 
+def test_nox_test_installs_its_extra_into_a_stale_venv(project):
+    """s61: a venv synced before an update added a dev dep (pytest-xdist in v1.29) must still pass `nox -s test`
+    — the session names its extra instead of trusting whatever the env happened to hold."""
+    _, path = project
+    run(["uv", "sync"], path)
+    try:
+        run(["uvx", NOX, "-s", "test"], path)
+    finally:
+        run(["uv", "sync", "--extra", "dev", "--extra", "devtools"], path)
+
+
 def test_coverage_floor(project):
     _, path = project
     run(["uv", "run", "pytest", "tests", "--cov", "-q"], path)

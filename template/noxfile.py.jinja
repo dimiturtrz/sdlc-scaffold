@@ -171,10 +171,15 @@ def lint(session: nox.Session) -> None:
     session.run("uv", "run", "--with", "pyrefly=={{ pyrefly_version }}", "pyrefly", "check", *LINT_LAYERS, external=True)
 
 
+# The test runners name their extra, so `uv run` installs it into a venv synced before an update added a dev
+# dep — a bare `uv run` keeps the stale env and pytest rejects the new `addopts` flags (bd s61).
+DEV = ("--extra", "dev")
+
+
 @nox.session(venv_backend="none")
 def test(session: nox.Session) -> None:
     """pytest."""
-    session.run("uv", "run", "pytest", "tests", "-q", external=True)
+    session.run("uv", "run", *DEV, "pytest", "tests", "-q", external=True)
 
 
 @nox.session(venv_backend="none")
@@ -183,15 +188,16 @@ def cov(session: nox.Session) -> None:
     session.run(
         "uv",
         "run",
+        *DEV,
         "pytest",
         "tests",
         "--cov",
         "--cov-report=term-missing",
         external=True,
     )
-    session.run("uv", "run", "coverage", "report", "--fail-under={{ coverage_floor }}", external=True)
+    session.run("uv", "run", *DEV, "coverage", "report", "--fail-under={{ coverage_floor }}", external=True)
     # Advisory: 95% target — warns, never fails (coverage exits 2 when under; success_codes swallows it).
-    session.run("uv", "run", "coverage", "report", "--fail-under=95", external=True, success_codes=[0, 2])
+    session.run("uv", "run", *DEV, "coverage", "report", "--fail-under=95", external=True, success_codes=[0, 2])
 
 
 @nox.session(venv_backend="none")
