@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov"]
+dev = ["pytest", "pytest-cov", "pytest-xdist"]
 # The guardrail ANALYZERS are an installed package pinned by scaffold tag (not vendored source) — an engine
 # update is a one-line `devtools_ref` bump on `copier update`, no source diff in your PRs. Imports as
 # `devtools` (`python -m devtools.graph.fitness …`); grimp/networkx arrive transitively. ast-grep/jscpd configs are
@@ -31,7 +31,14 @@ include = [{% for p in packages.split(",") %}"{{ p | trim }}*"{% if not loop.las
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "--import-mode=importlib"
+# One home for how the suite RUNS, read by every runner (nox test/cov, CI, the pre-push hook) because they
+# all invoke plain `pytest`. `--import-mode=importlib` is what the mirror layout's same-named test files
+# need. `-n` spreads the suite across pytest-xdist workers — the count is the `pytest_workers` answer
+# (`0` = serial, for a suite that cannot share a GPU), so change it with `copier update --data`, not here.
+# `--dist loadfile` keeps a file's tests on one worker, so module fixtures are built once per file.
+# pytest-cov combines the workers into one .coverage, so the floor and the 95% target read the whole run.
+# `--durations=25` names the slowest tests in every log. One run goes serial with `PYTEST_ADDOPTS="-n 0"`.
+addopts = "--import-mode=importlib -n {{ pytest_workers }} --dist loadfile --durations=25"
 # REQUIRED by [tool.structure] test_layout = "mirror". pytest collects `test_*.py` by default, so a
 # mirror tree is not collected AT ALL without this — and an uncollected suite reports green while running
 # zero tests, which is worse than a red one. `devtools.hygiene.mirror --assert` fails on the CONFIG if these two
@@ -43,18 +50,21 @@ python_classes = []
 
 # Dependency hygiene (deptry, ENFORCED): imported-but-undeclared (DEP001) / declared-but-unused (DEP002) /
 # transitive (DEP003) imports. noxfile.py imports the `nox` runner (invoked via uvx, deliberately not a
-# project dep) so it's excluded from the scan.
+# project dep) so it's excluded from the scan. Add any tree that is not packaged code (old scripts, a
+# legacy/ dir being folded in) to the slot — keep noxfile.py.
 [tool.deptry]
+# >>> LOCAL-SLOT: deptry-exclude — edit freely, the template will not overwrite intent here
 extend_exclude = ["noxfile.py"]
+# <<< LOCAL-SLOT: deptry-exclude
 
 # deptry does not scan tests/ (its default exclude), so DEP002 (declared-but-unused) fires for anything
 # only exercised by the test suite or by tooling. PERMANENT ignores (never imported in scanned source by
-# design): the test-runner deps `pytest`/`pytest-cov`, and `sdlc-devtools` (the analyzers, invoked as a CLI
-# `python -m devtools.*`). STARTERS: the runtime deps the scaffold ships for you to build on
+# design): the test-runner deps `pytest`/`pytest-cov`/`pytest-xdist`, and `sdlc-devtools` (the analyzers,
+# invoked as a CLI `python -m devtools.*`). STARTERS: the runtime deps the scaffold ships for you to build on
 # ({{ "numpy/jaxtyping/beartype/" if enable_ml }}pydantic) — they read as unused until you import them.
 [tool.deptry.per_rule_ignores]
-# >>> LOCAL-SLOT: deptry-unused — PRUNE a starter once you wire it (keep pytest/pytest-cov/sdlc-devtools)
-DEP002 = ["pytest", "pytest-cov", "sdlc-devtools", {% if enable_ml %}"numpy", "jaxtyping", "beartype", {% endif %}"pydantic"]
+# >>> LOCAL-SLOT: deptry-unused — PRUNE a starter once you wire it (keep the test runners + sdlc-devtools)
+DEP002 = ["pytest", "pytest-cov", "pytest-xdist", "sdlc-devtools", {% if enable_ml %}"numpy", "jaxtyping", "beartype", {% endif %}"pydantic"]
 # <<< LOCAL-SLOT: deptry-unused
 
 [tool.ruff]

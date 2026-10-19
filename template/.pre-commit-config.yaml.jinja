@@ -180,9 +180,10 @@ repos:
       # (torch-import + tests every commit kills flow); tests/unit only (no integration/e2e/GPU/download — fast
       # + deterministic); NOT coverage (the floor stays a CI job). Enable once: `pre-commit install --hook-type
       # pre-push` (it is NOT installed by the default `pre-commit install`, which wires only the commit stage).
+      # `-n 0` runs it in one process: small unit tests finish before a pool of workers has finished importing.
       - id: unit-tests
         name: unit tests — pre-push (fast contract check; shift-left the CI test gate)
-        entry: uv run --extra dev pytest tests/unit -q
+        entry: uv run --extra dev pytest tests/unit -q -n 0
         language: system
         pass_filenames: false
         always_run: true
