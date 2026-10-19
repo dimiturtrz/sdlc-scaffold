@@ -10,6 +10,15 @@ Entries are keyed by the version that introduced the change, newest first.
 
 ---
 
+## v1.29.1 — `nox -s test`/`cov` install the `dev` extra themselves
+
+**What you'll see.** Nothing to do. If you updated to v1.29.0 and `nox -s cov` failed with
+`unrecognized arguments: -n --dist`, your `.venv` predated `pytest-xdist`: the test sessions ran a bare
+`uv run`, which never adds a missing extra. They now run `uv run --extra dev`, like the pre-push hook. On
+v1.29.0 itself, `uv sync --extra dev --extra devtools` once fixes it.
+
+---
+
 ## v1.29.0 — the suite runs in parallel (`pytest_workers` answer); deptry's `extend_exclude` becomes a LOCAL-SLOT
 
 **What you'll see.** `pytest-xdist` joins the `dev` extra and `[tool.pytest.ini_options] addopts` gains
